@@ -5,6 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import Index from "./pages/Index"
 import Login from "./pages/Login"
+import Social from "./pages/Social"
+import Location from "./pages/Location"
+import Demographics from "./pages/Demographics"
+import AIInsights from "./pages/AIInsights"
+import Feedback from "./pages/Feedback"
+import Reports from "./pages/Reports"
+import Settings from "./pages/Settings"
 
 const queryClient = new QueryClient()
 
@@ -17,14 +24,13 @@ const App = () => (
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Index />} />
-          {/* Add placeholder routes for other pages */}
-          <Route path="/social" element={<div>Social Media Analytics (Coming Soon)</div>} />
-          <Route path="/location" element={<div>Location Data (Coming Soon)</div>} />
-          <Route path="/demographics" element={<div>Demographics (Coming Soon)</div>} />
-          <Route path="/ai-insights" element={<div>AI Insights (Coming Soon)</div>} />
-          <Route path="/feedback" element={<div>Feedback (Coming Soon)</div>} />
-          <Route path="/reports" element={<div>Reports (Coming Soon)</div>} />
-          <Route path="/settings" element={<div>Settings (Coming Soon)</div>} />
+          <Route path="/social" element={<Social />} />
+          <Route path="/location" element={<Location />} />
+          <Route path="/demographics" element={<Demographics />} />
+          <Route path="/ai-insights" element={<AIInsights />} />
+          <Route path="/feedback" element={<Feedback />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
