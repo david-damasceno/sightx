@@ -2,17 +2,6 @@ import { DashboardHeader } from "@/components/DashboardHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { InsightsPanel } from "@/components/InsightsPanel";
 import { 
-  BarChart as BarChartIcon, 
-  Users, 
-  DollarSign, 
-  TrendingUp, 
-  ShoppingCart,
-  Star,
-  ArrowUpRight,
-  ArrowDownRight
-} from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { 
   BarChart, 
   Bar, 
   XAxis, 
@@ -22,24 +11,49 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
-  Legend
+  Legend,
+  AreaChart,
+  Area
 } from "recharts";
+import { 
+  TrendingUp, 
+  Users, 
+  DollarSign, 
+  ShoppingCart,
+  Target,
+  ArrowUpRight,
+  Percent,
+  Clock
+} from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 const revenueData = [
-  { name: 'Jan', value: 35000 },
-  { name: 'Feb', value: 38000 },
-  { name: 'Mar', value: 42000 },
-  { name: 'Apr', value: 45231 },
-  { name: 'May', value: 48000 },
-  { name: 'Jun', value: 52000 },
+  { name: 'Jan', receita: 135000, custos: 85000 },
+  { name: 'Fev', receita: 148000, custos: 88000 },
+  { name: 'Mar', receita: 162000, custos: 92000 },
+  { name: 'Abr', receita: 175231, custos: 95000 },
+  { name: 'Mai', receita: 188000, custos: 98000 },
+  { name: 'Jun', receita: 202000, custos: 102000 },
 ];
 
-const socialEngagementData = [
-  { name: 'Mon', instagram: 2400, facebook: 1800, twitter: 1200 },
-  { name: 'Tue', instagram: 3200, facebook: 2100, twitter: 1600 },
-  { name: 'Wed', instagram: 2800, facebook: 1900, twitter: 1400 },
-  { name: 'Thu', instagram: 3600, facebook: 2400, twitter: 1800 },
-  { name: 'Fri', instagram: 3100, facebook: 2200, twitter: 1500 },
+const conversionData = [
+  { hora: '08:00', taxa: 2.4 },
+  { hora: '10:00', taxa: 3.1 },
+  { hora: '12:00', taxa: 4.3 },
+  { hora: '14:00', taxa: 3.8 },
+  { hora: '16:00', taxa: 4.1 },
+  { hora: '18:00', taxa: 4.8 },
+  { hora: '20:00', taxa: 5.2 },
+  { hora: '22:00', taxa: 3.9 },
+];
+
+const customerSegments = [
+  { name: 'Jan', novos: 840, recorrentes: 580 },
+  { name: 'Fev', novos: 920, recorrentes: 650 },
+  { name: 'Mar', novos: 880, recorrentes: 720 },
+  { name: 'Abr', novos: 960, recorrentes: 780 },
+  { name: 'Mai', novos: 1020, recorrentes: 850 },
+  { name: 'Jun', novos: 1150, recorrentes: 920 },
 ];
 
 export default function Index() {
@@ -48,97 +62,119 @@ export default function Index() {
       <DashboardHeader />
       
       <main className="container py-6 space-y-6">
-        {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricCard
-            title="Total Revenue"
-            value="$45,231"
+            title="Receita Total"
+            value="R$ 202.000"
             change="+20.1%"
             icon={<DollarSign className="h-4 w-4 text-green-500" />}
           />
           <MetricCard
-            title="Active Users"
-            value="2,420"
+            title="Clientes Ativos"
+            value="2.070"
             change="+15.1%"
             icon={<Users className="h-4 w-4 text-blue-500" />}
           />
           <MetricCard
-            title="Conversion Rate"
-            value="3.8%"
-            change="+4.1%"
-            icon={<TrendingUp className="h-4 w-4 text-purple-500" />}
+            title="Taxa de Conversão"
+            value="5.2%"
+            change="+1.4%"
+            icon={<Percent className="h-4 w-4 text-purple-500" />}
           />
           <MetricCard
-            title="Avg. Order Value"
-            value="$235"
+            title="Ticket Médio"
+            value="R$ 235"
             change="+10.3%"
             icon={<ShoppingCart className="h-4 w-4 text-orange-500" />}
           />
         </div>
 
-        {/* Charts and Insights */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Revenue Trend */}
           <Card className="lg:col-span-2 p-6 glass-card">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Revenue Trend</h3>
+              <h3 className="font-semibold">Receita vs Custos</h3>
               <div className="flex items-center text-sm text-green-500">
                 <ArrowUpRight className="h-4 w-4 mr-1" />
-                <span>12.5% from last month</span>
+                <span>Margem de lucro: 48%</span>
               </div>
             </div>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={revenueData}>
+              <AreaChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="value" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <Legend />
+                <Area 
+                  type="monotone" 
+                  dataKey="receita" 
+                  stackId="1"
+                  stroke="#4f46e5" 
+                  fill="#4f46e5"
+                  fillOpacity={0.6}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="custos" 
+                  stackId="1"
+                  stroke="#ef4444" 
+                  fill="#ef4444"
+                  fillOpacity={0.6}
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </Card>
 
-          {/* Smart Insights Panel */}
           <InsightsPanel />
         </div>
 
-        {/* Social Media Engagement */}
-        <Card className="p-6 glass-card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Social Media Engagement</h3>
-            <div className="flex items-center text-sm text-blue-500">
-              <Star className="h-4 w-4 mr-1" />
-              <span>High engagement today</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="p-6 glass-card">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Taxa de Conversão por Hora</h3>
+              <div className="flex items-center text-sm text-purple-500">
+                <Clock className="h-4 w-4 mr-1" />
+                <span>Melhor horário: 20h</span>
+              </div>
             </div>
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={socialEngagementData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="instagram" 
-                stroke="#E1306C" 
-                strokeWidth={2} 
-              />
-              <Line 
-                type="monotone" 
-                dataKey="facebook" 
-                stroke="#4267B2" 
-                strokeWidth={2} 
-              />
-              <Line 
-                type="monotone" 
-                dataKey="twitter" 
-                stroke="#1DA1F2" 
-                strokeWidth={2} 
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={conversionData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="hora" />
+                <YAxis />
+                <Tooltip />
+                <Line 
+                  type="monotone" 
+                  dataKey="taxa" 
+                  stroke="#8b5cf6" 
+                  strokeWidth={2}
+                  dot={{ fill: '#8b5cf6' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </Card>
+
+          <Card className="p-6 glass-card">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Segmentação de Clientes</h3>
+              <div className="flex items-center text-sm text-blue-500">
+                <Target className="h-4 w-4 mr-1" />
+                <span>+25% novos clientes</span>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={customerSegments}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="novos" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="recorrentes" fill="#22c55e" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </div>
       </main>
     </div>
   );

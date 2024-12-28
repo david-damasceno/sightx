@@ -1,35 +1,40 @@
 import { Card } from "@/components/ui/card";
-import { Lightbulb, TrendingUp, Users, AlertCircle } from "lucide-react";
+import { Lightbulb, TrendingUp, Users, AlertCircle, Brain, Target, DollarSign, ShoppingCart } from "lucide-react";
 
 export function InsightsPanel() {
   const insights = [
     {
+      icon: <Brain className="h-4 w-4 text-purple-500" />,
+      text: "Mih sugere: Aumente o engajamento nas redes sociais com posts entre 18h-21h, período de maior atividade do seu público",
+      type: "ai"
+    },
+    {
+      icon: <Target className="h-4 w-4 text-blue-500" />,
+      text: "Mih identificou: Seu público-alvo está mais ativo em Instagram e LinkedIn. Considere aumentar investimentos nestas plataformas",
+      type: "ai"
+    },
+    {
       icon: <TrendingUp className="h-4 w-4 text-green-500" />,
-      text: "Revenue increased by 15% compared to last month, driven by new product launches",
+      text: "Crescimento de 23% nas vendas online comparado ao mês anterior",
       type: "success"
     },
     {
-      icon: <Users className="h-4 w-4 text-blue-500" />,
-      text: "Customer engagement is up 23% this week across all social platforms",
-      type: "info"
-    },
-    {
       icon: <AlertCircle className="h-4 w-4 text-yellow-500" />,
-      text: "Inventory alert: 3 popular products are running low on stock",
+      text: "Mih alerta: 5 produtos populares estão com estoque baixo. Recomendo reposição em 7 dias",
       type: "warning"
     },
     {
-      icon: <Lightbulb className="h-4 w-4 text-purple-500" />,
-      text: "AI suggests targeting millennials based on recent engagement patterns",
-      type: "tip"
+      icon: <Users className="h-4 w-4 text-indigo-500" />,
+      text: "Mih observou: 78% dos clientes são millennials. Sugestão de campanhas focadas em sustentabilidade e tecnologia",
+      type: "ai"
     }
   ];
 
   return (
     <Card className="glass-card p-6 animate-in">
       <div className="flex items-center gap-2 mb-4">
-        <Lightbulb className="h-5 w-5 text-yellow-500" />
-        <h3 className="font-semibold">Smart Insights</h3>
+        <Brain className="h-5 w-5 text-purple-500" />
+        <h3 className="font-semibold">Insights da Mih</h3>
       </div>
       <div className="space-y-4">
         {insights.map((insight, index) => (
@@ -37,9 +42,8 @@ export function InsightsPanel() {
             key={index} 
             className={`flex items-start gap-3 p-3 rounded-lg transition-colors
               ${insight.type === 'success' ? 'bg-green-50 text-green-700' : ''}
-              ${insight.type === 'info' ? 'bg-blue-50 text-blue-700' : ''}
               ${insight.type === 'warning' ? 'bg-yellow-50 text-yellow-700' : ''}
-              ${insight.type === 'tip' ? 'bg-purple-50 text-purple-700' : ''}
+              ${insight.type === 'ai' ? 'bg-purple-50 text-purple-700' : ''}
             `}
           >
             {insight.icon}
