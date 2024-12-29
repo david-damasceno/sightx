@@ -7,6 +7,15 @@
     <meta name="description" content="Painel Inteligente de Análise Empresarial" />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
     <meta property="og:image" content="/og-image.png" />
+    <script>
+      // Verifica e aplica o tema escuro no carregamento inicial
+      const savedTheme = localStorage.getItem('theme')
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      
+      if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.documentElement.classList.add('dark')
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

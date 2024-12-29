@@ -3,12 +3,40 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useToast } from "@/components/ui/use-toast"
 
 export function GeneralSettings() {
   const { toast } = useToast()
   const [isDarkMode, setIsDarkMode] = useState(false)
+
+  // Efeito para verificar e aplicar o tema atual
+  useEffect(() => {
+    // Verifica se há preferência salva
+    const savedTheme = localStorage.getItem('theme')
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    
+    // Define o tema inicial baseado na preferência salva ou do sistema
+    const shouldUseDark = savedTheme === 'dark' || (!savedTheme && prefersDark)
+    setIsDarkMode(shouldUseDark)
+    
+    // Aplica o tema inicial
+    if (shouldUseDark) {
+      document.documentElement.classList.add('dark')
+    }
+  }, [])
+
+  // Função para alternar o modo escuro
+  const toggleDarkMode = (enabled: boolean) => {
+    setIsDarkMode(enabled)
+    if (enabled) {
+      document.documentElement.classList.add('dark')
+      localStorage.setItem('theme', 'dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+      localStorage.setItem('theme', 'light')
+    }
+  }
 
   const handleSave = () => {
     toast({
@@ -81,7 +109,7 @@ export function GeneralSettings() {
           </div>
           <Switch
             checked={isDarkMode}
-            onCheckedChange={setIsDarkMode}
+            onCheckedChange={toggleDarkMode}
           />
         </div>
 
