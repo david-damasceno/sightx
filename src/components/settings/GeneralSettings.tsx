@@ -12,72 +12,71 @@ export function GeneralSettings() {
 
   const handleSave = () => {
     toast({
-      title: "Settings saved",
-      description: "Your settings have been saved successfully.",
+      title: "Configurações salvas",
+      description: "Suas configurações foram salvas com sucesso.",
     })
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-medium">General Settings</h2>
+        <h2 className="text-lg font-medium">Configurações Gerais</h2>
         <p className="text-sm text-muted-foreground">
-          Configure your system preferences and appearance
+          Configure as preferências do sistema e aparência
         </p>
       </div>
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>System Language</Label>
-          <Select defaultValue="en">
+          <Label>Idioma do Sistema</Label>
+          <Select defaultValue="pt-BR">
             <SelectTrigger>
-              <SelectValue placeholder="Select language" />
+              <SelectValue placeholder="Selecione o idioma" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="en">English</SelectItem>
-              <SelectItem value="es">Spanish</SelectItem>
-              <SelectItem value="fr">French</SelectItem>
-              <SelectItem value="de">German</SelectItem>
-              <SelectItem value="pt">Portuguese</SelectItem>
+              <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
+              <SelectItem value="en">Inglês</SelectItem>
+              <SelectItem value="es">Espanhol</SelectItem>
+              <SelectItem value="fr">Francês</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label>Time Zone</Label>
-          <Select defaultValue="utc">
+          <Label>Fuso Horário</Label>
+          <Select defaultValue="america-sp">
             <SelectTrigger>
-              <SelectValue placeholder="Select timezone" />
+              <SelectValue placeholder="Selecione o fuso horário" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="utc">UTC</SelectItem>
-              <SelectItem value="est">Eastern Time</SelectItem>
-              <SelectItem value="cst">Central Time</SelectItem>
-              <SelectItem value="pst">Pacific Time</SelectItem>
+              <SelectItem value="america-sp">América/São Paulo</SelectItem>
+              <SelectItem value="america-rj">América/Rio de Janeiro</SelectItem>
+              <SelectItem value="america-bsb">América/Brasília</SelectItem>
+              <SelectItem value="america-manaus">América/Manaus</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label>Default Currency</Label>
-          <Select defaultValue="usd">
+          <Label>Moeda Padrão</Label>
+          <Select defaultValue="brl">
             <SelectTrigger>
-              <SelectValue placeholder="Select currency" />
+              <SelectValue placeholder="Selecione a moeda" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="usd">USD ($)</SelectItem>
-              <SelectItem value="eur">EUR (€)</SelectItem>
-              <SelectItem value="gbp">GBP (£)</SelectItem>
-              <SelectItem value="jpy">JPY (¥)</SelectItem>
+              <SelectItem value="brl">Real (R$)</SelectItem>
+              <SelectItem value="usd">Dólar (US$)</SelectItem>
+              <SelectItem value="eur">Euro (€)</SelectItem>
+              <SelectItem value="gbp">Libra (£)</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label>Dark Mode</Label>
+            <Label>Modo Escuro</Label>
             <p className="text-sm text-muted-foreground">
-              Enable dark mode for better visibility in low light
+              Ative o modo escuro para melhor visibilidade em ambientes com pouca luz
             </p>
           </div>
           <Switch
@@ -87,17 +86,17 @@ export function GeneralSettings() {
         </div>
 
         <div className="space-y-2">
-          <Label>Company Logo</Label>
+          <Label>Logo da Empresa</Label>
           <div className="flex items-center gap-4">
             <div className="h-20 w-20 rounded border flex items-center justify-center">
-              Logo Preview
+              Prévia do Logo
             </div>
-            <Button variant="outline">Upload New Logo</Button>
+            <Button variant="outline">Enviar Novo Logo</Button>
           </div>
         </div>
       </div>
 
-      <Button onClick={handleSave}>Save Changes</Button>
+      <Button onClick={handleSave}>Salvar Alterações</Button>
     </div>
   )
 }

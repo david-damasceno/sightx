@@ -4,27 +4,27 @@ import { Link, useLocation } from "react-router-dom"
 
 const menuItems = [
   {
-    title: "Dashboard",
+    title: "Painel",
     href: "/",
     icon: Home
   },
   {
-    title: "Social Media",
+    title: "Redes Sociais",
     href: "/social",
     icon: Share2
   },
   {
-    title: "Location Data",
+    title: "Localização",
     href: "/location",
     icon: MapPin
   },
   {
-    title: "Demographics",
+    title: "Demografia",
     href: "/demographics",
     icon: Users
   },
   {
-    title: "AI Insights",
+    title: "IA Insights",
     href: "/ai-insights",
     icon: Brain
   },
@@ -34,12 +34,12 @@ const menuItems = [
     icon: MessageSquare
   },
   {
-    title: "Reports",
+    title: "Relatórios",
     href: "/reports",
     icon: FileText
   },
   {
-    title: "Settings",
+    title: "Configurações",
     href: "/settings",
     icon: Settings
   }
