@@ -30,7 +30,7 @@ const App = () => (
           <Route path="/ai-insights" element={<AIInsights />} />
           <Route path="/feedback" element={<Feedback />} />
           <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/*" element={<Settings />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
