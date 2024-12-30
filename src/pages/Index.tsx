@@ -13,7 +13,10 @@ import {
   Line,
   Legend,
   AreaChart,
-  Area
+  Area,
+  PieChart,
+  Pie,
+  Cell
 } from "recharts";
 import { 
   TrendingUp, 
@@ -23,7 +26,11 @@ import {
   Users,
   ArrowUpRight,
   Percent,
-  Clock
+  Clock,
+  Target,
+  ShoppingBag,
+  ArrowDownRight,
+  Repeat
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
@@ -50,6 +57,24 @@ const categoryData = [
   { categoria: 'Decoração', vendas: 45000 },
   { categoria: 'Utensílios', vendas: 35000 },
   { categoria: 'Outros', vendas: 25000 },
+];
+
+const customerData = [
+  { tipo: 'Novos', valor: 30 },
+  { tipo: 'Recorrentes', valor: 70 },
+];
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
+const hourlyData = [
+  { hora: '8h', vendas: 12 },
+  { hora: '10h', vendas: 18 },
+  { hora: '12h', vendas: 25 },
+  { hora: '14h', vendas: 20 },
+  { hora: '16h', vendas: 28 },
+  { hora: '18h', vendas: 35 },
+  { hora: '20h', vendas: 42 },
+  { hora: '22h', vendas: 30 },
 ];
 
 export default function Index() {
@@ -82,6 +107,30 @@ export default function Index() {
             value="5"
             change="-2"
             icon={<Package className="h-4 w-4 text-orange-500" />}
+          />
+          <MetricCard
+            title="Clientes Ativos"
+            value="1.250"
+            change="+15%"
+            icon={<Users className="h-4 w-4 text-indigo-500" />}
+          />
+          <MetricCard
+            title="Taxa de Recompra"
+            value="70%"
+            change="+5%"
+            icon={<Repeat className="h-4 w-4 text-teal-500" />}
+          />
+          <MetricCard
+            title="Produtos Vendidos"
+            value="856"
+            change="+23%"
+            icon={<ShoppingBag className="h-4 w-4 text-pink-500" />}
+          />
+          <MetricCard
+            title="Meta Mensal"
+            value="89%"
+            change="+4%"
+            icon={<Target className="h-4 w-4 text-yellow-500" />}
           />
         </div>
 
@@ -177,6 +226,63 @@ export default function Index() {
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="p-6 glass-card">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Vendas por Hora</h3>
+              <div className="flex items-center text-sm text-indigo-500">
+                <Clock className="h-4 w-4 mr-1" />
+                <span>Pico às 20h</span>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={hourlyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="hora" />
+                <YAxis />
+                <Tooltip />
+                <Line 
+                  type="monotone" 
+                  dataKey="vendas" 
+                  name="Vendas"
+                  stroke="#8884d8" 
+                  strokeWidth={2}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </Card>
+
+          <Card className="p-6 glass-card">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Perfil dos Clientes</h3>
+              <div className="flex items-center text-sm text-teal-500">
+                <Users className="h-4 w-4 mr-1" />
+                <span>70% recorrentes</span>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={customerData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="valor"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {customerData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
             </ResponsiveContainer>
           </Card>
         </div>

@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Brain, TrendingUp, Package, AlertCircle, ShoppingCart, Users } from "lucide-react";
+import { Brain, TrendingUp, Package, AlertCircle, ShoppingCart, Users, Clock, Repeat } from "lucide-react";
 
 export function InsightsPanel() {
   const insights = [
@@ -27,6 +27,16 @@ export function InsightsPanel() {
       icon: <Users className="h-4 w-4 text-indigo-500" />,
       text: "Mih observou: Clientes que compram eletrônicos têm 70% mais chance de retornar em 30 dias",
       type: "ai"
+    },
+    {
+      icon: <Clock className="h-4 w-4 text-teal-500" />,
+      text: "Mih sugere: Aumente a equipe no período das 18h às 22h para melhor atendimento",
+      type: "ai"
+    },
+    {
+      icon: <Repeat className="h-4 w-4 text-pink-500" />,
+      text: "Taxa de recompra aumentou 5% após implementação do programa de fidelidade",
+      type: "success"
     }
   ];
 
@@ -36,7 +46,7 @@ export function InsightsPanel() {
         <Brain className="h-5 w-5 text-purple-500" />
         <h3 className="font-semibold">Insights da Mih</h3>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-4 max-h-[600px] overflow-y-auto">
         {insights.map((insight, index) => (
           <div 
             key={index} 
