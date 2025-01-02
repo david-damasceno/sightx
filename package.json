@@ -8,8 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview", // Esse script pode ser usado pelo PM2
-    "start": "vite preview"   // Adicionando um start padrão
+    "preview": "vite preview",
+    "start": "vite preview" 
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
