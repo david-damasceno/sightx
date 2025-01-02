@@ -84,13 +84,12 @@ export default function Login() {
               },
               className: {
                 container: 'space-y-4',
-                button: 'w-full px-4 py-3 text-white font-medium rounded-lg shadow-sm hover:opacity-90 transition-opacity duration-200',
+                button: 'w-full px-4 py-3 text-black font-medium rounded-lg shadow-sm hover:opacity-90 transition-opacity duration-200',
                 input: 'w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow duration-200',
                 label: 'block text-sm font-medium text-gray-700 mb-1',
                 message: 'text-sm text-gray-600 mt-1',
                 anchor: 'text-blue-600 hover:text-blue-700 font-medium',
                 divider: 'my-6',
-                socialButtonsBlockButton: 'text-black !important', // Força a cor preta nos botões sociais
               },
             }}
             providers={["google", "github"]}
