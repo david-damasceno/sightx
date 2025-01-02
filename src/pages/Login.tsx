@@ -8,7 +8,6 @@ export default function Login() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Verificar se o usuário já está autenticado
     supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         navigate("/")
@@ -37,8 +36,8 @@ export default function Login() {
                     brand: '#2563eb',
                     brandAccent: '#1d4ed8',
                   },
-                  borderRadii: {
-                    borderRadiusButton: '0.5rem',
+                  radii: {
+                    buttonBorderRadius: '0.5rem',
                     inputBorderRadius: '0.5rem',
                   },
                 },
