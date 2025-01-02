@@ -3,7 +3,7 @@ import { ThemeSupa } from "@supabase/auth-ui-shared"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
 import { useEffect } from "react"
-import { Building2, Lock, Mail } from "lucide-react"
+import { Building2 } from "lucide-react"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -90,6 +90,7 @@ export default function Login() {
                 message: 'text-sm text-gray-600 mt-1',
                 anchor: 'text-blue-600 hover:text-blue-700 font-medium',
                 divider: 'my-6',
+                socialButtonsBlockButton: 'text-black !important', // Força a cor preta nos botões sociais
               },
             }}
             providers={["google", "github"]}
