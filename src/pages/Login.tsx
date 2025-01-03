@@ -28,7 +28,7 @@ export default function Login() {
           
           <div className="space-y-8">
             <h2 className="text-3xl font-bold mb-8">
-              Transforme seus dados em insights valiosos
+              Transformando Dados em Decisões
             </h2>
             
             <div className="space-y-6">
@@ -155,6 +155,7 @@ export default function Login() {
               },
             }}
             view="sign_in"
+            providers={[]}
           />
         </div>
       </div>
