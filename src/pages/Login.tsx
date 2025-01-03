@@ -23,7 +23,7 @@ export default function Login() {
           <div className="flex items-center justify-center space-x-2">
             <Building2 className="h-8 w-8 text-blue-600" />
             <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              IntelliBiz
+              SightX
             </h2>
           </div>
           <div className="space-y-2">
