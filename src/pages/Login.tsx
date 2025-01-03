@@ -19,7 +19,7 @@ export default function Login() {
   return (
     <div className="flex min-h-screen">
       {/* Left Side - Features */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-12 flex-col justify-between">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-12 flex-col justify-between animate-fade-in">
         <div>
           <div className="flex items-center space-x-3 mb-12">
             <Building2 className="h-10 w-10" />
@@ -32,7 +32,7 @@ export default function Login() {
             </h2>
             
             <div className="space-y-6">
-              <div className="flex items-start space-x-4">
+              <div className="flex items-start space-x-4 hover:translate-x-2 transition-transform duration-300">
                 <BarChart2 className="h-6 w-6 mt-1" />
                 <div>
                   <h3 className="font-semibold text-xl mb-2">Análise Avançada</h3>
@@ -42,7 +42,7 @@ export default function Login() {
                 </div>
               </div>
 
-              <div className="flex items-start space-x-4">
+              <div className="flex items-start space-x-4 hover:translate-x-2 transition-transform duration-300">
                 <PieChart className="h-6 w-6 mt-1" />
                 <div>
                   <h3 className="font-semibold text-xl mb-2">Insights Inteligentes</h3>
@@ -52,7 +52,7 @@ export default function Login() {
                 </div>
               </div>
 
-              <div className="flex items-start space-x-4">
+              <div className="flex items-start space-x-4 hover:translate-x-2 transition-transform duration-300">
                 <TrendingUp className="h-6 w-6 mt-1" />
                 <div>
                   <h3 className="font-semibold text-xl mb-2">Tomada de Decisão</h3>
@@ -62,7 +62,7 @@ export default function Login() {
                 </div>
               </div>
 
-              <div className="flex items-start space-x-4">
+              <div className="flex items-start space-x-4 hover:translate-x-2 transition-transform duration-300">
                 <Eye className="h-6 w-6 mt-1" />
                 <div>
                   <h3 className="font-semibold text-xl mb-2">Visão Clara</h3>
@@ -81,8 +81,8 @@ export default function Login() {
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-8">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50">
+        <div className="w-full max-w-md space-y-8 animate-fade-in">
           <div className="text-center space-y-6">
             <div className="lg:hidden flex items-center justify-center space-x-2 mb-8">
               <Building2 className="h-8 w-8 text-blue-600" />
@@ -136,8 +136,8 @@ export default function Login() {
               },
               className: {
                 container: 'space-y-4',
-                button: 'w-full px-4 py-3 text-white font-medium rounded-lg shadow-sm hover:opacity-90 transition-opacity duration-200',
-                input: 'w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow duration-200',
+                button: 'w-full px-4 py-3 text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg shadow-sm hover:opacity-90 transition-all duration-200 hover:shadow-md',
+                input: 'w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white shadow-sm',
                 label: 'block text-sm font-medium text-gray-700 mb-1',
                 message: 'text-sm text-gray-600 mt-1',
                 anchor: 'text-blue-600 hover:text-blue-700 font-medium',
