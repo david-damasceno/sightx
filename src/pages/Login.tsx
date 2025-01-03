@@ -3,7 +3,7 @@ import { ThemeSupa } from "@supabase/auth-ui-shared"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
 import { useEffect } from "react"
-import { Building2 } from "lucide-react"
+import { Building2, BarChart2, PieChart, TrendingUp, Eye } from "lucide-react"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -17,37 +17,89 @@ export default function Login() {
   }, [navigate])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="w-full max-w-md space-y-8 p-10 bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl animate-fade-in">
-        <div className="text-center space-y-6">
-          <div className="flex items-center justify-center space-x-2">
-            <Building2 className="h-8 w-8 text-blue-600" />
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              SightX
+    <div className="flex min-h-screen">
+      {/* Left Side - Features */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-12 flex-col justify-between">
+        <div>
+          <div className="flex items-center space-x-3 mb-12">
+            <Building2 className="h-10 w-10" />
+            <h1 className="text-4xl font-bold">SightX</h1>
+          </div>
+          
+          <div className="space-y-8">
+            <h2 className="text-3xl font-bold mb-8">
+              Transforme seus dados em insights valiosos
             </h2>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-2xl font-semibold text-gray-900">
-              Bem-vindo de volta
-            </h3>
-            <p className="text-sm text-gray-600">
-              Faça login para acessar seu painel de controle
-            </p>
+            
+            <div className="space-y-6">
+              <div className="flex items-start space-x-4">
+                <BarChart2 className="h-6 w-6 mt-1" />
+                <div>
+                  <h3 className="font-semibold text-xl mb-2">Análise Avançada</h3>
+                  <p className="text-white/80">
+                    Visualize e analise seus dados de forma intuitiva com dashboards personalizados
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-4">
+                <PieChart className="h-6 w-6 mt-1" />
+                <div>
+                  <h3 className="font-semibold text-xl mb-2">Insights Inteligentes</h3>
+                  <p className="text-white/80">
+                    Descubra padrões e tendências com nossa análise preditiva
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-4">
+                <TrendingUp className="h-6 w-6 mt-1" />
+                <div>
+                  <h3 className="font-semibold text-xl mb-2">Tomada de Decisão</h3>
+                  <p className="text-white/80">
+                    Tome decisões baseadas em dados com confiança e precisão
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-4">
+                <Eye className="h-6 w-6 mt-1" />
+                <div>
+                  <h3 className="font-semibold text-xl mb-2">Visão Clara</h3>
+                  <p className="text-white/80">
+                    Obtenha uma visão completa do seu negócio em tempo real
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">
-              Continue com
-            </span>
-          </div>
+        <div className="text-sm text-white/60">
+          © 2024 SightX. Todos os direitos reservados.
         </div>
+      </div>
 
-        <div className="mt-8">
+      {/* Right Side - Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center space-y-6">
+            <div className="lg:hidden flex items-center justify-center space-x-2 mb-8">
+              <Building2 className="h-8 w-8 text-blue-600" />
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                SightX
+              </h2>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-semibold text-gray-900">
+                Bem-vindo de volta
+              </h3>
+              <p className="text-sm text-gray-600">
+                Faça login para acessar seu painel
+              </p>
+            </div>
+          </div>
+
           <Auth
             supabaseClient={supabase}
             appearance={{
@@ -84,7 +136,7 @@ export default function Login() {
               },
               className: {
                 container: 'space-y-4',
-                button: 'w-full px-4 py-3 text-black font-medium rounded-lg shadow-sm hover:opacity-90 transition-opacity duration-200',
+                button: 'w-full px-4 py-3 text-white font-medium rounded-lg shadow-sm hover:opacity-90 transition-opacity duration-200',
                 input: 'w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow duration-200',
                 label: 'block text-sm font-medium text-gray-700 mb-1',
                 message: 'text-sm text-gray-600 mt-1',
@@ -92,8 +144,6 @@ export default function Login() {
                 divider: 'my-6',
               },
             }}
-            providers={["google", "github"]}
-            redirectTo={window.location.origin}
             localization={{
               variables: {
                 sign_in: {
@@ -101,33 +151,11 @@ export default function Login() {
                   password_label: "Senha",
                   button_label: "Entrar",
                   loading_button_label: "Entrando...",
-                  social_provider_text: "Continuar com {{provider}}",
-                  link_text: "Já tem uma conta? Entre",
-                },
-                sign_up: {
-                  email_label: "Email",
-                  password_label: "Senha",
-                  button_label: "Criar conta",
-                  loading_button_label: "Criando conta...",
-                  social_provider_text: "Criar conta com {{provider}}",
-                  link_text: "Não tem uma conta? Cadastre-se",
                 },
               },
             }}
+            view="sign_in"
           />
-        </div>
-
-        <div className="mt-6 text-center text-xs text-gray-600">
-          <p>
-            Ao continuar, você concorda com nossos{" "}
-            <a href="#" className="text-blue-600 hover:text-blue-800 font-medium">
-              Termos de Serviço
-            </a>{" "}
-            e{" "}
-            <a href="#" className="text-blue-600 hover:text-blue-800 font-medium">
-              Política de Privacidade
-            </a>
-          </p>
         </div>
       </div>
     </div>
