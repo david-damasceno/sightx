@@ -1,6 +1,5 @@
-import { Home, BarChart2, Users, MapPin, Share2, Brain, MessageSquare, FileText, Settings } from "lucide-react"
+import { Home, Share2, MapPin, Users, Brain, MessageSquare, FileText, Settings } from "lucide-react"
 import {
-  Sidebar,
   SidebarContent,
   SidebarHeader,
   SidebarMenu,
@@ -16,42 +15,50 @@ const menuItems = [
   {
     title: "Dashboard",
     href: "/dashboard",
-    icon: Home
+    icon: Home,
+    tooltip: "Dashboard"
   },
   {
     title: "Redes Sociais",
     href: "/social",
-    icon: Share2
+    icon: Share2,
+    tooltip: "Redes Sociais"
   },
   {
     title: "Localização",
     href: "/location",
-    icon: MapPin
+    icon: MapPin,
+    tooltip: "Localização"
   },
   {
     title: "Demografia",
     href: "/demographics",
-    icon: Users
+    icon: Users,
+    tooltip: "Demografia"
   },
   {
     title: "IA Insights",
     href: "/ai-insights",
-    icon: Brain
+    icon: Brain,
+    tooltip: "IA Insights"
   },
   {
     title: "Feedback",
     href: "/feedback",
-    icon: MessageSquare
+    icon: MessageSquare,
+    tooltip: "Feedback"
   },
   {
     title: "Relatórios",
     href: "/reports",
-    icon: FileText
+    icon: FileText,
+    tooltip: "Relatórios"
   },
   {
     title: "Configurações",
     href: "/settings",
-    icon: Settings
+    icon: Settings,
+    tooltip: "Configurações"
   }
 ]
 
@@ -74,7 +81,7 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar>
+    <div className="h-screen bg-background border-r">
       <SidebarHeader className="p-4">
         <h2 className="text-lg font-semibold">SightX</h2>
       </SidebarHeader>
@@ -89,7 +96,7 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   asChild
                   isActive={isActive}
-                  tooltip={item.title}
+                  tooltip={item.tooltip}
                 >
                   <Link to={item.href} className="flex items-center gap-2">
                     <Icon className="h-4 w-4" />
@@ -101,6 +108,6 @@ export function AppSidebar() {
           })}
         </SidebarMenu>
       </SidebarContent>
-    </Sidebar>
+    </div>
   )
 }
