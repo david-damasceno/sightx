@@ -23,24 +23,32 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <SidebarProvider defaultOpen={false}>
-          <div className="flex min-h-screen w-full">
-            <AppSidebar />
-            <main className="flex-1">
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/" element={<Index />} />
-                <Route path="/social" element={<Social />} />
-                <Route path="/location" element={<Location />} />
-                <Route path="/demographics" element={<Demographics />} />
-                <Route path="/ai-insights" element={<AIInsights />} />
-                <Route path="/feedback" element={<Feedback />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/settings/*" element={<Settings />} />
-              </Routes>
-            </main>
-          </div>
-        </SidebarProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/*"
+            element={
+              <SidebarProvider defaultOpen={false}>
+                <div className="flex min-h-screen w-full">
+                  <AppSidebar />
+                  <main className="flex-1">
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/social" element={<Social />} />
+                      <Route path="/location" element={<Location />} />
+                      <Route path="/demographics" element={<Demographics />} />
+                      <Route path="/ai-insights" element={<AIInsights />} />
+                      <Route path="/feedback" element={<Feedback />} />
+                      <Route path="/reports" element={<Reports />} />
+                      <Route path="/settings/*" element={<Settings />} />
+                    </Routes>
+                  </main>
+                </div>
+              </SidebarProvider>
+            }
+          />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
