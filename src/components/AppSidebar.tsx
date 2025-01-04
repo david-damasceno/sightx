@@ -1,89 +1,64 @@
-import { Home, Share2, MapPin, Users, Brain, MessageSquare, FileText, Settings } from "lucide-react"
+import { Home, BarChart2, Users, MapPin, Share2, Brain, MessageSquare, FileText, Settings } from "lucide-react"
 import {
+  Sidebar,
   SidebarContent,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { useLocation, Link } from "react-router-dom"
-import { useEffect } from "react"
-import { supabase } from "@/integrations/supabase/client"
-import { useNavigate } from "react-router-dom"
+import { useLocation } from "react-router-dom"
 
 const menuItems = [
   {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: Home,
-    tooltip: "Dashboard"
+    title: "Painel",
+    href: "/",
+    icon: Home
   },
   {
     title: "Redes Sociais",
     href: "/social",
-    icon: Share2,
-    tooltip: "Redes Sociais"
+    icon: Share2
   },
   {
     title: "Localização",
     href: "/location",
-    icon: MapPin,
-    tooltip: "Localização"
+    icon: MapPin
   },
   {
     title: "Demografia",
     href: "/demographics",
-    icon: Users,
-    tooltip: "Demografia"
+    icon: Users
   },
   {
     title: "IA Insights",
     href: "/ai-insights",
-    icon: Brain,
-    tooltip: "IA Insights"
+    icon: Brain
   },
   {
     title: "Feedback",
     href: "/feedback",
-    icon: MessageSquare,
-    tooltip: "Feedback"
+    icon: MessageSquare
   },
   {
     title: "Relatórios",
     href: "/reports",
-    icon: FileText,
-    tooltip: "Relatórios"
+    icon: FileText
   },
   {
     title: "Configurações",
     href: "/settings",
-    icon: Settings,
-    tooltip: "Configurações"
+    icon: Settings
   }
 ]
 
 export function AppSidebar() {
   const location = useLocation()
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session && location.pathname !== '/login') {
-        navigate('/login')
-      }
-    }
-    checkSession()
-  }, [location, navigate])
-
-  if (location.pathname === '/login') {
-    return null
-  }
 
   return (
-    <div className="h-screen bg-background border-r">
+    <Sidebar>
       <SidebarHeader className="p-4">
-        <h2 className="text-lg font-semibold">SightX</h2>
+        <h2 className="text-lg font-semibold">Menu</h2>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
@@ -96,18 +71,18 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   asChild
                   isActive={isActive}
-                  tooltip={item.tooltip}
+                  tooltip={item.title}
                 >
-                  <Link to={item.href} className="flex items-center gap-2">
+                  <a href={item.href} className="flex items-center gap-2">
                     <Icon className="h-4 w-4" />
                     <span>{item.title}</span>
-                  </Link>
+                  </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )
           })}
         </SidebarMenu>
       </SidebarContent>
-    </div>
+    </Sidebar>
   )
 }
