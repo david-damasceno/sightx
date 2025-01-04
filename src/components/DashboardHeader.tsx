@@ -3,31 +3,13 @@ import { Button } from "@/components/ui/button"
 import { useNavigate } from "react-router-dom"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { supabase } from "@/integrations/supabase/client"
-import { useToast } from "@/components/ui/use-toast"
 
 export function DashboardHeader() {
   const navigate = useNavigate()
-  const { toast } = useToast()
 
   const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      
-      toast({
-        title: "Logout realizado com sucesso",
-        duration: 2000,
-      })
-      
-      navigate("/login", { replace: true })
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error)
-      toast({
-        title: "Erro ao fazer logout",
-        description: "Por favor, tente novamente",
-        variant: "destructive",
-      })
-    }
+    await supabase.auth.signOut()
+    navigate("/login")
   }
 
   return (
