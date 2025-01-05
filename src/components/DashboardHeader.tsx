@@ -21,7 +21,7 @@ export function DashboardHeader() {
             className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent cursor-pointer"
             onClick={() => navigate("/")}
           >
-            IntelliBiz
+            SightX
           </h2>
         </div>
         <div className="ml-auto flex items-center gap-4">
