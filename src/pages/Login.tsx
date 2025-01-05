@@ -99,6 +99,7 @@ export default function Login() {
                 },
               },
             }}
+            view="sign_in"
           />
         </div>
 
