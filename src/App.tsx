@@ -29,7 +29,7 @@ const App = () => (
             <main className="flex-1">
               <Routes>
                 <Route path="/login" element={<Login />} />
-                <Route path="/dashboard" element={<Index />} />
+                <Route path="/" element={<Index />} />
                 <Route path="/social" element={<Social />} />
                 <Route path="/location" element={<Location />} />
                 <Route path="/demographics" element={<Demographics />} />
@@ -37,7 +37,6 @@ const App = () => (
                 <Route path="/feedback" element={<Feedback />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings/*" element={<Settings />} />
-                <Route path="/" element={<Navigate to="/login" replace />} />
               </Routes>
             </main>
           </div>

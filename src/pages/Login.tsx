@@ -36,6 +36,17 @@ export default function Login() {
           </div>
         </div>
 
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">
+              Continue com
+            </span>
+          </div>
+        </div>
+
         <div className="mt-8">
           <Auth
             supabaseClient={supabase}
@@ -81,6 +92,8 @@ export default function Login() {
                 divider: 'my-6',
               },
             }}
+            providers={["google", "github"]}
+            redirectTo={window.location.origin}
             localization={{
               variables: {
                 sign_in: {
@@ -88,6 +101,7 @@ export default function Login() {
                   password_label: "Senha",
                   button_label: "Entrar",
                   loading_button_label: "Entrando...",
+                  social_provider_text: "Continuar com {{provider}}",
                   link_text: "Já tem uma conta? Entre",
                 },
                 sign_up: {
@@ -95,6 +109,7 @@ export default function Login() {
                   password_label: "Senha",
                   button_label: "Criar conta",
                   loading_button_label: "Criando conta...",
+                  social_provider_text: "Criar conta com {{provider}}",
                   link_text: "Não tem uma conta? Cadastre-se",
                 },
               },
