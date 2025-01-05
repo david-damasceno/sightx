@@ -88,18 +88,18 @@ export default function Login() {
                   password_label: "Senha",
                   button_label: "Entrar",
                   loading_button_label: "Entrando...",
-                  link_text: "Já tem uma conta? Entre",
                 },
                 sign_up: {
                   email_label: "Email",
                   password_label: "Senha",
                   button_label: "Criar conta",
                   loading_button_label: "Criando conta...",
-                  link_text: "Não tem uma conta? Cadastre-se",
                 },
               },
             }}
             view="sign_in"
+            providers={[]}
+            socialLayout="horizontal"
           />
         </div>
 
