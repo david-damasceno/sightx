@@ -1,4 +1,4 @@
-import { Home, BarChart2, Users, MapPin, Share2, Brain, MessageSquare, FileText, Settings } from "lucide-react"
+import { Home, Share2, MapPin, Users, Brain, MessageSquare, FileText, Settings } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -13,42 +13,50 @@ const menuItems = [
   {
     title: "Painel",
     href: "/",
-    icon: Home
+    icon: Home,
+    description: "Visão geral e métricas principais"
   },
   {
     title: "Redes Sociais",
     href: "/social",
-    icon: Share2
+    icon: Share2,
+    description: "Gestão de mídias sociais"
   },
   {
     title: "Localização",
     href: "/location",
-    icon: MapPin
+    icon: MapPin,
+    description: "Análise geográfica"
   },
   {
     title: "Demografia",
     href: "/demographics",
-    icon: Users
+    icon: Users,
+    description: "Dados demográficos"
   },
   {
     title: "IA Insights",
     href: "/ai-insights",
-    icon: Brain
+    icon: Brain,
+    description: "Análises com inteligência artificial"
   },
   {
     title: "Feedback",
     href: "/feedback",
-    icon: MessageSquare
+    icon: MessageSquare,
+    description: "Avaliações e comentários"
   },
   {
     title: "Relatórios",
     href: "/reports",
-    icon: FileText
+    icon: FileText,
+    description: "Relatórios e análises"
   },
   {
     title: "Configurações",
     href: "/settings",
-    icon: Settings
+    icon: Settings,
+    description: "Preferências do sistema"
   }
 ]
 
@@ -58,7 +66,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
-        <h2 className="text-lg font-semibold">Menu</h2>
+        <h2 className="text-lg font-semibold text-primary">Menu Principal</h2>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
@@ -71,11 +79,16 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   asChild
                   isActive={isActive}
-                  tooltip={item.title}
+                  tooltip={item.description}
                 >
-                  <a href={item.href} className="flex items-center gap-2">
-                    <Icon className="h-4 w-4" />
-                    <span>{item.title}</span>
+                  <a 
+                    href={item.href}
+                    className="flex items-center gap-3 px-4 py-2 rounded-md transition-colors hover:bg-accent group"
+                  >
+                    <Icon className={`h-5 w-5 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'}`} />
+                    <span className={`${isActive ? 'font-medium text-primary' : 'text-muted-foreground group-hover:text-primary'}`}>
+                      {item.title}
+                    </span>
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
