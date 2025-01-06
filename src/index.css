@@ -54,20 +54,3 @@
     transform: translateY(0);
   }
 }
-
-/* Estilos específicos para o menu */
-.sidebar-menu-item {
-  @apply transition-all duration-200 ease-in-out;
-}
-
-.sidebar-menu-item:hover {
-  @apply transform scale-[1.02];
-}
-
-.sidebar-icon {
-  @apply transition-transform duration-200;
-}
-
-.sidebar-menu-item:hover .sidebar-icon {
-  @apply transform scale-110;
-}
