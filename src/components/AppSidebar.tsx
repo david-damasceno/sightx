@@ -13,50 +13,42 @@ const menuItems = [
   {
     title: "Painel",
     href: "/",
-    icon: Home,
-    description: "Visão geral do sistema"
+    icon: Home
   },
   {
     title: "Redes Sociais",
     href: "/social",
-    icon: Share2,
-    description: "Gestão de mídias sociais"
+    icon: Share2
   },
   {
     title: "Localização",
     href: "/location",
-    icon: MapPin,
-    description: "Análise geográfica"
+    icon: MapPin
   },
   {
     title: "Demografia",
     href: "/demographics",
-    icon: Users,
-    description: "Dados demográficos"
+    icon: Users
   },
   {
     title: "IA Insights",
     href: "/ai-insights",
-    icon: Brain,
-    description: "Análises com IA"
+    icon: Brain
   },
   {
     title: "Feedback",
     href: "/feedback",
-    icon: MessageSquare,
-    description: "Feedback dos usuários"
+    icon: MessageSquare
   },
   {
     title: "Relatórios",
     href: "/reports",
-    icon: FileText,
-    description: "Relatórios e análises"
+    icon: FileText
   },
   {
     title: "Configurações",
     href: "/settings",
-    icon: Settings,
-    description: "Configurações do sistema"
+    icon: Settings
   }
 ]
 
@@ -66,9 +58,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
-        <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          SightX
-        </h2>
+        <h2 className="text-lg font-semibold">Menu</h2>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
@@ -81,18 +71,11 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   asChild
                   isActive={isActive}
-                  tooltip={item.description}
-                  className="group relative flex items-center gap-3 p-3 transition-all duration-300 ease-in-out hover:bg-accent rounded-lg"
+                  tooltip={item.title}
                 >
-                  <a href={item.href} className="flex items-center gap-3 w-full">
-                    <Icon className={`h-5 w-5 transition-colors duration-200 ${
-                      isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'
-                    }`} />
-                    <span className={`font-medium transition-colors duration-200 ${
-                      isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'
-                    }`}>
-                      {item.title}
-                    </span>
+                  <a href={item.href} className="flex items-center gap-2">
+                    <Icon className="h-4 w-4" />
+                    <span>{item.title}</span>
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
