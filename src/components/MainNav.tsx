@@ -24,7 +24,7 @@ const menuItems = [
     icon: Users
   },
   {
-    title: "IA Insights",
+    title: "Analista Dona",
     href: "/ai-insights",
     icon: Brain
   },
