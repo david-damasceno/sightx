@@ -1,4 +1,3 @@
-import { DashboardHeader } from "@/components/DashboardHeader";
 import { InsightsPanel } from "@/components/InsightsPanel";
 import { MetricsGrid } from "@/components/dashboard/MetricsGrid";
 import { SalesChart } from "@/components/dashboard/SalesChart";
@@ -10,8 +9,6 @@ import { CustomerChart } from "@/components/dashboard/CustomerChart";
 export default function Index() {
   return (
     <div className="min-h-screen bg-background">
-      <DashboardHeader />
-      
       <main className="container py-6 space-y-6">
         <MetricsGrid />
 

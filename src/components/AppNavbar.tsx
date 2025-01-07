@@ -68,7 +68,7 @@ export function AppNavbar() {
             <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
               SightX
             </h2>
-            <span className="text-xs text-muted-foreground">v{APP_VERSION}</span>
+            <span className="text-xs text-muted-foreground">{APP_VERSION.toString()}</span>
           </Link>
           
           <div className="hidden md:flex items-center space-x-1">
