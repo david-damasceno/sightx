@@ -3,7 +3,6 @@ import { ThemeSupa } from "@supabase/auth-ui-shared"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
 import { useEffect } from "react"
-import { Building2 } from "lucide-react"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -20,9 +19,13 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="w-full max-w-md space-y-8 p-10 bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl animate-fade-in">
         <div className="text-center space-y-6">
-          <div className="flex items-center justify-center space-x-2">
-            <Building2 className="h-8 w-8 text-blue-600" />
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <img 
+              src="/lovable-uploads/800dc37c-395b-470c-814b-1014271e967e.png" 
+              alt="SightX Logo" 
+              className="h-16 w-16"
+            />
+            <h2 className="text-3xl font-bold text-gray-900">
               SightX
             </h2>
           </div>

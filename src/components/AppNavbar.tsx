@@ -1,9 +1,10 @@
 import { Link, useLocation } from "react-router-dom"
-import { Home, Share2, Users, Brain, MessageSquare, FileText, Settings, Search } from "lucide-react"
+import { Home, Share2, Users, Brain, MessageSquare, FileText, Database, Search, LogOut } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { supabase } from "@/integrations/supabase/client"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +19,11 @@ const menuItems = [
     title: "Painel",
     href: "/",
     icon: Home
+  },
+  {
+    title: "Dados",
+    href: "/data",
+    icon: Database
   },
   {
     title: "Redes Sociais",
@@ -49,19 +55,20 @@ const menuItems = [
 export function AppNavbar() {
   const location = useLocation()
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+  }
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center">
             <img 
               src="/lovable-uploads/800dc37c-395b-470c-814b-1014271e967e.png" 
               alt="SightX Logo" 
-              className="h-8 w-8"
+              className="h-10 w-10 hover:opacity-80 transition-opacity"
             />
-            <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-              SightX
-            </h2>
           </Link>
           
           <div className="hidden md:flex items-center space-x-1">
@@ -111,17 +118,9 @@ export function AppNavbar() {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Configurações</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <MessageSquare className="mr-2 h-4 w-4" />
-                <span>Suporte</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                Sair
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sair</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
