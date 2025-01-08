@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileSpreadsheet, FileText, Database, FileJson, FileCsv, Download } from "lucide-react"
+import { FileSpreadsheet, FileText, Database, FileJson, Download } from "lucide-react"
 import { toast } from "sonner"
 
 export default function Data() {
@@ -32,7 +32,7 @@ export default function Data() {
     {
       name: "CSV",
       format: "CSV",
-      icon: <FileCsv className="h-8 w-8 text-orange-600" />,
+      icon: <FileSpreadsheet className="h-8 w-8 text-orange-600" />,
       description: "Exportar dados em CSV (.csv)"
     },
     {
