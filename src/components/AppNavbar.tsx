@@ -26,11 +26,6 @@ const menuItems = [
     icon: Share2
   },
   {
-    title: "Localização",
-    href: "/location",
-    icon: MapPin
-  },
-  {
     title: "Demografia",
     href: "/demographics",
     icon: Users
@@ -41,7 +36,7 @@ const menuItems = [
     icon: Brain
   },
   {
-    title: "Feedback",
+    title: "NPS",
     href: "/feedback",
     icon: MessageSquare
   },
@@ -49,11 +44,6 @@ const menuItems = [
     title: "Relatórios",
     href: "/reports",
     icon: FileText
-  },
-  {
-    title: "Configurações",
-    href: "/settings",
-    icon: Settings
   }
 ]
 
@@ -68,7 +58,6 @@ export function AppNavbar() {
             <h2 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
               SightX
             </h2>
-            <span className="text-xs text-muted-foreground">{APP_VERSION.toString()}</span>
           </Link>
           
           <div className="hidden md:flex items-center space-x-1">
