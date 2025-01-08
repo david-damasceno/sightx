@@ -9,20 +9,23 @@ import { CustomerChart } from "@/components/dashboard/CustomerChart";
 export default function Index() {
   return (
     <div className="min-h-screen bg-background">
-      <main className="container py-6 space-y-6">
-        <MetricsGrid />
-
+      <main className="container py-6 space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <SalesChart />
+          <div className="lg:col-span-2">
+            <MetricsGrid />
+          </div>
           <InsightsPanel />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <StockChart />
-          <CategoryChart />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <SalesChart />
+          <div className="lg:col-span-2">
+            <CategoryChart />
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <StockChart />
           <HourlyChart />
           <CustomerChart />
         </div>
