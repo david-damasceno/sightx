@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Home, Share2, Users, Brain, MessageSquare, FileText, Database, Search, LogOut } from "lucide-react"
+import { Home, Share2, Users, Brain, MessageSquare, FileText, Database, Search, LogOut, DollarSign, TrendingUp } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,16 @@ const menuItems = [
     title: "Dados",
     href: "/data",
     icon: Database
+  },
+  {
+    title: "Vendas",
+    href: "/sales",
+    icon: DollarSign
+  },
+  {
+    title: "Desempenho",
+    href: "/performance",
+    icon: TrendingUp
   },
   {
     title: "Redes Sociais",

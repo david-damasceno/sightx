@@ -13,6 +13,8 @@ import AIInsights from "./pages/AIInsights"
 import Feedback from "./pages/Feedback"
 import Reports from "./pages/Reports"
 import Data from "./pages/Data"
+import Sales from "./pages/Sales"
+import Performance from "./pages/Performance"
 
 const queryClient = new QueryClient()
 
@@ -28,6 +30,8 @@ const AppContent = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Index />} />
           <Route path="/data" element={<Data />} />
+          <Route path="/sales" element={<Sales />} />
+          <Route path="/performance" element={<Performance />} />
           <Route path="/social" element={<Social />} />
           <Route path="/demographics" element={<Demographics />} />
           <Route path="/ai-insights" element={<AIInsights />} />

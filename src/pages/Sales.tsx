@@ -1,27 +1,63 @@
-import { useState } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MetricCard } from "@/components/MetricCard";
-import { SalesCard } from "@/components/dashboard/SalesCard";
-import { Seller } from "@/types/dashboard";
-import { mockSellers, mockSalesMetrics } from "@/data/mockData";
-import { DollarSign, ShoppingCart, Percent, Target } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
+import { useState } from "react"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { MetricCard } from "@/components/MetricCard"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Card } from "@/components/ui/card"
+import { DollarSign, ShoppingCart, Percent, Target } from "lucide-react"
+
+interface Seller {
+  id: number
+  name: string
+  region: string
+  salesVolume: number
+  avatarUrl: string
+}
+
+const mockSalesMetrics = {
+  totalRevenue: 1250000,
+  totalSales: 450,
+  conversionRate: 68,
+  targetCompletion: 85
+}
+
+const mockSellers: Seller[] = [
+  {
+    id: 1,
+    name: "Ana Silva",
+    region: "Sudeste",
+    salesVolume: 450000,
+    avatarUrl: "/placeholder.svg"
+  },
+  {
+    id: 2,
+    name: "Carlos Santos",
+    region: "Sul",
+    salesVolume: 380000,
+    avatarUrl: "/placeholder.svg"
+  },
+  {
+    id: 3,
+    name: "Mariana Costa",
+    region: "Nordeste",
+    salesVolume: 420000,
+    avatarUrl: "/placeholder.svg"
+  }
+]
 
 export default function Sales() {
-  const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [regionFilter, setRegionFilter] = useState("all");
+  const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [regionFilter, setRegionFilter] = useState("all")
 
   const filteredSellers = mockSellers.filter(seller => {
-    const matchesSearch = seller.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRegion = regionFilter === "all" || seller.region === regionFilter;
-    return matchesSearch && matchesRegion;
-  });
+    const matchesSearch = seller.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesRegion = regionFilter === "all" || seller.region === regionFilter
+    return matchesSearch && matchesRegion
+  })
 
-  const regions = Array.from(new Set(mockSellers.map(s => s.region)));
+  const regions = Array.from(new Set(mockSellers.map(s => s.region)))
 
   return (
     <div className="container py-6 space-y-6">
@@ -29,24 +65,24 @@ export default function Sales() {
         <MetricCard
           title="Faturamento Total"
           value={`R$ ${mockSalesMetrics.totalRevenue.toLocaleString()}`}
-          icon={<DollarSign />}
+          icon={<DollarSign className="h-4 w-4" />}
         />
         <MetricCard
           title="Total de Vendas"
-          value={mockSalesMetrics.totalSales}
-          icon={<ShoppingCart />}
+          value={mockSalesMetrics.totalSales.toString()}
+          icon={<ShoppingCart className="h-4 w-4" />}
         />
         <MetricCard
           title="Taxa de Conversão"
           value={`${mockSalesMetrics.conversionRate}%`}
           change="+2.5%"
-          icon={<Percent />}
+          icon={<Percent className="h-4 w-4" />}
         />
         <MetricCard
           title="Meta Atingida"
           value={`${mockSalesMetrics.targetCompletion}%`}
           change="+5%"
-          icon={<Target />}
+          icon={<Target className="h-4 w-4" />}
         />
       </div>
 
@@ -73,11 +109,24 @@ export default function Sales() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredSellers.map(seller => (
-          <SalesCard
-            key={seller.id}
-            seller={seller}
-            onClick={setSelectedSeller}
-          />
+          <Card key={seller.id} className="p-4 cursor-pointer hover:bg-accent transition-colors" onClick={() => setSelectedSeller(seller)}>
+            <div className="flex items-center gap-4">
+              <Avatar>
+                <AvatarImage src={seller.avatarUrl} alt={seller.name} />
+                <AvatarFallback>{seller.name.substring(0, 2)}</AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="font-medium">{seller.name}</h3>
+                <p className="text-sm text-muted-foreground">{seller.region}</p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <p className="text-sm text-muted-foreground">Volume de Vendas</p>
+              <p className="text-lg font-semibold">
+                R$ {seller.salesVolume.toLocaleString()}
+              </p>
+            </div>
+          </Card>
         ))}
       </div>
 
@@ -111,5 +160,5 @@ export default function Sales() {
         </SheetContent>
       </Sheet>
     </div>
-  );
+  )
 }
