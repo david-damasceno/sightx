@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
 import { ThemeProvider } from "next-themes"
 import { AppNavbar } from "@/components/AppNavbar"
 import Index from "./pages/Index"
@@ -16,6 +16,29 @@ import Data from "./pages/Data"
 
 const queryClient = new QueryClient()
 
+const AppContent = () => {
+  const location = useLocation()
+  const isLoginPage = location.pathname === '/login'
+
+  return (
+    <div className="min-h-screen flex flex-col w-full">
+      {!isLoginPage && <AppNavbar />}
+      <main className="flex-1">
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Index />} />
+          <Route path="/data" element={<Data />} />
+          <Route path="/social" element={<Social />} />
+          <Route path="/demographics" element={<Demographics />} />
+          <Route path="/ai-insights" element={<AIInsights />} />
+          <Route path="/feedback" element={<Feedback />} />
+          <Route path="/reports" element={<Reports />} />
+        </Routes>
+      </main>
+    </div>
+  )
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="light" attribute="class">
@@ -23,21 +46,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="min-h-screen flex flex-col w-full">
-            <AppNavbar />
-            <main className="flex-1">
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/" element={<Index />} />
-                <Route path="/data" element={<Data />} />
-                <Route path="/social" element={<Social />} />
-                <Route path="/demographics" element={<Demographics />} />
-                <Route path="/ai-insights" element={<AIInsights />} />
-                <Route path="/feedback" element={<Feedback />} />
-                <Route path="/reports" element={<Reports />} />
-              </Routes>
-            </main>
-          </div>
+          <AppContent />
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>
