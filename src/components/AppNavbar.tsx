@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Home, Share2, Users, Brain, MessageSquare, FileText, DollarSign, TrendingUp, LogOut } from "lucide-react"
+import { Home, Share2, Users, Brain, MessageSquare, FileText, DollarSign, TrendingUp, LogOut, Settings, User } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -83,6 +83,14 @@ export function AppNavbar() {
     }
   }
 
+  const handleSettingsClick = () => {
+    navigate("/settings")
+    toast({
+      title: "Configurações",
+      description: "Acessando as configurações do sistema",
+    })
+  }
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -132,12 +140,40 @@ export function AppNavbar() {
                   <AvatarImage src="/placeholder.svg" alt="Avatar" />
                   <AvatarFallback>AD</AvatarFallback>
                 </Avatar>
+                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-background" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+            <DropdownMenuContent className="w-64" align="end" forceMount>
+              <div className="flex items-center justify-start gap-2 p-2">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src="/placeholder.svg" alt="Avatar" />
+                  <AvatarFallback>AD</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col space-y-0.5">
+                  <p className="text-sm font-medium">Administrador</p>
+                  <p className="text-xs text-muted-foreground">admin@sightx.com</p>
+                </div>
+              </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+              <DropdownMenuItem 
+                className="cursor-pointer flex items-center p-2 hover:bg-accent"
+                onClick={() => navigate("/profile")}
+              >
+                <User className="mr-2 h-4 w-4" />
+                <span>Meu Perfil</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="cursor-pointer flex items-center p-2 hover:bg-accent"
+                onClick={handleSettingsClick}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Configurações</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={handleLogout} 
+                className="cursor-pointer flex items-center p-2 text-red-600 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-900 dark:hover:text-red-100"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Sair</span>
               </DropdownMenuItem>
