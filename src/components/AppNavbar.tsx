@@ -1,7 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Home, Share2, Users, Brain, MessageSquare, FileText, Database, Search, LogOut, DollarSign, TrendingUp } from "lucide-react"
+import { Home, Share2, Users, Brain, MessageSquare, FileText, DollarSign, TrendingUp } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { supabase } from "@/integrations/supabase/client"
@@ -20,11 +19,6 @@ const menuItems = [
     title: "Painel",
     href: "/",
     icon: Home
-  },
-  {
-    title: "Dados",
-    href: "/data",
-    icon: Database
   },
   {
     title: "Vendas",
@@ -129,11 +123,6 @@ export function AppNavbar() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden lg:flex relative w-64">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar..." className="pl-8" />
-          </div>
-
           <ModeToggle />
 
           <DropdownMenu>
