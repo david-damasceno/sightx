@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Home, Share2, Users, Brain, MessageSquare, FileText, DollarSign, TrendingUp } from "lucide-react"
+import { Home, Share2, Users, Brain, MessageSquare, FileText, DollarSign, TrendingUp, LogOut } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
