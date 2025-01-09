@@ -17,20 +17,20 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="w-full max-w-md space-y-8 p-10 bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl animate-fade-in">
-        <div className="text-center space-y-6">
-          <div className="flex flex-col items-center justify-center space-y-4">
+      <div className="w-full max-w-md space-y-4 p-6 bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl animate-fade-in">
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center gap-3">
             <img 
               src="/lovable-uploads/800dc37c-395b-470c-814b-1014271e967e.png" 
               alt="SightX Logo" 
-              className="h-16 w-16"
+              className="h-10 w-10"
             />
-            <h2 className="text-3xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-gray-900">
               SightX
             </h2>
           </div>
-          <div className="space-y-2">
-            <h3 className="text-2xl font-semibold text-gray-900">
+          <div className="space-y-1">
+            <h3 className="text-xl font-semibold text-gray-900">
               Bem-vindo de volta
             </h3>
             <p className="text-sm text-gray-600">
@@ -39,7 +39,7 @@ export default function Login() {
           </div>
         </div>
 
-        <div className="mt-8">
+        <div className="mt-4">
           <Auth
             supabaseClient={supabase}
             appearance={{
@@ -61,8 +61,8 @@ export default function Login() {
                     inputBorderRadius: '0.75rem',
                   },
                   space: {
-                    inputPadding: '1rem',
-                    buttonPadding: '1rem',
+                    inputPadding: '0.75rem',
+                    buttonPadding: '0.75rem',
                   },
                   fonts: {
                     bodyFontFamily: `ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`,
@@ -75,13 +75,13 @@ export default function Login() {
                 },
               },
               className: {
-                container: 'space-y-4',
-                button: 'w-full px-4 py-3 text-black font-medium rounded-lg shadow-sm hover:opacity-90 transition-opacity duration-200',
-                input: 'w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow duration-200',
+                container: 'space-y-3',
+                button: 'w-full px-4 py-2.5 text-black font-medium rounded-lg shadow-sm hover:opacity-90 transition-opacity duration-200',
+                input: 'w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow duration-200',
                 label: 'block text-sm font-medium text-gray-700 mb-1',
                 message: 'text-sm text-gray-600 mt-1',
                 anchor: 'text-blue-600 hover:text-blue-700 font-medium',
-                divider: 'my-6',
+                divider: 'my-4',
               },
             }}
             localization={{
@@ -106,7 +106,7 @@ export default function Login() {
           />
         </div>
 
-        <div className="mt-6 text-center text-xs text-gray-600">
+        <div className="mt-4 text-center text-xs text-gray-600">
           <p>
             Ao continuar, você concorda com nossos{" "}
             <a href="#" className="text-blue-600 hover:text-blue-800 font-medium">
