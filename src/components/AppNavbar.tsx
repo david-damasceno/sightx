@@ -1,10 +1,11 @@
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Home, Share2, Users, Brain, MessageSquare, FileText, Database, Search, LogOut } from "lucide-react"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { supabase } from "@/integrations/supabase/client"
+import { useToast } from "@/components/ui/use-toast"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,9 +55,28 @@ const menuItems = [
 
 export function AppNavbar() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { toast } = useToast()
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso",
+      })
+      
+      navigate("/login")
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error)
+      toast({
+        variant: "destructive",
+        title: "Erro ao sair",
+        description: "Não foi possível fazer logout. Tente novamente.",
+      })
+    }
   }
 
   return (
@@ -118,7 +138,7 @@ export function AppNavbar() {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Sair</span>
               </DropdownMenuItem>
