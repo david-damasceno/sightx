@@ -7,6 +7,8 @@ import { PerformanceCard } from "@/components/dashboard/PerformanceCard";
 import { Employee } from "@/types/dashboard";
 import { mockEmployees, mockPerformanceMetrics } from "@/data/mockData";
 import { Users, TrendingUp, Award, LineChart } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
 
 export default function Performance() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -101,7 +103,6 @@ export default function Performance() {
                   <h4 className="font-medium mb-2">Score Atual</h4>
                   <p className="text-2xl font-bold">{selectedEmployee.score.toFixed(1)}</p>
                 </Card>
-                {/* Aqui você pode adicionar mais cards com gráficos e métricas detalhadas */}
               </div>
             </div>
           )}

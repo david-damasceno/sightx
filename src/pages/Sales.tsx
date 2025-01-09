@@ -7,6 +7,8 @@ import { SalesCard } from "@/components/dashboard/SalesCard";
 import { Seller } from "@/types/dashboard";
 import { mockSellers, mockSalesMetrics } from "@/data/mockData";
 import { DollarSign, ShoppingCart, Percent, Target } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
 
 export default function Sales() {
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
@@ -103,7 +105,6 @@ export default function Sales() {
                     R$ {selectedSeller.salesVolume.toLocaleString()}
                   </p>
                 </Card>
-                {/* Aqui você pode adicionar mais cards com gráficos e métricas detalhadas */}
               </div>
             </div>
           )}
