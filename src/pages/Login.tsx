@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom"
 import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ArrowRight, Lock, Mail } from "lucide-react"
+import { Lock, LogOut } from "lucide-react"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -18,12 +18,29 @@ export default function Login() {
     })
   }, [navigate])
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    navigate("/login")
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]" />
       
       <Card className="w-full max-w-md p-8 space-y-6 bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl border-0 animate-fade-in">
-        <div className="space-y-2 text-center">
+        <div className="space-y-4 text-center">
+          {/* Logo e Nome da Empresa */}
+          <div className="flex flex-col items-center space-y-4">
+            <img 
+              src="/lovable-uploads/800dc37c-395b-470c-814b-1014271e967e.png" 
+              alt="Logo da Empresa" 
+              className="h-16 w-auto animate-fade-in"
+            />
+            <h2 className="text-2xl font-bold text-gray-900">
+              Sistema de Gestão Empresarial
+            </h2>
+          </div>
+
           <div className="flex justify-center">
             <div className="relative">
               <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 blur-md opacity-75" />
@@ -118,6 +135,16 @@ export default function Login() {
           providers={[]}
           socialLayout="horizontal"
         />
+
+        {/* Botão de Logout */}
+        <Button
+          variant="outline"
+          className="w-full mt-4 text-gray-600 hover:text-gray-800"
+          onClick={handleLogout}
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sair do Sistema
+        </Button>
 
         <div className="mt-6">
           <p className="text-xs text-center text-gray-500">
