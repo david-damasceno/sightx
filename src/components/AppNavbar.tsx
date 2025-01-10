@@ -83,14 +83,6 @@ export function AppNavbar() {
     }
   }
 
-  const handleSettingsClick = () => {
-    navigate("/settings")
-    toast({
-      title: "Configurações",
-      description: "Acessando as configurações do sistema",
-    })
-  }
-
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -143,7 +135,7 @@ export function AppNavbar() {
                 <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-background" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64" align="end" forceMount>
+            <DropdownMenuContent className="w-64 bg-background" align="end" forceMount>
               <div className="flex items-center justify-start gap-2 p-2">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src="/placeholder.svg" alt="Avatar" />
@@ -164,7 +156,7 @@ export function AppNavbar() {
               </DropdownMenuItem>
               <DropdownMenuItem 
                 className="cursor-pointer flex items-center p-2 hover:bg-accent"
-                onClick={handleSettingsClick}
+                onClick={() => navigate("/settings/general")}
               >
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Configurações</span>

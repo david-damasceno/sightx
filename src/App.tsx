@@ -14,6 +14,8 @@ import Feedback from "./pages/Feedback"
 import Reports from "./pages/Reports"
 import Sales from "./pages/Sales"
 import Performance from "./pages/Performance"
+import Profile from "./pages/Profile"
+import Settings from "./pages/Settings"
 
 const queryClient = new QueryClient()
 
@@ -35,6 +37,8 @@ const AppContent = () => {
           <Route path="/ai-insights" element={<AIInsights />} />
           <Route path="/feedback" element={<Feedback />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings/*" element={<Settings />} />
         </Routes>
       </main>
     </div>
