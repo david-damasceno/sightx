@@ -1,5 +1,5 @@
 import { useState, useRef } from "react"
-import AvatarEditor from "react-avatar-editor"
+import ReactAvatarEditor from "react-avatar-editor"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
@@ -7,16 +7,16 @@ import { RotateCcw, RotateCw, ZoomIn } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/components/ui/use-toast"
 
-interface AvatarEditorProps {
+interface ProfileAvatarEditorProps {
   isOpen: boolean
   onClose: () => void
   onSave: (url: string) => void
   imageUrl?: string
 }
 
-export function AvatarEditor({ isOpen, onClose, onSave, imageUrl }: AvatarEditorProps) {
+export function ProfileAvatarEditor({ isOpen, onClose, onSave, imageUrl }: ProfileAvatarEditorProps) {
   const { toast } = useToast()
-  const editorRef = useRef<AvatarEditor>(null)
+  const editorRef = useRef<ReactAvatarEditor>(null)
   const [scale, setScale] = useState(1)
   const [rotate, setRotate] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -81,7 +81,7 @@ export function AvatarEditor({ isOpen, onClose, onSave, imageUrl }: AvatarEditor
         </DialogHeader>
         <div className="space-y-6">
           <div className="flex justify-center">
-            <AvatarEditor
+            <ReactAvatarEditor
               ref={editorRef}
               image={imageUrl || "/placeholder.svg"}
               width={250}
