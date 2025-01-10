@@ -8,13 +8,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { User, Mail, Phone, Building, MapPin, Loader2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
-import { AvatarEditor } from "@/components/AvatarEditor"
 
 export default function Profile() {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
-  const [isEditorOpen, setIsEditorOpen] = useState(false)
-  const [selectedImage, setSelectedImage] = useState<string>()
+  const [uploading, setUploading] = useState(false)
   const [profile, setProfile] = useState({
     full_name: "",
     email: "",
@@ -50,6 +48,7 @@ export default function Profile() {
 
       if (error) {
         if (error.code === 'PGRST116') {
+          // Profile doesn't exist yet, create it
           const currentTime = new Date().toISOString()
           const { error: insertError } = await supabase
             .from('profiles')
@@ -108,16 +107,56 @@ export default function Profile() {
       .toUpperCase()
   }
 
-  const handleAvatarClick = () => {
-    setIsEditorOpen(true)
-  }
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true)
+      
+      if (!event.target.files || event.target.files.length === 0) {
+        throw new Error('Você precisa selecionar uma imagem para fazer upload.')
+      }
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Usuário não autenticado')
+
       const file = event.target.files[0]
-      const imageUrl = URL.createObjectURL(file)
-      setSelectedImage(imageUrl)
-      setIsEditorOpen(true)
+      const fileExt = file.name.split('.').pop()
+      const filePath = `${user.id}-${Math.random()}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString(),
+        })
+
+      if (updateError) throw updateError
+
+      setProfile({ ...profile, avatar_url: publicUrl })
+      
+      toast({
+        title: "Sucesso",
+        description: "Foto de perfil atualizada com sucesso.",
+      })
+    } catch (error) {
+      console.error('Error uploading avatar:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao fazer upload da imagem.",
+        variant: "destructive"
+      })
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -171,51 +210,40 @@ export default function Profile() {
       <Card className="p-6">
         <div className="space-y-8">
           <div className="flex items-start gap-4">
-            <div className="relative group">
-              <Avatar 
-                className="h-24 w-24 cursor-pointer transition-opacity group-hover:opacity-75"
-                onClick={handleAvatarClick}
-              >
-                <AvatarImage src={profile.avatar_url} alt="Foto do perfil" />
-                <AvatarFallback>
-                  {profile.full_name ? getInitials(profile.full_name) : ""}
-                </AvatarFallback>
-              </Avatar>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-                id="avatar-upload"
-              />
-            </div>
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={profile.avatar_url} alt="Foto do perfil" />
+              <AvatarFallback>
+                {profile.full_name ? getInitials(profile.full_name) : ""}
+              </AvatarFallback>
+            </Avatar>
             <div className="space-y-2">
               <h2 className="text-xl font-semibold">Foto do Perfil</h2>
               <p className="text-sm text-muted-foreground">
                 Esta foto será exibida em seu perfil e em outras áreas do sistema.
               </p>
-              <Button variant="outline" asChild>
-                <label htmlFor="avatar-upload" className="cursor-pointer">
-                  Alterar foto
-                </label>
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" disabled={uploading} asChild>
+                  <label className="cursor-pointer">
+                    {uploading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      "Alterar foto"
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                      disabled={uploading}
+                    />
+                  </label>
+                </Button>
+              </div>
             </div>
           </div>
-
-          <AvatarEditor
-            isOpen={isEditorOpen}
-            onClose={() => {
-              setIsEditorOpen(false)
-              setSelectedImage(undefined)
-            }}
-            onSave={(url) => {
-              setProfile(prev => ({ ...prev, avatar_url: url }))
-              if (selectedImage) {
-                URL.revokeObjectURL(selectedImage)
-              }
-            }}
-            imageUrl={selectedImage || profile.avatar_url}
-          />
 
           <Separator />
 
