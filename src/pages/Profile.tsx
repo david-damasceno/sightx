@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -5,16 +6,157 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/components/ui/use-toast"
-import { User, Mail, Phone, Building, MapPin } from "lucide-react"
+import { User, Mail, Phone, Building, MapPin, Loader2 } from "lucide-react"
+import { supabase } from "@/integrations/supabase/client"
 
 export default function Profile() {
   const { toast } = useToast()
+  const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [profile, setProfile] = useState({
+    full_name: "",
+    email: "",
+    avatar_url: "",
+    phone: "",
+    company: "",
+    address: ""
+  })
 
-  const handleSave = () => {
-    toast({
-      title: "Perfil atualizado",
-      description: "Suas informações foram salvas com sucesso.",
-    })
+  useEffect(() => {
+    getProfile()
+  }, [])
+
+  const getProfile = async () => {
+    try {
+      setLoading(true)
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) throw new Error('No user')
+
+      let { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (error) throw error
+
+      if (data) {
+        setProfile({
+          full_name: data.full_name || "",
+          email: data.email || "",
+          avatar_url: data.avatar_url || "",
+          phone: data.phone || "",
+          company: data.company || "",
+          address: data.address || ""
+        })
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar o perfil.",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .filter((_, index, array) => index === 0 || index === array.length - 1)
+      .join('')
+      .toUpperCase()
+  }
+
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true)
+      
+      if (!event.target.files || event.target.files.length === 0) {
+        throw new Error('Você precisa selecionar uma imagem para fazer upload.')
+      }
+
+      const file = event.target.files[0]
+      const fileExt = file.name.split('.').pop()
+      const filePath = `${crypto.randomUUID()}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) throw new Error('No user')
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString(),
+        })
+
+      if (updateError) throw updateError
+
+      setProfile({ ...profile, avatar_url: publicUrl })
+      
+      toast({
+        title: "Sucesso",
+        description: "Foto de perfil atualizada com sucesso.",
+      })
+    } catch (error) {
+      console.error('Error uploading avatar:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao fazer upload da imagem.",
+        variant: "destructive"
+      })
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleSave = async () => {
+    try {
+      setLoading(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) throw new Error('No user')
+
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          ...profile,
+          updated_at: new Date().toISOString(),
+        })
+
+      if (error) throw error
+
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram salvas com sucesso.",
+      })
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar o perfil.",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -28,15 +170,37 @@ export default function Profile() {
         <div className="space-y-8">
           <div className="flex items-start gap-4">
             <Avatar className="h-24 w-24">
-              <AvatarImage src="/placeholder.svg" alt="Foto do perfil" />
-              <AvatarFallback>AD</AvatarFallback>
+              <AvatarImage src={profile.avatar_url} alt="Foto do perfil" />
+              <AvatarFallback>
+                {profile.full_name ? getInitials(profile.full_name) : ""}
+              </AvatarFallback>
             </Avatar>
             <div className="space-y-2">
               <h2 className="text-xl font-semibold">Foto do Perfil</h2>
               <p className="text-sm text-muted-foreground">
                 Esta foto será exibida em seu perfil e em outras áreas do sistema.
               </p>
-              <Button variant="outline">Alterar foto</Button>
+              <div className="flex gap-2">
+                <Button variant="outline" disabled={uploading} asChild>
+                  <label className="cursor-pointer">
+                    {uploading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      "Alterar foto"
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                      disabled={uploading}
+                    />
+                  </label>
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -47,7 +211,13 @@ export default function Profile() {
               <Label htmlFor="name">Nome completo</Label>
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="name" className="pl-9" placeholder="Seu nome completo" defaultValue="Administrador" />
+                <Input
+                  id="name"
+                  className="pl-9"
+                  placeholder="Seu nome completo"
+                  value={profile.full_name}
+                  onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                />
               </div>
             </div>
 
@@ -55,7 +225,14 @@ export default function Profile() {
               <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="email" className="pl-9" type="email" placeholder="Seu email" defaultValue="admin@sightx.com" />
+                <Input
+                  id="email"
+                  className="pl-9"
+                  type="email"
+                  placeholder="Seu email"
+                  value={profile.email}
+                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                />
               </div>
             </div>
 
@@ -63,7 +240,13 @@ export default function Profile() {
               <Label htmlFor="phone">Telefone</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="phone" className="pl-9" placeholder="Seu telefone" />
+                <Input
+                  id="phone"
+                  className="pl-9"
+                  placeholder="Seu telefone"
+                  value={profile.phone}
+                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                />
               </div>
             </div>
 
@@ -71,7 +254,13 @@ export default function Profile() {
               <Label htmlFor="company">Empresa</Label>
               <div className="relative">
                 <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="company" className="pl-9" placeholder="Nome da empresa" defaultValue="SightX" />
+                <Input
+                  id="company"
+                  className="pl-9"
+                  placeholder="Nome da empresa"
+                  value={profile.company}
+                  onChange={(e) => setProfile({ ...profile, company: e.target.value })}
+                />
               </div>
             </div>
 
@@ -79,13 +268,28 @@ export default function Profile() {
               <Label htmlFor="address">Endereço</Label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="address" className="pl-9" placeholder="Seu endereço completo" />
+                <Input
+                  id="address"
+                  className="pl-9"
+                  placeholder="Seu endereço completo"
+                  value={profile.address}
+                  onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                />
               </div>
             </div>
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={handleSave}>Salvar Alterações</Button>
+            <Button onClick={handleSave} disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                "Salvar Alterações"
+              )}
+            </Button>
           </div>
         </div>
       </Card>
