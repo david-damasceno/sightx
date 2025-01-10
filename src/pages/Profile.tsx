@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { User, Mail, Phone, Building, MapPin, Loader2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 
@@ -31,7 +31,14 @@ export default function Profile() {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
 
-      if (!user) throw new Error('No user')
+      if (!user) {
+        toast({
+          title: "Erro",
+          description: "Usuário não autenticado",
+          variant: "destructive"
+        })
+        return
+      }
 
       let { data, error } = await supabase
         .from('profiles')
@@ -39,7 +46,32 @@ export default function Profile() {
         .eq('id', user.id)
         .single()
 
-      if (error) throw error
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // Profile doesn't exist yet, create it
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              email: user.email,
+              updated_at: new Date().toISOString()
+            })
+
+          if (insertError) throw insertError
+
+          data = {
+            id: user.id,
+            email: user.email,
+            full_name: "",
+            avatar_url: "",
+            phone: "",
+            company: "",
+            address: ""
+          }
+        } else {
+          throw error
+        }
+      }
 
       if (data) {
         setProfile({
@@ -64,6 +96,7 @@ export default function Profile() {
   }
 
   const getInitials = (name: string) => {
+    if (!name) return ""
     return name
       .split(' ')
       .map((n) => n[0])
@@ -80,19 +113,18 @@ export default function Profile() {
         throw new Error('Você precisa selecionar uma imagem para fazer upload.')
       }
 
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Usuário não autenticado')
+
       const file = event.target.files[0]
       const fileExt = file.name.split('.').pop()
-      const filePath = `${crypto.randomUUID()}.${fileExt}`
+      const filePath = `${user.id}-${Math.random()}.${fileExt}`
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file)
 
       if (uploadError) throw uploadError
-
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) throw new Error('No user')
 
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
@@ -131,7 +163,14 @@ export default function Profile() {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
       
-      if (!user) throw new Error('No user')
+      if (!user) {
+        toast({
+          title: "Erro",
+          description: "Usuário não autenticado",
+          variant: "destructive"
+        })
+        return
+      }
 
       const { error } = await supabase
         .from('profiles')
