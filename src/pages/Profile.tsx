@@ -49,12 +49,13 @@ export default function Profile() {
       if (error) {
         if (error.code === 'PGRST116') {
           // Profile doesn't exist yet, create it
+          const currentTime = new Date().toISOString()
           const { error: insertError } = await supabase
             .from('profiles')
             .insert({
               id: user.id,
               email: user.email,
-              updated_at: new Date().toISOString()
+              updated_at: currentTime
             })
 
           if (insertError) throw insertError
@@ -66,7 +67,8 @@ export default function Profile() {
             avatar_url: "",
             phone: "",
             company: "",
-            address: ""
+            address: "",
+            updated_at: currentTime
           }
         } else {
           throw error
