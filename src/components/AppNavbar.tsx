@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/components/ui/use-toast"
+import { useEffect, useState } from "react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +62,43 @@ export function AppNavbar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const [profile, setProfile] = useState<{
+    full_name: string;
+    email: string;
+    avatar_url: string;
+  } | null>(null)
+
+  useEffect(() => {
+    getProfile()
+  }, [])
+
+  const getProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, email, avatar_url')
+        .eq('id', user.id)
+        .single()
+
+      if (error) throw error
+      setProfile(data)
+    } catch (error) {
+      console.error('Error loading profile:', error)
+    }
+  }
+
+  const getInitials = (name: string) => {
+    if (!name) return "AD"
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .filter((_, index, array) => index === 0 || index === array.length - 1)
+      .join('')
+      .toUpperCase()
+  }
 
   const handleLogout = async () => {
     try {
@@ -129,8 +167,8 @@ export function AppNavbar() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src="/placeholder.svg" alt="Avatar" />
-                  <AvatarFallback>AD</AvatarFallback>
+                  <AvatarImage src={profile?.avatar_url} alt="Avatar" />
+                  <AvatarFallback>{profile?.full_name ? getInitials(profile.full_name) : "AD"}</AvatarFallback>
                 </Avatar>
                 <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-background" />
               </Button>
@@ -138,12 +176,12 @@ export function AppNavbar() {
             <DropdownMenuContent className="w-64 bg-background" align="end" forceMount>
               <div className="flex items-center justify-start gap-2 p-2">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src="/placeholder.svg" alt="Avatar" />
-                  <AvatarFallback>AD</AvatarFallback>
+                  <AvatarImage src={profile?.avatar_url} alt="Avatar" />
+                  <AvatarFallback>{profile?.full_name ? getInitials(profile.full_name) : "AD"}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col space-y-0.5">
-                  <p className="text-sm font-medium">Administrador</p>
-                  <p className="text-xs text-muted-foreground">admin@sightx.com</p>
+                  <p className="text-sm font-medium">{profile?.full_name || "Administrador"}</p>
+                  <p className="text-xs text-muted-foreground">{profile?.email || "admin@sightx.com"}</p>
                 </div>
               </div>
               <DropdownMenuSeparator />
