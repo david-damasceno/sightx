@@ -44,7 +44,8 @@ export function UserMenu({ profile }: UserMenuProps) {
         description: "Você foi desconectado com sucesso",
       })
       
-      navigate("/login")
+      // Força a navegação para a página de login após o logout
+      window.location.href = '/login'
     } catch (error) {
       console.error("Erro ao fazer logout:", error)
       toast({

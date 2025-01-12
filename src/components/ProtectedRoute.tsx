@@ -36,6 +36,7 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
     checkOnboardingStatus()
   }, [session, checkOnboarding])
 
+  // Mostra loading enquanto verifica a sessão
   if (loading || (checkOnboarding && checkingOnboarding)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -44,10 +45,12 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
     )
   }
 
+  // Redireciona para login se não houver sessão
   if (!session) {
     return <Navigate to="/login" replace />
   }
 
+  // Redireciona para onboarding se necessário
   if (checkOnboarding && !isOnboarded && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />
   }
