@@ -8,11 +8,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { User, Mail, Phone, Building, MapPin, Loader2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
+import { ProfileAvatarEditor } from "@/components/AvatarEditor/AvatarEditor"
 
 export default function Profile() {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
-  const [uploading, setUploading] = useState(false)
+  const [isEditorOpen, setIsEditorOpen] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [profile, setProfile] = useState({
     full_name: "",
     email: "",
@@ -48,7 +50,6 @@ export default function Profile() {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          // Profile doesn't exist yet, create it
           const currentTime = new Date().toISOString()
           const { error: insertError } = await supabase
             .from('profiles')
@@ -107,56 +108,60 @@ export default function Profile() {
       .toUpperCase()
   }
 
-  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || event.target.files.length === 0) return
+    
+    const file = event.target.files[0]
+    const imageUrl = URL.createObjectURL(file)
+    setSelectedImage(imageUrl)
+    setIsEditorOpen(true)
+  }
+
+  const handleSaveAvatar = async (url: string) => {
     try {
-      setUploading(true)
-      
-      if (!event.target.files || event.target.files.length === 0) {
-        throw new Error('Você precisa selecionar uma imagem para fazer upload.')
-      }
-
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Usuário não autenticado')
-
-      const file = event.target.files[0]
-      const fileExt = file.name.split('.').pop()
-      const filePath = `${user.id}-${Math.random()}.${fileExt}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file)
-
-      if (uploadError) throw uploadError
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath)
+      if (!user) throw new Error('User not authenticated')
 
       const { error: updateError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
-          avatar_url: publicUrl,
+          avatar_url: url,
           updated_at: new Date().toISOString(),
         })
 
       if (updateError) throw updateError
 
-      setProfile({ ...profile, avatar_url: publicUrl })
-      
-      toast({
-        title: "Sucesso",
-        description: "Foto de perfil atualizada com sucesso.",
-      })
+      setProfile({ ...profile, avatar_url: url })
     } catch (error) {
-      console.error('Error uploading avatar:', error)
+      console.error('Error updating avatar:', error)
       toast({
         title: "Erro",
-        description: "Erro ao fazer upload da imagem.",
+        description: "Erro ao atualizar a foto de perfil.",
         variant: "destructive"
       })
-    } finally {
-      setUploading(false)
+    }
+  }
+
+  const handleDeleteAvatar = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated')
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          avatar_url: "",
+          updated_at: new Date().toISOString(),
+        })
+
+      if (updateError) throw updateError
+
+      setProfile({ ...profile, avatar_url: "" })
+    } catch (error) {
+      console.error('Error deleting avatar:', error)
+      throw error
     }
   }
 
@@ -222,22 +227,14 @@ export default function Profile() {
                 Esta foto será exibida em seu perfil e em outras áreas do sistema.
               </p>
               <div className="flex gap-2">
-                <Button variant="outline" disabled={uploading} asChild>
+                <Button variant="outline" asChild>
                   <label className="cursor-pointer">
-                    {uploading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      "Alterar foto"
-                    )}
+                    Alterar foto
                     <input
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={handleAvatarChange}
-                      disabled={uploading}
+                      onChange={handleFileSelect}
                     />
                   </label>
                 </Button>
@@ -334,6 +331,19 @@ export default function Profile() {
           </div>
         </div>
       </Card>
+
+      {selectedImage && (
+        <ProfileAvatarEditor
+          open={isEditorOpen}
+          onClose={() => {
+            setIsEditorOpen(false)
+            setSelectedImage(null)
+          }}
+          imageUrl={selectedImage}
+          onSave={handleSaveAvatar}
+          onDelete={handleDeleteAvatar}
+        />
+      )}
     </div>
   )
 }
