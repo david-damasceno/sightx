@@ -45,21 +45,18 @@ export function useOrganization() {
     let isUnique = false
 
     while (!isUnique) {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('organizations')
-        .select('slug')
+        .select('id')
         .eq('slug', slug)
-        .single()
 
-      if (error && error.code === 'PGRST116') {
+      if (!data || data.length === 0) {
         // Nenhum resultado encontrado, slug é único
         isUnique = true
-      } else if (!error) {
+      } else {
         // Slug existe, tentar próximo número
         slug = `${baseSlug}-${counter}`
         counter++
-      } else {
-        throw error
       }
     }
 
@@ -75,7 +72,14 @@ export function useOrganization() {
         throw new Error('Usuário não autenticado')
       }
 
-      const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      // Normaliza o slug base removendo caracteres especiais e espaços
+      const baseSlug = name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+
       const uniqueSlug = await generateUniqueSlug(baseSlug)
 
       const { data: result, error: rpcError } = await supabase.rpc(
