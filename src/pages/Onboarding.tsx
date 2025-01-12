@@ -5,7 +5,8 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Building, Loader2 } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+import { Building, Loader2, Users, Briefcase } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { useOrganization } from "@/hooks/useOrganization"
@@ -13,6 +14,7 @@ import { useOrganization } from "@/hooks/useOrganization"
 export default function Onboarding() {
   const [loading, setLoading] = useState(false)
   const [orgName, setOrgName] = useState("")
+  const [companySize, setCompanySize] = useState("")
   const { session } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
@@ -60,7 +62,6 @@ export default function Onboarding() {
     try {
       setLoading(true)
 
-      // Garantir que o perfil existe
       const profileExists = await ensureProfileExists()
       if (!profileExists) {
         toast({
@@ -73,12 +74,12 @@ export default function Onboarding() {
 
       const org = await createOrganization(orgName.trim())
 
-      // Atualizar o perfil do usuário com a organização padrão
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           default_organization_id: org.id,
           onboarded: true,
+          company: orgName.trim(),
           updated_at: new Date().toISOString()
         })
         .eq('id', session?.user.id)
@@ -109,34 +110,82 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-md p-6">
-        <Card className="p-6 space-y-6">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="w-full max-w-lg">
+        <Card className="p-6 space-y-8">
           <div className="space-y-2 text-center">
-            <Building className="w-12 h-12 mx-auto text-primary" />
-            <h1 className="text-2xl font-bold">Bem-vindo ao SightX</h1>
-            <p className="text-sm text-muted-foreground">
-              Para começar, crie sua organização
+            <Building className="w-16 h-16 mx-auto text-primary" />
+            <h1 className="text-3xl font-bold">Bem-vindo ao SightX</h1>
+            <p className="text-lg text-muted-foreground">
+              Vamos configurar sua organização para começar
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="orgName">Nome da organização</Label>
-              <Input
-                id="orgName"
-                placeholder="Digite o nome da sua organização"
-                value={orgName}
-                onChange={(e) => setOrgName(e.target.value)}
-                disabled={loading}
-              />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div className="space-y-2 col-span-full">
+              <div className="flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold">Sobre sua organização</h2>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Estas informações ajudarão a personalizar sua experiência
+              </p>
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="col-span-full space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="orgName">Nome da organização</Label>
+                <Input
+                  id="orgName"
+                  placeholder="Digite o nome da sua empresa"
+                  value={orgName}
+                  onChange={(e) => setOrgName(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="companySize">Tamanho da empresa</Label>
+                <select
+                  id="companySize"
+                  className="w-full px-3 py-2 border rounded-md"
+                  value={companySize}
+                  onChange={(e) => setCompanySize(e.target.value)}
+                  disabled={loading}
+                >
+                  <option value="">Selecione...</option>
+                  <option value="1-10">1-10 funcionários</option>
+                  <option value="11-50">11-50 funcionários</option>
+                  <option value="51-200">51-200 funcionários</option>
+                  <option value="201-500">201-500 funcionários</option>
+                  <option value="501+">501+ funcionários</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              <span className="text-sm text-muted-foreground">
+                Você poderá convidar membros da equipe depois de criar sua organização
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
               <Button
-                type="submit"
-                className="w-full"
+                variant="outline"
+                onClick={handleCancel}
                 disabled={loading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="sm:w-[200px]"
               >
                 {loading ? (
                   <>
@@ -147,17 +196,8 @@ export default function Onboarding() {
                   "Criar organização"
                 )}
               </Button>
-              
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCancel}
-                disabled={loading}
-              >
-                Cancelar
-              </Button>
             </div>
-          </form>
+          </div>
         </Card>
       </div>
     </div>
