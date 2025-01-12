@@ -3,24 +3,32 @@ import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 
 export interface Profile {
+  id: string
   full_name: string
   email: string
   avatar_url: string
   phone: string
   company: string
   address: string
+  updated_at: string
+  default_organization_id: string | null
+  onboarded: boolean
 }
 
 export function useProfile() {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [profile, setProfile] = useState<Profile>({
+    id: "",
     full_name: "",
     email: "",
     avatar_url: "",
     phone: "",
     company: "",
-    address: ""
+    address: "",
+    updated_at: "",
+    default_organization_id: null,
+    onboarded: false
   })
 
   const getProfile = async () => {
@@ -51,7 +59,9 @@ export function useProfile() {
             .insert({
               id: user.id,
               email: user.email,
-              updated_at: currentTime
+              updated_at: currentTime,
+              onboarded: false,
+              default_organization_id: null
             })
 
           if (insertError) throw insertError
@@ -64,7 +74,9 @@ export function useProfile() {
             phone: "",
             company: "",
             address: "",
-            updated_at: currentTime
+            updated_at: currentTime,
+            default_organization_id: null,
+            onboarded: false
           }
         } else {
           throw error
@@ -73,12 +85,16 @@ export function useProfile() {
 
       if (data) {
         setProfile({
+          id: data.id,
           full_name: data.full_name || "",
           email: data.email || "",
           avatar_url: data.avatar_url || "",
           phone: data.phone || "",
           company: data.company || "",
-          address: data.address || ""
+          address: data.address || "",
+          updated_at: data.updated_at || "",
+          default_organization_id: data.default_organization_id,
+          onboarded: data.onboarded || false
         })
       }
     } catch (error) {
@@ -110,8 +126,8 @@ export function useProfile() {
       const { error } = await supabase
         .from('profiles')
         .upsert({
-          id: user.id,
           ...newProfile,
+          id: user.id,
           updated_at: new Date().toISOString(),
         })
 
