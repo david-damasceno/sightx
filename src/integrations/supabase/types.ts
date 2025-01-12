@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       organization_invites: {
@@ -50,7 +50,7 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       organization_members: {
@@ -85,7 +85,7 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       organizations: {
@@ -158,7 +158,9 @@ export interface Database {
         Relationships: []
       }
     }
-    Views: Record<string, never>
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
       create_organization_with_owner: {
         Args: {
@@ -166,11 +168,7 @@ export interface Database {
           p_slug: string
           p_user_id: string
         }
-        Returns: {
-          organization_id: string
-          name: string
-          slug: string
-        }
+        Returns: Json
       }
     }
     Enums: {
@@ -200,14 +198,14 @@ export type Tables<
     ? R
     : never
   : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-      PublicSchema["Views"])
-  ? (PublicSchema["Tables"] &
-      PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-      Row: infer R
-    }
-    ? R
+        PublicSchema["Views"])
+    ? (PublicSchema["Tables"] &
+        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
     : never
-  : never
 
 export type TablesInsert<
   PublicTableNameOrOptions extends
@@ -278,4 +276,3 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
     ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
