@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Building } from "lucide-react"
+import { Building, Loader2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { useOrganization } from "@/hooks/useOrganization"
@@ -17,6 +17,34 @@ export default function Onboarding() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const { createOrganization } = useOrganization()
+
+  const ensureProfileExists = async () => {
+    if (!session?.user) return false
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .single()
+
+    if (!profile) {
+      const { error: createError } = await supabase
+        .from('profiles')
+        .insert({
+          id: session.user.id,
+          email: session.user.email,
+          updated_at: new Date().toISOString(),
+          onboarded: false
+        })
+
+      if (createError) {
+        console.error('Error creating profile:', createError)
+        return false
+      }
+    }
+
+    return true
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,6 +59,18 @@ export default function Onboarding() {
 
     try {
       setLoading(true)
+
+      // Garantir que o perfil existe
+      const profileExists = await ensureProfileExists()
+      if (!profileExists) {
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Não foi possível criar seu perfil. Tente novamente.",
+        })
+        return
+      }
+
       const org = await createOrganization(orgName.trim())
 
       // Atualizar o perfil do usuário com a organização padrão
@@ -64,7 +104,6 @@ export default function Onboarding() {
   }
 
   const handleCancel = async () => {
-    // Fazer logout e redirecionar para a página de login
     await supabase.auth.signOut()
     navigate('/login')
   }
@@ -99,7 +138,14 @@ export default function Onboarding() {
                 className="w-full"
                 disabled={loading}
               >
-                {loading ? "Criando..." : "Criar organização"}
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  "Criar organização"
+                )}
               </Button>
               
               <Button
