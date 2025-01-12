@@ -52,7 +52,7 @@ const AppContent = () => {
           <Route
             path="/sales"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute checkOnboarding>
                 <Sales />
               </ProtectedRoute>
             }
@@ -60,7 +60,7 @@ const AppContent = () => {
           <Route
             path="/performance"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute checkOnboarding>
                 <Performance />
               </ProtectedRoute>
             }
@@ -68,7 +68,7 @@ const AppContent = () => {
           <Route
             path="/social"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute checkOnboarding>
                 <Social />
               </ProtectedRoute>
             }
@@ -76,7 +76,7 @@ const AppContent = () => {
           <Route
             path="/demographics"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute checkOnboarding>
                 <Demographics />
               </ProtectedRoute>
             }
@@ -84,7 +84,7 @@ const AppContent = () => {
           <Route
             path="/ai-insights"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute checkOnboarding>
                 <AIInsights />
               </ProtectedRoute>
             }
@@ -92,7 +92,7 @@ const AppContent = () => {
           <Route
             path="/feedback"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute checkOnboarding>
                 <Feedback />
               </ProtectedRoute>
             }
@@ -100,7 +100,7 @@ const AppContent = () => {
           <Route
             path="/reports"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute checkOnboarding>
                 <Reports />
               </ProtectedRoute>
             }
@@ -108,7 +108,7 @@ const AppContent = () => {
           <Route
             path="/profile"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute checkOnboarding>
                 <Profile />
               </ProtectedRoute>
             }
@@ -116,11 +116,12 @@ const AppContent = () => {
           <Route
             path="/settings/*"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute checkOnboarding>
                 <Settings />
               </ProtectedRoute>
             }
           />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
     </div>
