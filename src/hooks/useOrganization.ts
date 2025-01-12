@@ -72,32 +72,24 @@ export function useOrganization() {
       }
 
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-      
-      // Primeiro, criar a organização
+
+      // Iniciar uma transação usando o cliente RPC
+      const { data: result, error: rpcError } = await supabase.rpc('create_organization_with_owner', {
+        p_name: name,
+        p_slug: slug,
+        p_user_id: user.id
+      })
+
+      if (rpcError) throw rpcError
+
+      // Buscar a organização recém-criada
       const { data: org, error: orgError } = await supabase
         .from('organizations')
-        .insert({
-          name,
-          slug,
-          status: 'active'
-        })
-        .select()
+        .select('*')
+        .eq('id', result.organization_id)
         .single()
 
       if (orgError) throw orgError
-
-      if (!org) throw new Error('Nenhum dado da organização retornado')
-
-      // Depois, criar o membro owner
-      const { error: memberError } = await supabase
-        .from('organization_members')
-        .insert({
-          organization_id: org.id,
-          user_id: user.id,
-          role: 'owner'
-        })
-
-      if (memberError) throw memberError
 
       toast({
         title: "Sucesso",
