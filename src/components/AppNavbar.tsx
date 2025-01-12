@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/components/ui/use-toast"
 import { useEffect, useState } from "react"
+import { useAuth } from "@/contexts/AuthContext"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,6 +63,7 @@ export function AppNavbar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { session } = useAuth()
   const [profile, setProfile] = useState<{
     full_name: string;
     email: string;
@@ -69,41 +71,27 @@ export function AppNavbar() {
   } | null>(null)
 
   useEffect(() => {
-    checkSession()
-    getProfile()
-  }, [])
-
-  const checkSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      navigate("/login")
+    if (session?.user) {
+      getProfile()
     }
-  }
+  }, [session])
 
   const getProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        navigate("/login")
-        return
-      }
-
       const { data, error } = await supabase
         .from('profiles')
         .select('full_name, email, avatar_url')
-        .eq('id', user.id)
+        .eq('id', session?.user?.id)
         .single()
 
       if (error) {
         console.error('Error loading profile:', error)
-        navigate("/login")
         return
       }
       
       setProfile(data)
     } catch (error) {
       console.error('Error loading profile:', error)
-      navigate("/login")
     }
   }
 
