@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -36,6 +36,7 @@ export default function Onboarding() {
         .insert({
           name: orgName.trim(),
           slug: orgName.trim().toLowerCase().replace(/\s+/g, '-'),
+          status: 'active'
         })
         .select()
         .single()
@@ -58,7 +59,8 @@ export default function Onboarding() {
         .from('profiles')
         .update({
           default_organization_id: org.id,
-          onboarded: true
+          onboarded: true,
+          updated_at: new Date().toISOString()
         })
         .eq('id', session?.user.id)
 
@@ -70,12 +72,12 @@ export default function Onboarding() {
       })
 
       navigate('/')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar organização:', error)
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível criar a organização. Tente novamente.",
+        description: error.message || "Não foi possível criar a organização. Tente novamente.",
       })
     } finally {
       setLoading(false)
