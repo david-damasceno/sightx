@@ -26,14 +26,12 @@ export function useOrganization() {
       
       if (data && data.length > 0) {
         setCurrentOrganization(data[0])
+      } else {
+        setCurrentOrganization(null)
       }
     } catch (error: any) {
       console.error('Error fetching organizations:', error)
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar as organizações.",
-        variant: "destructive"
-      })
+      // Removemos o toast de erro aqui pois é esperado não ter organizações no início
     } finally {
       setLoading(false)
     }
@@ -113,6 +111,8 @@ export function useOrganization() {
   }
 
   const fetchMembers = async (organizationId: string) => {
+    if (!organizationId) return // Não busca membros se não houver organização
+
     try {
       setLoading(true)
       const { data, error } = await supabase
@@ -125,11 +125,7 @@ export function useOrganization() {
       setMembers(data || [])
     } catch (error: any) {
       console.error('Error fetching members:', error)
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os membros da organização.",
-        variant: "destructive"
-      })
+      // Removemos o toast de erro aqui também pois é esperado não ter membros no início
     } finally {
       setLoading(false)
     }
