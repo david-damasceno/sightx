@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Building, Loader2, Users, Briefcase } from "lucide-react"
+import { Building, Loader2, Users, Briefcase, ArrowRight, Info } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { useOrganization } from "@/hooks/useOrganization"
 
 export default function Onboarding() {
   const [loading, setLoading] = useState(false)
+  const [step, setStep] = useState(1)
   const [orgName, setOrgName] = useState("")
   const [companySize, setCompanySize] = useState("")
   const { session } = useAuth()
@@ -109,94 +110,137 @@ export default function Onboarding() {
     navigate('/login')
   }
 
+  const nextStep = () => {
+    if (!orgName.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Por favor, insira o nome da organização",
+      })
+      return
+    }
+    setStep(2)
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-lg">
-        <Card className="p-6 space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
+      <div className="w-full max-w-lg animate-fade-in">
+        <Card className="p-8 space-y-8 shadow-lg">
           <div className="space-y-2 text-center">
-            <Building className="w-16 h-16 mx-auto text-primary" />
-            <h1 className="text-3xl font-bold">Bem-vindo ao SightX</h1>
+            <Building className="w-16 h-16 mx-auto text-primary animate-fade-in" />
+            <h1 className="text-3xl font-bold tracking-tight">Bem-vindo ao SightX</h1>
             <p className="text-lg text-muted-foreground">
               Vamos configurar sua organização para começar
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div className="space-y-2 col-span-full">
-              <div className="flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold">Sobre sua organização</h2>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Estas informações ajudarão a personalizar sua experiência
-              </p>
-            </div>
-
-            <div className="col-span-full space-y-4">
+          {step === 1 ? (
+            <div className="space-y-6 animate-fade-in">
               <div className="space-y-2">
-                <Label htmlFor="orgName">Nome da organização</Label>
-                <Input
-                  id="orgName"
-                  placeholder="Digite o nome da sua empresa"
-                  value={orgName}
-                  onChange={(e) => setOrgName(e.target.value)}
-                  disabled={loading}
-                />
+                <div className="flex items-center gap-2">
+                  <Briefcase className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold">Sobre sua organização</h2>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Estas informações ajudarão a personalizar sua experiência
+                </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="companySize">Tamanho da empresa</Label>
-                <select
-                  id="companySize"
-                  className="w-full px-3 py-2 border rounded-md"
-                  value={companySize}
-                  onChange={(e) => setCompanySize(e.target.value)}
-                  disabled={loading}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="orgName" className="text-base">
+                    Nome da organização
+                  </Label>
+                  <Input
+                    id="orgName"
+                    placeholder="Digite o nome da sua empresa"
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    className="text-base"
+                    autoFocus
+                  />
+                </div>
+
+                <Button 
+                  onClick={nextStep}
+                  className="w-full gap-2"
                 >
-                  <option value="">Selecione...</option>
-                  <option value="1-10">1-10 funcionários</option>
-                  <option value="11-50">11-50 funcionários</option>
-                  <option value="51-200">51-200 funcionários</option>
-                  <option value="201-500">201-500 funcionários</option>
-                  <option value="501+">501+ funcionários</option>
-                </select>
+                  Próximo passo
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-6 animate-fade-in">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold">Tamanho da equipe</h2>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Isso nos ajudará a otimizar sua experiência
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="companySize" className="text-base">
+                    Número de funcionários
+                  </Label>
+                  <select
+                    id="companySize"
+                    className="w-full px-3 py-2 border rounded-md text-base"
+                    value={companySize}
+                    onChange={(e) => setCompanySize(e.target.value)}
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="1-10">1-10 funcionários</option>
+                    <option value="11-50">11-50 funcionários</option>
+                    <option value="51-200">51-200 funcionários</option>
+                    <option value="201-500">201-500 funcionários</option>
+                    <option value="501+">501+ funcionários</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2 p-4 bg-secondary/50 rounded-lg">
+                  <Info className="w-5 h-5 text-primary shrink-0" />
+                  <span className="text-sm text-muted-foreground">
+                    Você poderá convidar membros da equipe depois de criar sua organização
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <Separator />
 
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              <span className="text-sm text-muted-foreground">
-                Você poderá convidar membros da equipe depois de criar sua organização
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button
-                variant="outline"
-                onClick={handleCancel}
-                disabled={loading}
-              >
-                Cancelar
-              </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            {step === 2 && (
               <Button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="sm:w-[200px]"
+                className="sm:w-[200px] gap-2"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     Criando...
                   </>
                 ) : (
-                  "Criar organização"
+                  <>
+                    Criar organização
+                    <ArrowRight className="w-4 h-4" />
+                  </>
                 )}
               </Button>
-            </div>
+            )}
           </div>
         </Card>
       </div>
