@@ -39,27 +39,31 @@ export function useOrganization() {
     }
   }
 
-  const fetchMembers = async (organizationId: string) => {
-    try {
-      setLoading(true)
+  const generateUniqueSlug = async (baseSlug: string): Promise<string> => {
+    let slug = baseSlug
+    let counter = 1
+    let isUnique = false
+
+    while (!isUnique) {
       const { data, error } = await supabase
-        .from('organization_members')
-        .select('*')
-        .eq('organization_id', organizationId)
+        .from('organizations')
+        .select('slug')
+        .eq('slug', slug)
+        .single()
 
-      if (error) throw error
-
-      setMembers(data || [])
-    } catch (error: any) {
-      console.error('Error fetching members:', error)
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os membros da organização.",
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
+      if (error && error.code === 'PGRST116') {
+        // Nenhum resultado encontrado, slug é único
+        isUnique = true
+      } else if (!error) {
+        // Slug existe, tentar próximo número
+        slug = `${baseSlug}-${counter}`
+        counter++
+      } else {
+        throw error
+      }
     }
+
+    return slug
   }
 
   const createOrganization = async (name: string) => {
@@ -71,13 +75,14 @@ export function useOrganization() {
         throw new Error('Usuário não autenticado')
       }
 
-      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      const uniqueSlug = await generateUniqueSlug(baseSlug)
 
       const { data: result, error: rpcError } = await supabase.rpc(
         'create_organization_with_owner',
         {
           p_name: name,
-          p_slug: slug,
+          p_slug: uniqueSlug,
           p_user_id: user.id
         }
       )
@@ -101,6 +106,29 @@ export function useOrganization() {
         variant: "destructive"
       })
       throw error
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchMembers = async (organizationId: string) => {
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('organization_members')
+        .select('*')
+        .eq('organization_id', organizationId)
+
+      if (error) throw error
+
+      setMembers(data || [])
+    } catch (error: any) {
+      console.error('Error fetching members:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os membros da organização.",
+        variant: "destructive"
+      })
     } finally {
       setLoading(false)
     }
