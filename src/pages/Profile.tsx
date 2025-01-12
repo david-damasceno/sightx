@@ -42,7 +42,7 @@ export default function Profile() {
     <div className="container py-6 space-y-6">
       <div className="flex items-center gap-2">
         <User className="h-5 w-5" />
-        <h1 className="text-2xl font-bold">Meu Perfil</h1>
+        <h1 className="text-2xl font-bold">Minha Conta</h1>
       </div>
 
       <Card className="p-6">
