@@ -63,6 +63,12 @@ export default function Onboarding() {
     }
   }
 
+  const handleCancel = async () => {
+    // Fazer logout e redirecionar para a página de login
+    await supabase.auth.signOut()
+    navigate('/login')
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md p-6">
@@ -87,13 +93,24 @@ export default function Onboarding() {
               />
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? "Criando..." : "Criar organização"}
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? "Criando..." : "Criar organização"}
+              </Button>
+              
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+            </div>
           </form>
         </Card>
       </div>
