@@ -108,13 +108,27 @@ export default function Profile() {
       .toUpperCase()
   }
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files || event.target.files.length === 0) return
-    
-    const file = event.target.files[0]
-    const imageUrl = URL.createObjectURL(file)
-    setSelectedImage(imageUrl)
-    setIsEditorOpen(true)
+  const handleAvatarClick = () => {
+    if (profile.avatar_url) {
+      // Se já tem avatar, abre o editor com a imagem atual
+      setSelectedImage(profile.avatar_url)
+      setIsEditorOpen(true)
+    } else {
+      // Se não tem avatar, abre o seletor de arquivo
+      const fileInput = document.createElement('input')
+      fileInput.type = 'file'
+      fileInput.accept = 'image/*'
+      fileInput.onchange = (event: Event) => {
+        const target = event.target as HTMLInputElement
+        if (!target.files || target.files.length === 0) return
+        
+        const file = target.files[0]
+        const imageUrl = URL.createObjectURL(file)
+        setSelectedImage(imageUrl)
+        setIsEditorOpen(true)
+      }
+      fileInput.click()
+    }
   }
 
   const handleSaveAvatar = async (url: string) => {
@@ -227,16 +241,11 @@ export default function Profile() {
                 Esta foto será exibida em seu perfil e em outras áreas do sistema.
               </p>
               <div className="flex gap-2">
-                <Button variant="outline" asChild>
-                  <label className="cursor-pointer">
-                    Alterar foto
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFileSelect}
-                    />
-                  </label>
+                <Button 
+                  variant="outline" 
+                  onClick={handleAvatarClick}
+                >
+                  {profile.avatar_url ? "Editar foto" : "Alterar foto"}
                 </Button>
               </div>
             </div>
