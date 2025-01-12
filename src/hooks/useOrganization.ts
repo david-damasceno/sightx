@@ -86,22 +86,13 @@ export function useOrganization() {
 
       if (!result) throw new Error('Nenhum resultado retornado da função RPC')
 
-      // Buscar a organização recém-criada
-      const { data: org, error: orgError } = await supabase
-        .from('organizations')
-        .select('*')
-        .eq('id', result.organization_id)
-        .single()
-
-      if (orgError) throw orgError
-
       toast({
         title: "Sucesso",
         description: "Organização criada com sucesso.",
       })
 
       await fetchOrganizations()
-      return org
+      return result as Organization
     } catch (error: any) {
       console.error('Error creating organization:', error)
       toast({
