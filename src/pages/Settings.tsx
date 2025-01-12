@@ -4,6 +4,7 @@ import { SettingsSidebar } from "@/components/settings/SettingsSidebar"
 import { Routes, Route, Navigate } from "react-router-dom"
 import { GeneralSettings } from "@/components/settings/GeneralSettings"
 import { UsersSettings } from "@/components/settings/UsersSettings"
+import { MembersSettings } from "@/components/settings/MembersSettings"
 import { IntegrationsSettings } from "@/components/settings/IntegrationsSettings"
 import { ReportsSettings } from "@/components/settings/ReportsSettings"
 import { AlertsSettings } from "@/components/settings/AlertsSettings"
@@ -28,6 +29,7 @@ export default function Settings() {
               <Route path="/" element={<Navigate to="/settings/general" replace />} />
               <Route path="/general" element={<GeneralSettings />} />
               <Route path="/users" element={<UsersSettings />} />
+              <Route path="/members" element={<MembersSettings />} />
               <Route path="/integrations" element={<IntegrationsSettings />} />
               <Route path="/reports" element={<ReportsSettings />} />
               <Route path="/alerts" element={<AlertsSettings />} />
