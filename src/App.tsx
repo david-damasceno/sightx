@@ -2,13 +2,14 @@ import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom"
 import { ThemeProvider } from "next-themes"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { AppNavbar } from "@/components/AppNavbar"
 import Index from "./pages/Index"
 import Login from "./pages/Login"
+import Onboarding from "./pages/Onboarding"
 import Social from "./pages/Social"
 import Demographics from "./pages/Demographics"
 import AIInsights from "./pages/AIInsights"
@@ -24,17 +25,26 @@ const queryClient = new QueryClient()
 const AppContent = () => {
   const location = useLocation()
   const isLoginPage = location.pathname === '/login'
+  const isOnboardingPage = location.pathname === '/onboarding'
 
   return (
     <div className="min-h-screen flex flex-col w-full">
-      {!isLoginPage && <AppNavbar />}
+      {!isLoginPage && !isOnboardingPage && <AppNavbar />}
       <main className="flex-1">
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route
-            path="/"
+            path="/onboarding"
             element={
               <ProtectedRoute>
+                <Onboarding />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute checkOnboarding>
                 <Index />
               </ProtectedRoute>
             }
