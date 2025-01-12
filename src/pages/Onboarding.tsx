@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Building } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { useOrganization } from "@/hooks/useOrganization"
 
 export default function Onboarding() {
   const [loading, setLoading] = useState(false)
@@ -15,6 +16,7 @@ export default function Onboarding() {
   const { session } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { createOrganization } = useOrganization()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,32 +31,9 @@ export default function Onboarding() {
 
     try {
       setLoading(true)
+      const org = await createOrganization(orgName.trim())
 
-      // Criar a organização
-      const { data: org, error: orgError } = await supabase
-        .from('organizations')
-        .insert({
-          name: orgName.trim(),
-          slug: orgName.trim().toLowerCase().replace(/\s+/g, '-'),
-          status: 'active'
-        })
-        .select()
-        .single()
-
-      if (orgError) throw orgError
-
-      // Adicionar o usuário como membro (owner) da organização
-      const { error: memberError } = await supabase
-        .from('organization_members')
-        .insert({
-          organization_id: org.id,
-          user_id: session?.user.id,
-          role: 'owner'
-        })
-
-      if (memberError) throw memberError
-
-      // Atualizar o perfil do usuário
+      // Atualizar o perfil do usuário com a organização padrão
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
