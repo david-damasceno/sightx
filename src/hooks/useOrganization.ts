@@ -65,8 +65,15 @@ export function useOrganization() {
   const createOrganization = async (name: string) => {
     try {
       setLoading(true)
-      const slug = name.toLowerCase().replace(/\s+/g, '-')
+      const { data: { user } } = await supabase.auth.getUser()
       
+      if (!user) {
+        throw new Error('Usuário não autenticado')
+      }
+
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      
+      // Primeiro, criar a organização
       const { data: org, error: orgError } = await supabase
         .from('organizations')
         .insert({
@@ -79,13 +86,14 @@ export function useOrganization() {
 
       if (orgError) throw orgError
 
-      if (!org) throw new Error('No organization data returned')
+      if (!org) throw new Error('Nenhum dado da organização retornado')
 
+      // Depois, criar o membro owner
       const { error: memberError } = await supabase
         .from('organization_members')
         .insert({
           organization_id: org.id,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: user.id,
           role: 'owner'
         })
 
