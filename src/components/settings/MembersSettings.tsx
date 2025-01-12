@@ -12,10 +12,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { useToast } from "@/components/ui/use-toast"
-import { Users, UserPlus, Mail, Shield, Building } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { Users, UserPlus, Mail, Shield, Building, Loader2 } from "lucide-react"
 import { useOrganization } from "@/hooks/useOrganization"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 
 export function MembersSettings() {
   const [inviteEmail, setInviteEmail] = useState("")
@@ -46,20 +47,29 @@ export function MembersSettings() {
     }
   }
 
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case 'owner':
+        return 'bg-purple-100 text-purple-800'
+      case 'admin':
+        return 'bg-blue-100 text-blue-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Building className="h-5 w-5" />
-          <div>
-            <h1 className="text-2xl font-bold">
-              {currentOrganization?.name || "Carregando..."}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Gerencie sua organização e membros
-            </p>
-          </div>
+      <div>
+        <div className="flex items-center gap-2 mb-2">
+          <Building className="h-5 w-5 text-muted-foreground" />
+          <h1 className="text-2xl font-bold">
+            {currentOrganization?.name || "Carregando..."}
+          </h1>
         </div>
+        <p className="text-sm text-muted-foreground">
+          Gerencie sua organização e membros. Convide novos membros para colaborar.
+        </p>
       </div>
 
       <Card className="p-6">
@@ -89,9 +99,18 @@ export function MembersSettings() {
                 </div>
               </div>
               <div className="flex items-end">
-                <Button onClick={handleInvite} disabled={loading}>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Convidar
+                <Button onClick={handleInvite} disabled={loading || !inviteEmail}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Convidar
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -102,53 +121,74 @@ export function MembersSettings() {
           {/* Lista de Membros */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <h2 className="text-lg font-semibold">Membros Atuais</h2>
-              <p className="text-sm text-muted-foreground">
-                Gerencie os membros atuais da sua organização e suas permissões.
-              </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">Membros Atuais</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {members.length} {members.length === 1 ? 'membro' : 'membros'} na organização
+                  </p>
+                </div>
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  {members.length}
+                </Badge>
+              </div>
             </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Membro</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Função</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {members.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={member.avatar_url || undefined} />
-                        <AvatarFallback>
-                          {member.full_name?.charAt(0) || member.email?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      {member.full_name || "Sem nome"}
-                    </TableCell>
-                    <TableCell>{member.email}</TableCell>
-                    <TableCell className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-muted-foreground" />
-                      {member.role}
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">
-                        Ativo
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">
-                        Gerenciar
-                      </Button>
-                    </TableCell>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Membro</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Função</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {members.map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell className="flex items-center gap-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={member.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/10">
+                            {member.full_name?.charAt(0) || member.email?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {member.full_name || "Sem nome"}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {member.email}
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant="secondary"
+                          className={`${getRoleBadgeColor(member.role || '')} flex w-fit items-center gap-1`}
+                        >
+                          <Shield className="h-3 w-3" />
+                          {member.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">
+                          Ativo
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm">
+                          Gerenciar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
       </Card>
