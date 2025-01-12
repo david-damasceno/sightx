@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils"
 import { Link, useLocation } from "react-router-dom"
 import {
   Settings, Users, Link as LinkIcon, FileText, Bell, 
-  MapPin, Brain, Shield, HelpCircle, Globe, UserPlus
+  MapPin, Brain, Shield, HelpCircle, Globe, Building
 } from "lucide-react"
 
 const settingsMenuItems = [
@@ -13,10 +13,10 @@ const settingsMenuItems = [
     description: "Preferências do sistema, idioma e aparência"
   },
   {
-    title: "Membros",
+    title: "Organização",
     href: "/settings/members",
-    icon: UserPlus,
-    description: "Gerenciar membros da organização"
+    icon: Building,
+    description: "Gerenciar organização e membros"
   },
   {
     title: "Usuários & Permissões",

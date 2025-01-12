@@ -13,8 +13,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useToast } from "@/components/ui/use-toast"
-import { Users, UserPlus, Mail, Shield } from "lucide-react"
+import { Users, UserPlus, Mail, Shield, Building } from "lucide-react"
 import { useOrganization } from "@/hooks/useOrganization"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export function MembersSettings() {
   const [inviteEmail, setInviteEmail] = useState("")
@@ -47,9 +48,18 @@ export function MembersSettings() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Users className="h-5 w-5" />
-        <h1 className="text-2xl font-bold">Membros da Organização</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Building className="h-5 w-5" />
+          <div>
+            <h1 className="text-2xl font-bold">
+              {currentOrganization?.name || "Carregando..."}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Gerencie sua organização e membros
+            </p>
+          </div>
+        </div>
       </div>
 
       <Card className="p-6">
@@ -102,6 +112,7 @@ export function MembersSettings() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Membro</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Função</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Ações</TableHead>
@@ -110,7 +121,16 @@ export function MembersSettings() {
               <TableBody>
                 {members.map((member) => (
                   <TableRow key={member.id}>
-                    <TableCell>{member.user_id}</TableCell>
+                    <TableCell className="flex items-center gap-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={member.avatar_url || undefined} />
+                        <AvatarFallback>
+                          {member.full_name?.charAt(0) || member.email?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      {member.full_name || "Sem nome"}
+                    </TableCell>
+                    <TableCell>{member.email}</TableCell>
                     <TableCell className="flex items-center gap-2">
                       <Shield className="h-4 w-4 text-muted-foreground" />
                       {member.role}
