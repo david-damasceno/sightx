@@ -73,12 +73,14 @@ export function useOrganization() {
 
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 
-      // Iniciar uma transação usando o cliente RPC
-      const { data: result, error: rpcError } = await supabase.rpc('create_organization_with_owner', {
-        p_name: name,
-        p_slug: slug,
-        p_user_id: user.id
-      })
+      const { data: result, error: rpcError } = await supabase.rpc(
+        'create_organization_with_owner',
+        {
+          p_name: name,
+          p_slug: slug,
+          p_user_id: user.id
+        }
+      )
 
       if (rpcError) throw rpcError
 
