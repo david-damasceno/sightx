@@ -82,6 +82,8 @@ export function useOrganization() {
 
       if (rpcError) throw rpcError
 
+      if (!result) throw new Error('Nenhum resultado retornado da função RPC')
+
       // Buscar a organização recém-criada
       const { data: org, error: orgError } = await supabase
         .from('organizations')
