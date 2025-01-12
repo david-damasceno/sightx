@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
       organization_invites: {
@@ -158,11 +158,19 @@ export type Database = {
         Relationships: []
       }
     }
-    Views: {
-      [_ in never]: never
-    }
     Functions: {
-      [_ in never]: never
+      create_organization_with_owner: {
+        Args: {
+          p_name: string
+          p_slug: string
+          p_user_id: string
+        }
+        Returns: {
+          organization_id: string
+          name: string
+          slug: string
+        }
+      }
     }
     Enums: {
       user_role: "owner" | "admin" | "member"
