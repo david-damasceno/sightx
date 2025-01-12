@@ -69,13 +69,24 @@ export function AppNavbar() {
   } | null>(null)
 
   useEffect(() => {
+    checkSession()
     getProfile()
   }, [])
+
+  const checkSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      navigate("/login")
+    }
+  }
 
   const getProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        navigate("/login")
+        return
+      }
 
       const { data, error } = await supabase
         .from('profiles')
@@ -83,15 +94,21 @@ export function AppNavbar() {
         .eq('id', user.id)
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('Error loading profile:', error)
+        navigate("/login")
+        return
+      }
+      
       setProfile(data)
     } catch (error) {
       console.error('Error loading profile:', error)
+      navigate("/login")
     }
   }
 
   const getInitials = (name: string) => {
-    if (!name) return "AD"
+    if (!name) return ""
     return name
       .split(' ')
       .map((n) => n[0])
@@ -119,6 +136,10 @@ export function AppNavbar() {
         description: "Não foi possível fazer logout. Tente novamente.",
       })
     }
+  }
+
+  if (!profile) {
+    return null
   }
 
   return (
@@ -167,21 +188,20 @@ export function AppNavbar() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src={profile?.avatar_url} alt="Avatar" />
-                  <AvatarFallback>{profile?.full_name ? getInitials(profile.full_name) : "AD"}</AvatarFallback>
+                  <AvatarImage src={profile.avatar_url} alt="Avatar" />
+                  <AvatarFallback>{getInitials(profile.full_name)}</AvatarFallback>
                 </Avatar>
-                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-background" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-64 bg-background" align="end" forceMount>
               <div className="flex items-center justify-start gap-2 p-2">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={profile?.avatar_url} alt="Avatar" />
-                  <AvatarFallback>{profile?.full_name ? getInitials(profile.full_name) : "AD"}</AvatarFallback>
+                  <AvatarImage src={profile.avatar_url} alt="Avatar" />
+                  <AvatarFallback>{getInitials(profile.full_name)}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col space-y-0.5">
-                  <p className="text-sm font-medium">{profile?.full_name || "Administrador"}</p>
-                  <p className="text-xs text-muted-foreground">{profile?.email || "admin@sightx.com"}</p>
+                  <p className="text-sm font-medium">{profile.full_name}</p>
+                  <p className="text-xs text-muted-foreground">{profile.email}</p>
                 </div>
               </div>
               <DropdownMenuSeparator />

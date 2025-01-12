@@ -8,12 +8,23 @@ export default function Login() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
+    checkSession()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
         navigate("/")
       }
     })
+
+    return () => subscription.unsubscribe()
   }, [navigate])
+
+  const checkSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      navigate("/")
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -23,15 +34,15 @@ export default function Login() {
             <img 
               src="/lovable-uploads/800dc37c-395b-470c-814b-1014271e967e.png" 
               alt="SightX Logo" 
-              className="h-14 w-14" // Aumentado de h-12 w-12 para h-14 w-14
+              className="h-14 w-14"
             />
-            <h2 className="text-4xl font-bold text-gray-900"> {/* Aumentado de text-3xl para text-4xl */}
+            <h2 className="text-4xl font-bold text-gray-900">
               SightX
             </h2>
           </div>
           <div className="space-y-1">
             <h3 className="text-xl font-semibold text-gray-900">
-              Bem-vindo de volta
+              Bem-vindo
             </h3>
             <p className="text-sm text-gray-600">
               Faça login para acessar seu painel de controle
@@ -104,19 +115,6 @@ export default function Login() {
             providers={[]}
             socialLayout="horizontal"
           />
-        </div>
-
-        <div className="mt-4 text-center text-xs text-gray-600">
-          <p>
-            Ao continuar, você concorda com nossos{" "}
-            <a href="#" className="text-blue-600 hover:text-blue-800 font-medium">
-              Termos de Serviço
-            </a>{" "}
-            e{" "}
-            <a href="#" className="text-blue-600 hover:text-blue-800 font-medium">
-              Política de Privacidade
-            </a>
-          </p>
         </div>
       </div>
     </div>
