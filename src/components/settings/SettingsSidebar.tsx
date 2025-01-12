@@ -7,64 +7,64 @@ import {
 
 const settingsMenuItems = [
   {
-    title: "General Settings",
+    title: "Minha Conta",
     href: "/settings/general",
     icon: Settings,
-    description: "System preferences, language, and appearance"
+    description: "Preferências do sistema, idioma e aparência"
   },
   {
-    title: "Users & Permissions",
+    title: "Usuários & Permissões",
     href: "/settings/users",
     icon: Users,
-    description: "Manage users, roles, and access control"
+    description: "Gerenciar usuários, funções e controle de acesso"
   },
   {
-    title: "Integrations",
+    title: "Integrações",
     href: "/settings/integrations",
     icon: LinkIcon,
-    description: "Connect with external platforms and services"
+    description: "Conectar com plataformas e serviços externos"
   },
   {
-    title: "Reports",
+    title: "Relatórios",
     href: "/settings/reports",
     icon: FileText,
-    description: "Customize reports and export preferences"
+    description: "Personalizar relatórios e preferências de exportação"
   },
   {
-    title: "Alerts",
+    title: "Alertas",
     href: "/settings/alerts",
     icon: Bell,
-    description: "Configure notifications and alert rules"
+    description: "Configurar notificações e regras de alerta"
   },
   {
-    title: "Locations",
+    title: "Localizações",
     href: "/settings/locations",
     icon: MapPin,
-    description: "Manage business locations and geography settings"
+    description: "Gerenciar localizações e configurações geográficas"
   },
   {
-    title: "AI Settings",
+    title: "Configurações de IA",
     href: "/settings/ai",
     icon: Brain,
-    description: "Configure AI analysis and predictions"
+    description: "Configurar análise e previsões de IA"
   },
   {
-    title: "Security",
+    title: "Segurança",
     href: "/settings/security",
     icon: Shield,
-    description: "Security settings and audit logs"
+    description: "Configurações de segurança e logs de auditoria"
   },
   {
-    title: "Support",
+    title: "Suporte",
     href: "/settings/support",
     icon: HelpCircle,
-    description: "Get help and access resources"
+    description: "Obter ajuda e acessar recursos"
   },
   {
-    title: "Localization",
+    title: "Localização",
     href: "/settings/localization",
     icon: Globe,
-    description: "Language and regional settings"
+    description: "Configurações de idioma e região"
   }
 ]
 
