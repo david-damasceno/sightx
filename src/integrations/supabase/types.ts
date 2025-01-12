@@ -50,7 +50,7 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       organization_members: {
@@ -85,7 +85,7 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
       organizations: {
@@ -158,6 +158,7 @@ export interface Database {
         Relationships: []
       }
     }
+    Views: Record<string, never>
     Functions: {
       create_organization_with_owner: {
         Args: {
@@ -199,14 +200,14 @@ export type Tables<
     ? R
     : never
   : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
+      PublicSchema["Views"])
+  ? (PublicSchema["Tables"] &
+      PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+      Row: infer R
+    }
+    ? R
     : never
+  : never
 
 export type TablesInsert<
   PublicTableNameOrOptions extends
@@ -277,3 +278,4 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
     ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
