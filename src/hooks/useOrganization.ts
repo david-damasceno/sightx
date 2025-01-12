@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { Database } from "@/integrations/supabase/types"
 
 type Organization = Database['public']['Tables']['organizations']['Row']
-type OrganizationMember = Database['public']['Tables']['organization_members']['Row']
+type OrganizationMember = Database['public']['Views']['organization_members_with_profiles']['Row']
 
 export function useOrganization() {
   const [loading, setLoading] = useState(false)
@@ -51,10 +51,8 @@ export function useOrganization() {
         .eq('slug', slug)
 
       if (!data || data.length === 0) {
-        // Nenhum resultado encontrado, slug é único
         isUnique = true
       } else {
-        // Slug existe, tentar próximo número
         slug = `${baseSlug}-${counter}`
         counter++
       }
@@ -72,7 +70,6 @@ export function useOrganization() {
         throw new Error('Usuário não autenticado')
       }
 
-      // Normaliza o slug base removendo caracteres especiais e espaços
       const baseSlug = name
         .toLowerCase()
         .normalize('NFD')
@@ -119,7 +116,7 @@ export function useOrganization() {
     try {
       setLoading(true)
       const { data, error } = await supabase
-        .from('organization_members')
+        .from('organization_members_with_profiles')
         .select('*')
         .eq('organization_id', organizationId)
 
@@ -143,7 +140,7 @@ export function useOrganization() {
       setLoading(true)
       const token = crypto.randomUUID()
       const expiresAt = new Date()
-      expiresAt.setDate(expiresAt.getDate() + 7) // Convite expira em 7 dias
+      expiresAt.setDate(expiresAt.getDate() + 7)
 
       const { error } = await supabase
         .from('organization_invites')
