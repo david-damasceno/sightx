@@ -12,7 +12,6 @@ import Login from "./pages/Login"
 import Onboarding from "./pages/Onboarding"
 import Social from "./pages/Social"
 import Demographics from "./pages/Demographics"
-import AIInsights from "./pages/AIInsights"
 import Feedback from "./pages/Feedback"
 import Reports from "./pages/Reports"
 import Sales from "./pages/Sales"
@@ -78,14 +77,6 @@ const AppContent = () => {
             element={
               <ProtectedRoute checkOnboarding>
                 <Demographics />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/ai-insights"
-            element={
-              <ProtectedRoute checkOnboarding>
-                <AIInsights />
               </ProtectedRoute>
             }
           />
