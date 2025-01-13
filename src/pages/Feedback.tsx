@@ -4,11 +4,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { MessageSquare, Link, Share2, Plus, Star, Users, BarChart3 } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import { NPSBreakdownChart } from "@/components/nps/NPSBreakdownChart"
 import { SentimentAnalysis } from "@/components/nps/SentimentAnalysis"
 import { TrendAnalysis } from "@/components/nps/TrendAnalysis"
-import { CreateSurveyForm } from "@/components/nps/CreateSurveyForm"
 
 interface NPSSurvey {
   id: string
@@ -55,7 +54,6 @@ const mockSurveys: NPSSurvey[] = [
 
 export default function Feedback() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [showCreateForm, setShowCreateForm] = useState(false)
   const { toast } = useToast()
 
   const getStatusColor = (status: NPSSurvey["status"]) => {
@@ -77,10 +75,6 @@ export default function Feedback() {
     })
   }
 
-  if (showCreateForm) {
-    return <CreateSurveyForm />
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <main className="container py-6 space-y-6 animate-in">
@@ -89,7 +83,7 @@ export default function Feedback() {
             <MessageSquare className="h-5 w-5" />
             <h1 className="text-2xl font-bold">Pesquisas NPS</h1>
           </div>
-          <Button onClick={() => setShowCreateForm(true)}>
+          <Button>
             <Plus className="h-4 w-4 mr-2" />
             Nova Pesquisa
           </Button>
