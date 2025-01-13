@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { MessageSquare, Link, Share2, Plus, Star, Users, BarChart3 } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { NPSBreakdownChart } from "@/components/nps/NPSBreakdownChart"
 import { SentimentAnalysis } from "@/components/nps/SentimentAnalysis"
 import { TrendAnalysis } from "@/components/nps/TrendAnalysis"
+import { CreateSurveyForm } from "@/components/nps/CreateSurveyForm"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 interface NPSSurvey {
   id: string
@@ -83,10 +85,20 @@ export default function Feedback() {
             <MessageSquare className="h-5 w-5" />
             <h1 className="text-2xl font-bold">Pesquisas NPS</h1>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Pesquisa
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Pesquisa
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Criar Nova Pesquisa NPS</DialogTitle>
+              </DialogHeader>
+              <CreateSurveyForm />
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
