@@ -59,7 +59,10 @@
 }
 
 .glass-card {
-  @apply bg-white/30 dark:bg-gray-800/30 backdrop-blur-md border border-white/20 dark:border-gray-700/20 shadow-lg;
+  @apply bg-white/30 dark:bg-gray-800/30 backdrop-blur-md 
+         border border-white/20 dark:border-gray-700/20 
+         shadow-lg hover:shadow-xl transition-all duration-300
+         dark:shadow-gray-900/30;
 }
 
 .animate-in {
@@ -80,16 +83,46 @@
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  @apply bg-transparent dark:bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+  @apply bg-gray-300 dark:bg-gray-700 rounded-full 
+         hover:bg-gray-400 dark:hover:bg-gray-600 
+         transition-colors duration-200;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400 dark:bg-gray-600;
+/* Card Hover Effects */
+.hover-card {
+  @apply transform transition-all duration-300 
+         hover:scale-[1.02] hover:-translate-y-1;
+}
+
+/* Input Fields Dark Mode Enhancement */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark textarea {
+  @apply bg-gray-800/50 border-gray-700 
+         focus:border-gray-600 focus:ring-gray-600;
+}
+
+/* Button Enhancements */
+.button-transition {
+  @apply transition-all duration-300 
+         hover:shadow-lg active:scale-95;
+}
+
+/* Dark Mode Selection */
+.dark ::selection {
+  @apply bg-gray-700 text-white;
+}
+
+/* Dark Mode Focus Ring */
+.dark :focus-visible {
+  @apply outline-none ring-2 ring-gray-600;
 }
