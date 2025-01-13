@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { MessageSquare, Link, Share2, Plus, Star, Users, BarChart3 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
+import { NPSBreakdownChart } from "@/components/nps/NPSBreakdownChart"
+import { SentimentAnalysis } from "@/components/nps/SentimentAnalysis"
+import { TrendAnalysis } from "@/components/nps/TrendAnalysis"
 
 interface NPSSurvey {
   id: string
@@ -117,6 +120,13 @@ export default function Feedback() {
             </div>
           </Card>
         </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <NPSBreakdownChart />
+          <TrendAnalysis />
+        </div>
+
+        <SentimentAnalysis />
 
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
