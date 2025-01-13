@@ -20,7 +20,7 @@ import {
   Upload,
   FileType,
   File,
-  LineChart // Changed from ChartLine to LineChart
+  LineChart as LineChartIcon // Renamed to avoid conflict
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -481,7 +481,7 @@ export default function AIInsights() {
 
                     <div className="flex items-start space-x-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
                       <div className="p-2 rounded-full bg-yellow-100 dark:bg-yellow-900">
-                        <LineChart className="h-4 w-4 text-yellow-500" />
+                        <LineChartIcon className="h-4 w-4 text-yellow-500" />
                       </div>
                       <div>
                         <h4 className="font-semibold">Projeção Futura</h4>
