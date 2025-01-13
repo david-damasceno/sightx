@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { DemographicMetrics } from "@/components/demographics/DemographicMetrics"
 import { CustomerMap } from "@/components/demographics/CustomerMap"
 import { DemographicCharts } from "@/components/demographics/DemographicCharts"
+import { Json } from "@/integrations/supabase/types"
 
 interface CustomerLocation {
   latitude: number
@@ -24,6 +25,21 @@ interface DemographicData {
   ageDistribution: ChartData[]
   incomeDistribution: ChartData[]
   educationLevels: ChartData[]
+}
+
+// Helper function to safely convert JSON to ChartData array
+function convertToChartData(jsonData: Json | null): ChartData[] {
+  if (!Array.isArray(jsonData)) return []
+  
+  return jsonData.map(item => {
+    if (typeof item === 'object' && item !== null && 'name' in item && 'value' in item) {
+      return {
+        name: String(item.name),
+        value: Number(item.value)
+      }
+    }
+    return { name: '', value: 0 }
+  }).filter(item => item.name !== '')
 }
 
 export default function Demographics() {
@@ -71,23 +87,11 @@ export default function Demographics() {
 
         // Processar dados demográficos com verificação de tipo
         if (demographicData) {
-          const ageDistribution = Array.isArray(demographicData.age_distribution) 
-            ? demographicData.age_distribution as ChartData[]
-            : []
-          
-          const incomeDistribution = Array.isArray(demographicData.income_distribution)
-            ? demographicData.income_distribution as ChartData[]
-            : []
-          
-          const educationLevels = Array.isArray(demographicData.education_levels)
-            ? demographicData.education_levels as ChartData[]
-            : []
-
           setDemographicData({
             totalPopulation: demographicData.total_population,
-            ageDistribution,
-            incomeDistribution,
-            educationLevels
+            ageDistribution: convertToChartData(demographicData.age_distribution),
+            incomeDistribution: convertToChartData(demographicData.income_distribution),
+            educationLevels: convertToChartData(demographicData.education_levels)
           })
         }
       } catch (error) {
