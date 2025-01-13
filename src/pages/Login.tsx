@@ -2,29 +2,17 @@ import { Auth } from "@supabase/auth-ui-react"
 import { ThemeSupa } from "@supabase/auth-ui-shared"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 
 export default function Login() {
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     checkSession()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        // Primeiro verifica se o usuário tem uma organização
-        const { data: memberData } = await supabase
-          .from('organization_members')
-          .select('organization_id')
-          .eq('user_id', session.user.id)
-          .single()
-
-        if (memberData) {
-          navigate("/")
-        } else {
-          navigate("/onboarding")
-        }
+        navigate("/")
       }
     })
 
@@ -32,33 +20,10 @@ export default function Login() {
   }, [navigate])
 
   const checkSession = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        // Verifica se o usuário já tem uma organização
-        const { data: memberData } = await supabase
-          .from('organization_members')
-          .select('organization_id')
-          .eq('user_id', session.user.id)
-          .single()
-
-        if (memberData) {
-          navigate("/")
-        } else {
-          navigate("/onboarding")
-        }
-      }
-    } finally {
-      setLoading(false)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      navigate("/")
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    )
   }
 
   return (

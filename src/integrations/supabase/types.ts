@@ -56,59 +56,6 @@ export type Database = {
           },
         ]
       }
-      data_files: {
-        Row: {
-          content_type: string
-          created_at: string | null
-          created_by: string | null
-          file_name: string
-          file_path: string
-          file_size: number
-          file_type: Database["public"]["Enums"]["file_type"]
-          id: string
-          last_analyzed_at: string | null
-          organization_id: string
-          preview_data: Json | null
-          status: string | null
-        }
-        Insert: {
-          content_type: string
-          created_at?: string | null
-          created_by?: string | null
-          file_name: string
-          file_path: string
-          file_size: number
-          file_type: Database["public"]["Enums"]["file_type"]
-          id?: string
-          last_analyzed_at?: string | null
-          organization_id: string
-          preview_data?: Json | null
-          status?: string | null
-        }
-        Update: {
-          content_type?: string
-          created_at?: string | null
-          created_by?: string | null
-          file_name?: string
-          file_path?: string
-          file_size?: number
-          file_type?: Database["public"]["Enums"]["file_type"]
-          id?: string
-          last_analyzed_at?: string | null
-          organization_id?: string
-          preview_data?: Json | null
-          status?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "data_files_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       demographic_data: {
         Row: {
           age_distribution: Json | null
@@ -149,91 +96,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "demographic_data_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      nps_responses: {
-        Row: {
-          comment: string | null
-          created_at: string | null
-          id: string
-          metadata: Json | null
-          respondent_email: string | null
-          score: number
-          sentiment: string | null
-          survey_id: string
-        }
-        Insert: {
-          comment?: string | null
-          created_at?: string | null
-          id?: string
-          metadata?: Json | null
-          respondent_email?: string | null
-          score: number
-          sentiment?: string | null
-          survey_id: string
-        }
-        Update: {
-          comment?: string | null
-          created_at?: string | null
-          id?: string
-          metadata?: Json | null
-          respondent_email?: string | null
-          score?: number
-          sentiment?: string | null
-          survey_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "nps_responses_survey_id_fkey"
-            columns: ["survey_id"]
-            isOneToOne: false
-            referencedRelation: "nps_surveys"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      nps_surveys: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string
-          organization_id: string
-          settings: Json | null
-          status: Database["public"]["Enums"]["survey_status"]
-          title: string
-          type: Database["public"]["Enums"]["survey_type"]
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          organization_id: string
-          settings?: Json | null
-          status?: Database["public"]["Enums"]["survey_status"]
-          title: string
-          type?: Database["public"]["Enums"]["survey_type"]
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          organization_id?: string
-          settings?: Json | null
-          status?: Database["public"]["Enums"]["survey_status"]
-          title?: string
-          type?: Database["public"]["Enums"]["survey_type"]
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "nps_surveys_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -415,12 +277,6 @@ export type Database = {
       }
     }
     Functions: {
-      calculate_nps_metrics: {
-        Args: {
-          survey_id: string
-        }
-        Returns: Json
-      }
       create_organization_with_owner: {
         Args: {
           p_name: string
@@ -431,9 +287,6 @@ export type Database = {
       }
     }
     Enums: {
-      file_type: "excel" | "csv" | "access" | "json"
-      survey_status: "draft" | "active" | "inactive" | "archived"
-      survey_type: "simple" | "detailed" | "advanced"
       user_role: "owner" | "admin" | "member"
     }
     CompositeTypes: {
