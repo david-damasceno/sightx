@@ -116,18 +116,9 @@ export default function AIInsights() {
           </div>
         </div>
 
-        {/* Search and Actions Bar */}
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm p-4 rounded-lg border">
-          <div className="relative w-full sm:w-96">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Buscar insights..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
+        {/* Actions Bar */}
+        <div className="flex justify-end bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm p-4 rounded-lg border">
+          <div className="flex gap-2">
             <Button variant="outline" size="icon" onClick={handleRefresh}>
               <RefreshCw className="h-4 w-4" />
             </Button>
