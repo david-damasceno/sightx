@@ -49,65 +49,88 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
     setFiles(data || [])
   }
 
+  const getFileType = (extension: string): "json" | "csv" | "excel" | "access" => {
+    switch (extension.toLowerCase()) {
+      case 'json':
+        return 'json'
+      case 'csv':
+        return 'csv'
+      case 'xlsx':
+      case 'xls':
+        return 'excel'
+      case 'accdb':
+        return 'access'
+      default:
+        throw new Error('Tipo de arquivo não suportado')
+    }
+  }
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    const fileType = file.name.split('.').pop()?.toLowerCase()
-    const allowedTypes = ['csv', 'xlsx', 'xls', 'accdb', 'json']
-
-    if (!allowedTypes.includes(fileType || '')) {
-      toast({
-        title: "Tipo de arquivo não suportado",
-        description: "Por favor, envie apenas arquivos CSV, Excel, Access ou JSON.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    // Upload do arquivo para o Storage
-    const fileName = `${crypto.randomUUID()}.${fileType}`
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('data-files')
-      .upload(fileName, file)
-
-    if (uploadError) {
+    const fileExt = file.name.split('.').pop()?.toLowerCase()
+    if (!fileExt) {
       toast({
         title: "Erro no upload",
-        description: uploadError.message,
+        description: "Arquivo sem extensão",
         variant: "destructive",
       })
       return
     }
 
-    // Criar registro na tabela data_files
-    const { error: dbError } = await supabase
-      .from('data_files')
-      .insert({
-        file_name: file.name,
-        file_path: fileName,
-        file_type: fileType,
-        file_size: file.size,
-        content_type: file.type,
-        status: 'pending',
-        preview_data: {} // Será atualizado após processamento
-      })
+    try {
+      const fileType = getFileType(fileExt)
+      const fileName = `${crypto.randomUUID()}.${fileExt}`
 
-    if (dbError) {
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('data-files')
+        .upload(fileName, file)
+
+      if (uploadError) {
+        toast({
+          title: "Erro no upload",
+          description: uploadError.message,
+          variant: "destructive",
+        })
+        return
+      }
+
+      const { error: dbError } = await supabase
+        .from('data_files')
+        .insert({
+          file_name: file.name,
+          file_path: fileName,
+          file_type: fileType,
+          file_size: file.size,
+          content_type: file.type,
+          status: 'pending',
+          preview_data: {},
+          organization_id: '123' // Você precisa passar o organization_id correto aqui
+        })
+
+      if (dbError) {
+        toast({
+          title: "Erro ao salvar arquivo",
+          description: dbError.message,
+          variant: "destructive",
+        })
+        return
+      }
+
       toast({
-        title: "Erro ao salvar arquivo",
-        description: dbError.message,
+        title: "Arquivo enviado com sucesso",
+        description: "Seu arquivo está sendo processado.",
+      })
+
+      fetchFiles()
+    } catch (error) {
+      toast({
+        title: "Erro no upload",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
         variant: "destructive",
       })
-      return
     }
-
-    toast({
-      title: "Arquivo enviado com sucesso",
-      description: "Seu arquivo está sendo processado.",
-    })
-
-    fetchFiles()
   }
 
   const handleDeleteFile = async (fileId: string) => {

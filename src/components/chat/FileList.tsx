@@ -9,7 +9,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { DataTable } from "@/components/ui/data-table"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
