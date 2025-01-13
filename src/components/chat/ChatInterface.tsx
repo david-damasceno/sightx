@@ -1,9 +1,11 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { MessageSquare, Image, FileText, Star, Send, Paperclip, Mic, Sparkles } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
+import { FileList } from "./FileList"
+import { supabase } from "@/integrations/supabase/client"
 
 interface ChatMessage {
   id: string
@@ -22,7 +24,113 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputMessage, setInputMessage] = useState("")
   const [isRecording, setIsRecording] = useState(false)
+  const [files, setFiles] = useState<any[]>([])
   const { toast } = useToast()
+
+  useEffect(() => {
+    fetchFiles()
+  }, [])
+
+  const fetchFiles = async () => {
+    const { data, error } = await supabase
+      .from('data_files')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      toast({
+        title: "Erro ao carregar arquivos",
+        description: error.message,
+        variant: "destructive",
+      })
+      return
+    }
+
+    setFiles(data || [])
+  }
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const fileType = file.name.split('.').pop()?.toLowerCase()
+    const allowedTypes = ['csv', 'xlsx', 'xls', 'accdb', 'json']
+
+    if (!allowedTypes.includes(fileType || '')) {
+      toast({
+        title: "Tipo de arquivo não suportado",
+        description: "Por favor, envie apenas arquivos CSV, Excel, Access ou JSON.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Upload do arquivo para o Storage
+    const fileName = `${crypto.randomUUID()}.${fileType}`
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('data-files')
+      .upload(fileName, file)
+
+    if (uploadError) {
+      toast({
+        title: "Erro no upload",
+        description: uploadError.message,
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Criar registro na tabela data_files
+    const { error: dbError } = await supabase
+      .from('data_files')
+      .insert({
+        file_name: file.name,
+        file_path: fileName,
+        file_type: fileType,
+        file_size: file.size,
+        content_type: file.type,
+        status: 'pending',
+        preview_data: {} // Será atualizado após processamento
+      })
+
+    if (dbError) {
+      toast({
+        title: "Erro ao salvar arquivo",
+        description: dbError.message,
+        variant: "destructive",
+      })
+      return
+    }
+
+    toast({
+      title: "Arquivo enviado com sucesso",
+      description: "Seu arquivo está sendo processado.",
+    })
+
+    fetchFiles()
+  }
+
+  const handleDeleteFile = async (fileId: string) => {
+    const { error } = await supabase
+      .from('data_files')
+      .delete()
+      .eq('id', fileId)
+
+    if (error) {
+      toast({
+        title: "Erro ao deletar arquivo",
+        description: error.message,
+        variant: "destructive",
+      })
+      return
+    }
+
+    toast({
+      title: "Arquivo deletado com sucesso",
+    })
+
+    fetchFiles()
+  }
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return
@@ -57,16 +165,6 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
           : msg
       )
     )
-  }
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      toast({
-        title: "Arquivo anexado",
-        description: `${file.name} foi anexado ao chat.`
-      })
-    }
   }
 
   const handleVoiceRecord = () => {
@@ -149,6 +247,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
             id="file-upload"
             className="hidden"
             onChange={handleFileUpload}
+            accept=".csv,.xlsx,.xls,.accdb,.json"
           />
           <Button
             variant="outline"
@@ -185,6 +284,10 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
           <Button onClick={handleSendMessage} className="bg-purple-500 hover:bg-purple-600">
             <Send className="h-4 w-4" />
           </Button>
+        </div>
+
+        <div className="mt-4">
+          <FileList files={files} onDelete={handleDeleteFile} />
         </div>
       </div>
     </div>
