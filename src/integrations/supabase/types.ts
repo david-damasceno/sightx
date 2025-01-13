@@ -56,6 +56,59 @@ export type Database = {
           },
         ]
       }
+      data_files: {
+        Row: {
+          content_type: string
+          created_at: string | null
+          created_by: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: Database["public"]["Enums"]["file_type"]
+          id: string
+          last_analyzed_at: string | null
+          organization_id: string
+          preview_data: Json | null
+          status: string | null
+        }
+        Insert: {
+          content_type: string
+          created_at?: string | null
+          created_by?: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: Database["public"]["Enums"]["file_type"]
+          id?: string
+          last_analyzed_at?: string | null
+          organization_id: string
+          preview_data?: Json | null
+          status?: string | null
+        }
+        Update: {
+          content_type?: string
+          created_at?: string | null
+          created_by?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: Database["public"]["Enums"]["file_type"]
+          id?: string
+          last_analyzed_at?: string | null
+          organization_id?: string
+          preview_data?: Json | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_files_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demographic_data: {
         Row: {
           age_distribution: Json | null
@@ -378,6 +431,7 @@ export type Database = {
       }
     }
     Enums: {
+      file_type: "excel" | "csv" | "access" | "json"
       survey_status: "draft" | "active" | "inactive" | "archived"
       survey_type: "simple" | "detailed" | "advanced"
       user_role: "owner" | "admin" | "member"
