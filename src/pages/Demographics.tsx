@@ -14,11 +14,16 @@ interface CustomerLocation {
   customerCount: number
 }
 
+interface ChartData {
+  name: string
+  value: number
+}
+
 interface DemographicData {
   totalPopulation: number
-  ageDistribution: { name: string; value: number }[]
-  incomeDistribution: { name: string; value: number }[]
-  educationLevels: { name: string; value: number }[]
+  ageDistribution: ChartData[]
+  incomeDistribution: ChartData[]
+  educationLevels: ChartData[]
 }
 
 export default function Demographics() {
@@ -51,9 +56,9 @@ export default function Demographics() {
           .from('demographic_data')
           .select('*')
           .eq('organization_id', currentOrganization.id)
-          .single()
+          .maybeSingle()
 
-        if (demographicError && demographicError.code !== 'PGRST116') throw demographicError
+        if (demographicError) throw demographicError
 
         // Processar dados de concentração
         const locations = concentrationData?.map(item => ({
@@ -64,13 +69,25 @@ export default function Demographics() {
 
         setCustomerLocations(locations)
 
-        // Processar dados demográficos
+        // Processar dados demográficos com verificação de tipo
         if (demographicData) {
+          const ageDistribution = Array.isArray(demographicData.age_distribution) 
+            ? demographicData.age_distribution as ChartData[]
+            : []
+          
+          const incomeDistribution = Array.isArray(demographicData.income_distribution)
+            ? demographicData.income_distribution as ChartData[]
+            : []
+          
+          const educationLevels = Array.isArray(demographicData.education_levels)
+            ? demographicData.education_levels as ChartData[]
+            : []
+
           setDemographicData({
             totalPopulation: demographicData.total_population,
-            ageDistribution: demographicData.age_distribution || [],
-            incomeDistribution: demographicData.income_distribution || [],
-            educationLevels: demographicData.education_levels || []
+            ageDistribution,
+            incomeDistribution,
+            educationLevels
           })
         }
       } catch (error) {
@@ -88,10 +105,17 @@ export default function Demographics() {
     loadData()
   }, [currentOrganization, toast])
 
-  // Calcular métricas
+  // Calcular métricas com verificação de tipo
   const totalCustomers = customerLocations.reduce((sum, loc) => sum + loc.customerCount, 0)
-  const averageIncome = demographicData.incomeDistribution.reduce((sum, item) => sum + (item.value * item.name), 0) / 100
-  const educationLevel = demographicData.educationLevels.find(item => item.name === "Superior")?.value || 0
+  
+  const averageIncome = demographicData.incomeDistribution.reduce((sum, item) => {
+    const income = parseFloat(item.name)
+    return isNaN(income) ? sum : sum + (income * item.value)
+  }, 0) / 100
+
+  const educationLevel = demographicData.educationLevels.find(
+    item => item.name === "Superior"
+  )?.value || 0
 
   return (
     <div className="min-h-screen bg-background">
