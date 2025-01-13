@@ -9,6 +9,100 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      customer_concentration: {
+        Row: {
+          city: string
+          created_at: string | null
+          customer_count: number
+          id: string
+          latitude: number
+          longitude: number
+          neighborhood: string
+          organization_id: string
+          state: string
+          updated_at: string | null
+        }
+        Insert: {
+          city: string
+          created_at?: string | null
+          customer_count: number
+          id?: string
+          latitude: number
+          longitude: number
+          neighborhood: string
+          organization_id: string
+          state: string
+          updated_at?: string | null
+        }
+        Update: {
+          city?: string
+          created_at?: string | null
+          customer_count?: number
+          id?: string
+          latitude?: number
+          longitude?: number
+          neighborhood?: string
+          organization_id?: string
+          state?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_concentration_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demographic_data: {
+        Row: {
+          age_distribution: Json | null
+          city: string
+          created_at: string | null
+          education_levels: Json | null
+          id: string
+          income_distribution: Json | null
+          organization_id: string
+          state: string
+          total_population: number
+          updated_at: string | null
+        }
+        Insert: {
+          age_distribution?: Json | null
+          city: string
+          created_at?: string | null
+          education_levels?: Json | null
+          id?: string
+          income_distribution?: Json | null
+          organization_id: string
+          state: string
+          total_population: number
+          updated_at?: string | null
+        }
+        Update: {
+          age_distribution?: Json | null
+          city?: string
+          created_at?: string | null
+          education_levels?: Json | null
+          id?: string
+          income_distribution?: Json | null
+          organization_id?: string
+          state?: string
+          total_population?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demographic_data_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_invites: {
         Row: {
           created_at: string | null
