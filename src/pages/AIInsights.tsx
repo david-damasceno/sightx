@@ -16,13 +16,54 @@ import {
   Filter,
   RefreshCw,
   Search,
-  Settings2
+  Settings2,
+  TrendingDown,
+  ChartLine,
+  ChartBar
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from "recharts"
+
+// Dados simulados para os gráficos
+const salesData = [
+  { month: 'Jan', vendas: 4000, meta: 3000 },
+  { month: 'Fev', vendas: 3000, meta: 3000 },
+  { month: 'Mar', vendas: 5000, meta: 3000 },
+  { month: 'Abr', vendas: 2780, meta: 3000 },
+  { month: 'Mai', vendas: 4890, meta: 3000 },
+  { month: 'Jun', vendas: 3390, meta: 3000 },
+]
+
+const customerData = [
+  { mes: 'Jan', novos: 120, recorrentes: 200 },
+  { mes: 'Fev', novos: 150, recorrentes: 220 },
+  { mes: 'Mar', novos: 180, recorrentes: 250 },
+  { mes: 'Abr', novos: 170, recorrentes: 280 },
+  { mes: 'Mai', novos: 200, recorrentes: 300 },
+  { mes: 'Jun', novos: 220, recorrentes: 320 },
+]
 
 export default function AIInsights() {
   const [selectedChat, setSelectedChat] = useState<string | null>(null)
@@ -177,22 +218,168 @@ export default function AIInsights() {
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="trends">
-            <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-8 text-center">
-              <div className="max-w-md mx-auto space-y-4">
-                <Brain className="h-16 w-16 mx-auto text-purple-500 opacity-50" />
-                <h3 className="text-xl font-semibold">Análise de Tendências</h3>
-                <p className="text-muted-foreground">
-                  Nossa IA está analisando seus dados para identificar tendências relevantes.
-                  Esta funcionalidade estará disponível em breve.
-                </p>
-                <Button variant="outline" className="gap-2">
-                  <RefreshCw className="h-4 w-4" />
-                  Verificar Novamente
-                </Button>
-              </div>
+          <TabsContent value="trends" className="mt-4 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Gráfico de Vendas */}
+              <Card className="col-span-1">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-green-500" />
+                        Tendência de Vendas
+                      </CardTitle>
+                      <CardDescription>
+                        Comparativo de vendas realizadas vs. meta
+                      </CardDescription>
+                    </div>
+                    <Button variant="outline" size="icon" onClick={handleRefresh}>
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={salesData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="vendas" 
+                          stroke="#22c55e" 
+                          name="Vendas"
+                          strokeWidth={2}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="meta" 
+                          stroke="#94a3b8" 
+                          name="Meta"
+                          strokeDasharray="5 5"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Gráfico de Clientes */}
+              <Card className="col-span-1">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Users className="h-5 w-5 text-blue-500" />
+                        Evolução de Clientes
+                      </CardTitle>
+                      <CardDescription>
+                        Novos clientes vs. recorrentes por mês
+                      </CardDescription>
+                    </div>
+                    <Button variant="outline" size="icon" onClick={handleRefresh}>
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={customerData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="mes" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar 
+                          dataKey="novos" 
+                          name="Novos Clientes" 
+                          fill="#3b82f6"
+                        />
+                        <Bar 
+                          dataKey="recorrentes" 
+                          name="Clientes Recorrentes" 
+                          fill="#93c5fd"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Cards de Insights */}
+              <Card className="col-span-1 lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-purple-500" />
+                    Insights das Tendências
+                  </CardTitle>
+                  <CardDescription>
+                    Análises e recomendações baseadas nas tendências identificadas
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-start space-x-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                      <div className="p-2 rounded-full bg-green-100 dark:bg-green-900">
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">Crescimento Sustentável</h4>
+                        <p className="text-sm text-muted-foreground">
+                          As vendas mantêm tendência de crescimento nos últimos 3 meses, 
+                          superando a meta em 15%.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                      <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900">
+                        <Users className="h-4 w-4 text-blue-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">Retenção de Clientes</h4>
+                        <p className="text-sm text-muted-foreground">
+                          A taxa de clientes recorrentes aumentou 12% no último trimestre,
+                          indicando forte fidelização.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                      <div className="p-2 rounded-full bg-yellow-100 dark:bg-yellow-900">
+                        <ChartLine className="h-4 w-4 text-yellow-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">Projeção Futura</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Baseado nas tendências atuais, projetamos um crescimento
+                          de 25% para o próximo trimestre.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                      <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900">
+                        <Target className="h-4 w-4 text-purple-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">Recomendação</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Considere aumentar o investimento em marketing digital para
+                          manter o ritmo de aquisição de novos clientes.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
+
         </Tabs>
       </div>
     </div>
