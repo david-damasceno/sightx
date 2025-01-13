@@ -1,5 +1,4 @@
 import { NavItem } from "./NavItem"
-import { UserMenu } from "./UserMenu"
 import { Logo } from "./Logo"
 import { OrganizationSelector } from "./OrganizationSelector"
 
@@ -10,9 +9,6 @@ export function Navigation() {
         <Logo />
         <div className="ml-8">
           <OrganizationSelector />
-        </div>
-        <div className="ml-auto flex items-center space-x-4">
-          <UserMenu />
         </div>
       </div>
     </div>
