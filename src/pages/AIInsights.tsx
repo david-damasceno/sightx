@@ -17,15 +17,17 @@ import {
   RefreshCw,
   Search,
   Settings2,
-  TrendingDown,
-  ChartLine,
-  ChartBar
+  Upload,
+  FileType,
+  File
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
+import { useOrganization } from "@/hooks/useOrganization"
+import { supabase } from "@/integrations/supabase/client"
 import {
   Card,
   CardContent,
@@ -69,6 +71,13 @@ export default function AIInsights() {
   const [selectedChat, setSelectedChat] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const { toast } = useToast()
+  const { currentOrganization } = useOrganization()
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{
+    name: string;
+    size: number;
+    type: string;
+    uploadedAt: Date;
+  }>>([])
 
   const handleExport = () => {
     toast({
@@ -82,6 +91,56 @@ export default function AIInsights() {
       title: "Atualizando insights",
       description: "Buscando novos insights...",
     })
+  }
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !currentOrganization) return
+
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${crypto.randomUUID()}.${fileExt}`
+      const filePath = `${currentOrganization.id}/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('data-files')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { error: dbError } = await supabase
+        .from('data_files')
+        .insert({
+          organization_id: currentOrganization.id,
+          file_name: file.name,
+          file_path: filePath,
+          file_type: fileExt as any,
+          file_size: file.size,
+          content_type: file.type,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        })
+
+      if (dbError) throw dbError
+
+      setUploadedFiles(prev => [...prev, {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        uploadedAt: new Date()
+      }])
+
+      toast({
+        title: "Arquivo enviado com sucesso",
+        description: "O arquivo será processado em breve para gerar insights.",
+      })
+    } catch (error) {
+      console.error('Erro no upload:', error)
+      toast({
+        title: "Erro no upload",
+        description: "Não foi possível enviar o arquivo. Tente novamente.",
+        variant: "destructive"
+      })
+    }
   }
 
   return (
@@ -207,6 +266,76 @@ export default function AIInsights() {
                 <InsightsPanel />
               </div>
             </div>
+
+            {/* Área de Upload */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="h-5 w-5 text-purple-500" />
+                  Upload de Arquivos para Análise
+                </CardTitle>
+                <CardDescription>
+                  Faça upload de arquivos para gerar insights automáticos usando IA
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center w-full">
+                    <label
+                      htmlFor="file-upload"
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-700 hover:bg-gray-100 border-gray-300 dark:border-gray-600 dark:hover:border-gray-500"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-8 h-8 mb-3 text-gray-400" />
+                        <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                          <span className="font-semibold">Clique para fazer upload</span> ou arraste e solte
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          CSV, Excel, JSON (MAX. 10MB)
+                        </p>
+                      </div>
+                      <input
+                        id="file-upload"
+                        type="file"
+                        className="hidden"
+                        accept=".csv,.xlsx,.xls,.json"
+                        onChange={handleFileUpload}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Lista de Arquivos */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-sm font-medium mb-3">Arquivos Enviados</h3>
+                      <div className="space-y-2">
+                        {uploadedFiles.map((file, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                          >
+                            <div className="flex items-center gap-3">
+                              <FileType className="h-5 w-5 text-purple-500" />
+                              <div>
+                                <p className="text-sm font-medium">{file.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  {(file.size / 1024 / 1024).toFixed(2)} MB • {
+                                    new Date(file.uploadedAt).toLocaleString()
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                            <Button variant="ghost" size="sm">
+                              <File className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="insights">
