@@ -6,6 +6,7 @@ import { MessageSquare, Image, FileText, Star, Send, Paperclip, Mic, Sparkles } 
 import { useToast } from "@/components/ui/use-toast"
 import { FileList } from "./FileList"
 import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface ChatMessage {
   id: string
@@ -26,15 +27,21 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
   const [isRecording, setIsRecording] = useState(false)
   const [files, setFiles] = useState<any[]>([])
   const { toast } = useToast()
+  const { currentOrganization } = useAuth()
 
   useEffect(() => {
-    fetchFiles()
-  }, [])
+    if (currentOrganization) {
+      fetchFiles()
+    }
+  }, [currentOrganization])
 
   const fetchFiles = async () => {
+    if (!currentOrganization) return
+
     const { data, error } = await supabase
       .from('data_files')
       .select('*')
+      .eq('organization_id', currentOrganization.id)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -67,7 +74,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (!file) return
+    if (!file || !currentOrganization) return
 
     const fileExt = file.name.split('.').pop()?.toLowerCase()
     if (!fileExt) {
@@ -106,7 +113,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
           content_type: file.type,
           status: 'pending',
           preview_data: {},
-          organization_id: '123' // Você precisa passar o organization_id correto aqui
+          organization_id: currentOrganization.id
         })
 
       if (dbError) {
