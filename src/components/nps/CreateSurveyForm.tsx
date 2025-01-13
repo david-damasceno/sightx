@@ -25,6 +25,9 @@ import {
 } from "@/components/ui/select"
 import { Card } from "@/components/ui/card"
 import { supabase } from "@/integrations/supabase/client"
+import type { Database } from "@/integrations/supabase/types"
+
+type NPSSurvey = Database['public']['Tables']['nps_surveys']['Insert']
 
 const surveyFormSchema = z.object({
   title: z.string().min(3, "O título deve ter pelo menos 3 caracteres"),
@@ -69,13 +72,18 @@ export function CreateSurveyForm() {
     setIsLoading(true)
 
     try {
+      const surveyData: NPSSurvey = {
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        organization_id: currentOrganization.id,
+        status: "draft",
+        settings: data.settings
+      }
+
       const { error } = await supabase
-        .from("nps_surveys")
-        .insert({
-          ...data,
-          organization_id: currentOrganization.id,
-          status: "draft",
-        })
+        .from('nps_surveys')
+        .insert(surveyData)
 
       if (error) throw error
 
