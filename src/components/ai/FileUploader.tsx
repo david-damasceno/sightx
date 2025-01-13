@@ -4,23 +4,45 @@ import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/integrations/supabase/client"
 import { useOrganization } from "@/hooks/useOrganization"
+import { Database } from "@/integrations/supabase/types"
+
+type FileType = Database['public']['Enums']['file_type']
+
+const getFileType = (extension: string): FileType => {
+  switch (extension.toLowerCase()) {
+    case 'csv':
+      return 'csv'
+    case 'xls':
+    case 'xlsx':
+      return 'excel'
+    case 'mdb':
+    case 'accdb':
+      return 'access'
+    case 'json':
+      return 'json'
+    default:
+      throw new Error('Tipo de arquivo não suportado')
+  }
+}
 
 export function FileUploader() {
   const [isUploading, setIsUploading] = useState(false)
   const { toast } = useToast()
-  const { organization } = useOrganization()
+  const { currentOrganization } = useOrganization()
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (!file || !organization) return
+    if (!file || !currentOrganization) return
 
     try {
       setIsUploading(true)
 
       // Upload arquivo para o storage
       const fileExt = file.name.split('.').pop()
+      if (!fileExt) throw new Error('Extensão do arquivo inválida')
+      
       const fileName = `${Math.random()}.${fileExt}`
-      const filePath = `${organization.id}/${fileName}`
+      const filePath = `${currentOrganization.id}/${fileName}`
 
       const { error: uploadError } = await supabase.storage
         .from('data-files')
@@ -32,10 +54,10 @@ export function FileUploader() {
       const { error: dbError } = await supabase
         .from('data_files')
         .insert({
-          organization_id: organization.id,
+          organization_id: currentOrganization.id,
           file_name: file.name,
           file_path: filePath,
-          file_type: fileExt?.toLowerCase(),
+          file_type: getFileType(fileExt),
           file_size: file.size,
           content_type: file.type,
         })

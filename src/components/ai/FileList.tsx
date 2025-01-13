@@ -7,12 +7,12 @@ import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
 export function FileList() {
-  const { organization } = useOrganization()
+  const { currentOrganization } = useOrganization()
 
   const { data: files, isLoading } = useQuery({
-    queryKey: ['data-files', organization?.id],
+    queryKey: ['data-files', currentOrganization?.id],
     queryFn: async () => {
-      if (!organization) return []
+      if (!currentOrganization) return []
       const { data, error } = await supabase
         .from('data_files')
         .select('*')
@@ -21,7 +21,7 @@ export function FileList() {
       if (error) throw error
       return data
     },
-    enabled: !!organization,
+    enabled: !!currentOrganization,
   })
 
   if (isLoading) {
