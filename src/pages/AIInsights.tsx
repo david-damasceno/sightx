@@ -78,7 +78,7 @@ export default function AIInsights() {
           </TabsList>
 
           <TabsContent value="chat" className="mt-0">
-            <div className="grid grid-cols-12 gap-2">
+            <div className="grid grid-cols-12 gap-0">
               <div className={`${isSidebarCollapsed ? 'col-span-1' : 'col-span-3'} transition-all duration-300`}>
                 <ChatSidebar 
                   selectedChat={selectedChat}
