@@ -14,6 +14,7 @@ import { ChatSidebar } from "@/components/chat/ChatSidebar"
 export default function AIInsights() {
   const [selectedChat, setSelectedChat] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const { toast } = useToast()
 
   const handleExport = () => {
@@ -78,13 +79,21 @@ export default function AIInsights() {
 
           <TabsContent value="chat" className="mt-0 space-y-4">
             <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-12 lg:col-span-3">
+              <div className={`transition-all duration-300 ${
+                isSidebarCollapsed ? "col-span-1" : "col-span-12 lg:col-span-3"
+              }`}>
                 <ChatSidebar 
                   selectedChat={selectedChat}
                   onSelectChat={setSelectedChat}
+                  isCollapsed={isSidebarCollapsed}
+                  onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                 />
               </div>
-              <div className="col-span-12 lg:col-span-6">
+              <div className={`transition-all duration-300 ${
+                isSidebarCollapsed 
+                  ? "col-span-11" 
+                  : "col-span-12 lg:col-span-6"
+              }`}>
                 <ChatInterface 
                   selectedChat={selectedChat}
                   onSelectChat={setSelectedChat}

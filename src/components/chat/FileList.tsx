@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
-import { Eye, Download, Trash2 } from "lucide-react"
+import { Eye, Download, Trash2, CheckSquare } from "lucide-react"
 import {
   Sheet,
   SheetContent,
@@ -22,9 +22,11 @@ interface FileListProps {
     preview_data: any
   }>
   onDelete: (id: string) => void
+  selectedFiles: string[]
+  onToggleSelect: (id: string) => void
 }
 
-export function FileList({ files, onDelete }: FileListProps) {
+export function FileList({ files, onDelete, selectedFiles, onToggleSelect }: FileListProps) {
   const [selectedFile, setSelectedFile] = useState<any>(null)
 
   const renderPreviewContent = (file: any) => {
@@ -38,7 +40,6 @@ export function FileList({ files, onDelete }: FileListProps) {
       )
     }
 
-    // Para CSV e Excel, assumimos que os dados estão em formato tabular
     if (file.file_type === "csv" || file.file_type === "excel") {
       return (
         <div className="overflow-auto">
@@ -81,14 +82,24 @@ export function FileList({ files, onDelete }: FileListProps) {
               key={file.id}
               className="flex items-center justify-between p-2 hover:bg-accent rounded-lg"
             >
-              <div className="flex-1">
-                <p className="font-medium">{file.file_name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {formatDistanceToNow(new Date(file.created_at), {
-                    addSuffix: true,
-                    locale: ptBR,
-                  })}
-                </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onToggleSelect(file.id)}
+                  className={selectedFiles.includes(file.id) ? "text-purple-500" : ""}
+                >
+                  <CheckSquare className="h-4 w-4" />
+                </Button>
+                <div>
+                  <p className="font-medium">{file.file_name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatDistanceToNow(new Date(file.created_at), {
+                      addSuffix: true,
+                      locale: ptBR,
+                    })}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Sheet>
