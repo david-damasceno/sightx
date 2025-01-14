@@ -26,6 +26,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
   const [inputMessage, setInputMessage] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [files, setFiles] = useState<any[]>([])
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([])
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
 
@@ -160,6 +161,15 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
     })
 
     fetchFiles()
+  }
+
+  const handleToggleFileSelect = (fileId: string) => {
+    setSelectedFiles(prev => {
+      if (prev.includes(fileId)) {
+        return prev.filter(id => id !== fileId)
+      }
+      return [...prev, fileId]
+    })
   }
 
   const handleSendMessage = async () => {
@@ -317,7 +327,12 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
         </div>
 
         <div className="mt-4">
-          <FileList files={files} onDelete={handleDeleteFile} />
+          <FileList 
+            files={files} 
+            onDelete={handleDeleteFile} 
+            selectedFiles={selectedFiles}
+            onToggleSelect={handleToggleFileSelect}
+          />
         </div>
       </div>
     </div>
