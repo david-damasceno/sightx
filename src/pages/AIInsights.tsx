@@ -33,10 +33,10 @@ export default function AIInsights() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="container py-6 space-y-6 animate-fade-in">
+      <div className="container py-4 space-y-4 animate-fade-in">
         <InsightsHeader />
 
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm p-4 rounded-lg border">
+        <div className="flex flex-col sm:flex-row gap-2 items-center justify-between bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm p-3 rounded-lg border">
           <div className="relative w-full sm:w-96">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -77,11 +77,9 @@ export default function AIInsights() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="chat" className="mt-0 space-y-4">
-            <div className="grid grid-cols-12 gap-4">
-              <div className={`transition-all duration-300 ${
-                isSidebarCollapsed ? "col-span-1" : "col-span-12 lg:col-span-3"
-              }`}>
+          <TabsContent value="chat" className="mt-0">
+            <div className="grid grid-cols-12 gap-3">
+              <div className={`${isSidebarCollapsed ? 'col-span-1' : 'col-span-3'} transition-all duration-300`}>
                 <ChatSidebar 
                   selectedChat={selectedChat}
                   onSelectChat={setSelectedChat}
@@ -89,24 +87,20 @@ export default function AIInsights() {
                   onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
                 />
               </div>
-              <div className={`transition-all duration-300 ${
-                isSidebarCollapsed 
-                  ? "col-span-11" 
-                  : "col-span-12 lg:col-span-6"
-              }`}>
+              <div className={`${isSidebarCollapsed ? 'col-span-8' : 'col-span-6'} transition-all duration-300`}>
                 <ChatInterface 
                   selectedChat={selectedChat}
                   onSelectChat={setSelectedChat}
                 />
               </div>
-              <div className="col-span-12 lg:col-span-3">
+              <div className="col-span-3">
                 <InsightsPanel />
               </div>
             </div>
           </TabsContent>
 
           <TabsContent value="insights">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               <InsightsPanel />
               <InsightsPanel />
             </div>
