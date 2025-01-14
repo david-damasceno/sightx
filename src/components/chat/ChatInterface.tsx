@@ -21,6 +21,17 @@ interface ChatInterfaceProps {
   onSelectChat: (chatId: string | null) => void
 }
 
+const getFileType = (extension: string): string => {
+  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp']
+  const documentExtensions = ['pdf', 'doc', 'docx', 'txt']
+  const spreadsheetExtensions = ['xls', 'xlsx', 'csv']
+
+  if (imageExtensions.includes(extension)) return 'image'
+  if (documentExtensions.includes(extension)) return 'document'
+  if (spreadsheetExtensions.includes(extension)) return 'spreadsheet'
+  return 'other'
+}
+
 export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputMessage, setInputMessage] = useState("")
