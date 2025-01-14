@@ -30,7 +30,7 @@ export function ChatSidebar({
       <Button
         variant="ghost"
         size="icon"
-        className="absolute -right-4 top-1/2 transform -translate-y-1/2 z-10"
+        className="absolute -right-3 top-1/2 transform -translate-y-1/2 z-10 bg-background/50 backdrop-blur-sm"
         onClick={onToggleCollapse}
       >
         {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
