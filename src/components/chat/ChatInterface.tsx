@@ -21,15 +21,16 @@ interface ChatInterfaceProps {
   onSelectChat: (chatId: string | null) => void
 }
 
-const getFileType = (extension: string): string => {
-  const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp']
-  const documentExtensions = ['pdf', 'doc', 'docx', 'txt']
-  const spreadsheetExtensions = ['xls', 'xlsx', 'csv']
-
-  if (imageExtensions.includes(extension)) return 'image'
-  if (documentExtensions.includes(extension)) return 'document'
-  if (spreadsheetExtensions.includes(extension)) return 'spreadsheet'
-  return 'other'
+const getFileType = (extension: string): "csv" | "excel" | "access" | "json" | null => {
+  const extensionMap: Record<string, "csv" | "excel" | "access" | "json"> = {
+    csv: "csv",
+    xls: "excel",
+    xlsx: "excel",
+    accdb: "access",
+    json: "json"
+  }
+  
+  return extensionMap[extension.toLowerCase()] || null
 }
 
 export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps) {
@@ -82,8 +83,17 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
       return
     }
 
+    const fileType = getFileType(fileExt)
+    if (!fileType) {
+      toast({
+        title: "Erro no upload",
+        description: "Tipo de arquivo não suportado",
+        variant: "destructive",
+      })
+      return
+    }
+
     try {
-      const fileType = getFileType(fileExt)
       const fileName = `${crypto.randomUUID()}.${fileExt}`
 
       const { data: uploadData, error: uploadError } = await supabase.storage
