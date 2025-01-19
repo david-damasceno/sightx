@@ -21,6 +21,18 @@ interface ChatInterfaceProps {
   onSelectChat: (chatId: string | null) => void
 }
 
+const getFileType = (extension: string): string | null => {
+  const fileTypes: Record<string, string> = {
+    json: 'json',
+    csv: 'csv',
+    xlsx: 'excel',
+    xls: 'excel',
+    txt: 'text',
+    pdf: 'pdf'
+  }
+  return fileTypes[extension.toLowerCase()] || null
+}
+
 export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputMessage, setInputMessage] = useState("")
