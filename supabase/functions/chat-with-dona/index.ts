@@ -11,13 +11,11 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // Verificar variáveis de ambiente
     if (!apiKey || !endpoint || !deployment) {
       const error = 'Missing required Azure OpenAI configuration'
       console.error(error, {
@@ -28,17 +26,15 @@ serve(async (req) => {
       throw new Error(error)
     }
 
-    // Parse request body
     const { message, context } = await req.json()
     console.log('Processing request:', { message, context })
 
-    // Prepare Azure OpenAI request
+    // Construir a URL correta para a API do Azure OpenAI
     const baseEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint
-    const url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2024-02-15-preview`
+    const url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-05-15`
     
     console.log('Calling Azure OpenAI at:', url)
 
-    // Make request to Azure OpenAI
     const azureResponse = await fetch(url, {
       method: 'POST',
       headers: {
@@ -58,10 +54,13 @@ serve(async (req) => {
         ],
         temperature: 0.7,
         max_tokens: 800,
+        top_p: 0.95,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+        stop: null
       }),
     })
 
-    // Log Azure OpenAI response status
     console.log('Azure OpenAI response status:', azureResponse.status)
 
     if (!azureResponse.ok) {
@@ -79,7 +78,6 @@ serve(async (req) => {
 
     const aiResponse = data.choices[0].message.content
 
-    // Return successful response
     return new Response(
       JSON.stringify({ response: aiResponse }),
       { 
@@ -90,7 +88,6 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    // Log and return error
     console.error('Error in chat-with-dona function:', error)
     return new Response(
       JSON.stringify({ 

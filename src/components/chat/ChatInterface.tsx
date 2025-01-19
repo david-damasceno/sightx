@@ -21,18 +21,6 @@ interface ChatInterfaceProps {
   onSelectChat: (chatId: string | null) => void
 }
 
-const getFileType = (extension: string): "csv" | "excel" | "access" | "json" | null => {
-  const extensionMap: Record<string, "csv" | "excel" | "access" | "json"> = {
-    csv: "csv",
-    xls: "excel",
-    xlsx: "excel",
-    accdb: "access",
-    json: "json"
-  }
-  
-  return extensionMap[extension.toLowerCase()] || null
-}
-
 export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputMessage, setInputMessage] = useState("")
@@ -68,6 +56,70 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
     }
 
     setFiles(data || [])
+  }
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isLoading) return
+
+    const newMessage: ChatMessage = {
+      id: Date.now().toString(),
+      content: inputMessage,
+      sender: "user",
+      timestamp: new Date()
+    }
+
+    setMessages(prev => [...prev, newMessage])
+    setInputMessage("")
+    setIsLoading(true)
+
+    try {
+      console.log('Sending message to DONA:', {
+        message: inputMessage,
+        context: {
+          selectedFiles,
+          organization: currentOrganization
+        }
+      })
+
+      const { data, error } = await supabase.functions.invoke('chat-with-dona', {
+        body: { 
+          message: inputMessage,
+          context: {
+            selectedFiles,
+            organization: currentOrganization
+          }
+        }
+      })
+
+      if (error) {
+        console.error('Error calling chat-with-dona:', error)
+        throw error
+      }
+
+      console.log('Response from DONA:', data)
+
+      if (!data.response) {
+        throw new Error('Invalid response from DONA')
+      }
+
+      const aiResponse: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        content: data.response,
+        sender: "ai",
+        timestamp: new Date()
+      }
+
+      setMessages(prev => [...prev, aiResponse])
+    } catch (error) {
+      console.error('Error in handleSendMessage:', error)
+      toast({
+        title: "Erro ao processar mensagem",
+        description: "Não foi possível obter resposta da DONA. Tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,53 +228,6 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
       }
       return [...prev, fileId]
     })
-  }
-
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return
-
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      content: inputMessage,
-      sender: "user",
-      timestamp: new Date()
-    }
-
-    setMessages(prev => [...prev, newMessage])
-    setInputMessage("")
-    setIsLoading(true)
-
-    try {
-      const { data, error } = await supabase.functions.invoke('chat-with-dona', {
-        body: { 
-          message: inputMessage,
-          context: {
-            selectedFiles: selectedFiles,
-            organization: currentOrganization
-          }
-        }
-      })
-
-      if (error) throw error
-
-      const aiResponse: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        content: data.response,
-        sender: "ai",
-        timestamp: new Date()
-      }
-
-      setMessages(prev => [...prev, aiResponse])
-    } catch (error) {
-      console.error('Error calling chat-with-dona:', error)
-      toast({
-        title: "Erro ao processar mensagem",
-        description: "Não foi possível obter resposta da DONA. Tente novamente.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
   }
 
   const toggleFavorite = (messageId: string) => {
