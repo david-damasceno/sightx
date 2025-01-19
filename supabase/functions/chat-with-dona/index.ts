@@ -17,28 +17,29 @@ serve(async (req) => {
   }
 
   try {
-    // Verificar se todas as variáveis de ambiente necessárias estão definidas
+    // Verificar variáveis de ambiente
     if (!apiKey || !endpoint || !deployment) {
-      console.error('Missing required environment variables:', {
+      const error = 'Missing required Azure OpenAI configuration'
+      console.error(error, {
         hasApiKey: !!apiKey,
         hasEndpoint: !!endpoint,
         hasDeployment: !!deployment
       })
-      throw new Error('Missing required Azure OpenAI configuration')
+      throw new Error(error)
     }
 
+    // Parse request body
     const { message, context } = await req.json()
+    console.log('Processing request:', { message, context })
 
-    console.log('Received message:', message)
-    console.log('Context:', context)
-
-    // Remover qualquer barra final do endpoint se existir
+    // Prepare Azure OpenAI request
     const baseEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint
     const url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2024-02-15-preview`
     
     console.log('Calling Azure OpenAI at:', url)
 
-    const response = await fetch(url, {
+    // Make request to Azure OpenAI
+    const azureResponse = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -60,17 +61,25 @@ serve(async (req) => {
       }),
     })
 
-    if (!response.ok) {
-      const error = await response.text()
-      console.error('Azure OpenAI Error:', error)
-      throw new Error(`Azure OpenAI Error: ${error}`)
+    // Log Azure OpenAI response status
+    console.log('Azure OpenAI response status:', azureResponse.status)
+
+    if (!azureResponse.ok) {
+      const errorText = await azureResponse.text()
+      console.error('Azure OpenAI Error:', errorText)
+      throw new Error(`Azure OpenAI Error: ${errorText}`)
     }
 
-    const data = await response.json()
+    const data = await azureResponse.json()
     console.log('Azure OpenAI Response:', data)
+
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response format from Azure OpenAI')
+    }
 
     const aiResponse = data.choices[0].message.content
 
+    // Return successful response
     return new Response(
       JSON.stringify({ response: aiResponse }),
       { 
@@ -81,9 +90,13 @@ serve(async (req) => {
       }
     )
   } catch (error) {
+    // Log and return error
     console.error('Error in chat-with-dona function:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: 'Error processing chat request'
+      }),
       { 
         status: 500,
         headers: { 
