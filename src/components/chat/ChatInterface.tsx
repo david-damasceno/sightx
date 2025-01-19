@@ -21,16 +21,17 @@ interface ChatInterfaceProps {
   onSelectChat: (chatId: string | null) => void
 }
 
-const getFileType = (extension: string): string | null => {
-  const fileTypes: Record<string, string> = {
+type FileType = "json" | "csv" | "excel" | "access"
+
+const getFileType = (extension: string): FileType | null => {
+  const fileTypes: Record<string, FileType> = {
     json: 'json',
     csv: 'csv',
     xlsx: 'excel',
     xls: 'excel',
-    txt: 'text',
-    pdf: 'pdf'
+    accdb: 'access'
   }
-  return fileTypes[extension.toLowerCase()] || null
+  return fileTypes[extension.toLowerCase()] as FileType || null
 }
 
 export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps) {
