@@ -17,23 +17,25 @@ serve(async (req) => {
 
   try {
     if (!apiKey || !endpoint || !deployment) {
-      const error = 'Missing required Azure OpenAI configuration'
-      console.error(error, {
+      console.error('Missing Azure OpenAI configuration:', {
         hasApiKey: !!apiKey,
         hasEndpoint: !!endpoint,
         hasDeployment: !!deployment
       })
-      throw new Error(error)
+      throw new Error('Missing required Azure OpenAI configuration')
     }
 
     const { message, context } = await req.json()
     console.log('Processing request:', { message, context })
 
-    // Construir a URL correta para a API do Azure OpenAI
+    // Remover qualquer barra final do endpoint
     const baseEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint
-    const url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-05-15`
+    
+    // Construir a URL correta para a API do Azure OpenAI
+    const url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-07-01-preview`
     
     console.log('Calling Azure OpenAI at:', url)
+    console.log('Using deployment:', deployment)
 
     const azureResponse = await fetch(url, {
       method: 'POST',
@@ -65,7 +67,7 @@ serve(async (req) => {
 
     if (!azureResponse.ok) {
       const errorText = await azureResponse.text()
-      console.error('Azure OpenAI Error:', errorText)
+      console.error('Azure OpenAI Error Response:', errorText)
       throw new Error(`Azure OpenAI Error: ${errorText}`)
     }
 
