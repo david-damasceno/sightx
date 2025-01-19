@@ -39,6 +39,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
   const [isRecording, setIsRecording] = useState(false)
   const [files, setFiles] = useState<any[]>([])
   const [selectedFiles, setSelectedFiles] = useState<string[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
 
@@ -178,7 +179,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
   }
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return
+    if (!inputMessage.trim() || isLoading) return
 
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -189,17 +190,39 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
 
     setMessages(prev => [...prev, newMessage])
     setInputMessage("")
+    setIsLoading(true)
 
-    // Simular resposta da IA
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase.functions.invoke('chat-with-dona', {
+        body: { 
+          message: inputMessage,
+          context: {
+            selectedFiles: selectedFiles,
+            organization: currentOrganization
+          }
+        }
+      })
+
+      if (error) throw error
+
       const aiResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        content: "Olá! Eu sou a DONA, sua assistente virtual. Como posso ajudar?",
+        content: data.response,
         sender: "ai",
         timestamp: new Date()
       }
+
       setMessages(prev => [...prev, aiResponse])
-    }, 1000)
+    } catch (error) {
+      console.error('Error calling chat-with-dona:', error)
+      toast({
+        title: "Erro ao processar mensagem",
+        description: "Não foi possível obter resposta da DONA. Tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const toggleFavorite = (messageId: string) => {
@@ -258,6 +281,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
           onImageUpload={handleGenerateImage}
           onVoiceRecord={handleVoiceRecord}
           isRecording={isRecording}
+          isLoading={isLoading}
         />
 
         <div className="p-4 border-t bg-background/50 backdrop-blur-sm">
