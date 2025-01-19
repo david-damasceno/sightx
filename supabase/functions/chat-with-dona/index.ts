@@ -17,18 +17,32 @@ serve(async (req) => {
   }
 
   try {
+    // Verificar se todas as variáveis de ambiente necessárias estão definidas
+    if (!apiKey || !endpoint || !deployment) {
+      console.error('Missing required environment variables:', {
+        hasApiKey: !!apiKey,
+        hasEndpoint: !!endpoint,
+        hasDeployment: !!deployment
+      })
+      throw new Error('Missing required Azure OpenAI configuration')
+    }
+
     const { message, context } = await req.json()
 
     console.log('Received message:', message)
     console.log('Context:', context)
 
-    const url = `${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=2024-02-15-preview`
+    // Remover qualquer barra final do endpoint se existir
+    const baseEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint
+    const url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2024-02-15-preview`
     
+    console.log('Calling Azure OpenAI at:', url)
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'api-key': apiKey!,
+        'api-key': apiKey,
       },
       body: JSON.stringify({
         messages: [
