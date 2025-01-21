@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { MessageSquare, Sparkles } from "lucide-react"
@@ -21,17 +21,16 @@ interface ChatInterfaceProps {
   onSelectChat: (chatId: string | null) => void
 }
 
-type FileType = "json" | "csv" | "excel" | "access"
-
-const getFileType = (extension: string): FileType | null => {
-  const fileTypes: Record<string, FileType> = {
-    json: 'json',
-    csv: 'csv',
-    xlsx: 'excel',
-    xls: 'excel',
-    accdb: 'access'
+const getFileType = (extension: string): "csv" | "excel" | "access" | "json" | null => {
+  const extensionMap: Record<string, "csv" | "excel" | "access" | "json"> = {
+    csv: "csv",
+    xls: "excel",
+    xlsx: "excel",
+    accdb: "access",
+    json: "json"
   }
-  return fileTypes[extension.toLowerCase()] as FileType || null
+  
+  return extensionMap[extension.toLowerCase()] || null
 }
 
 export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps) {
@@ -40,97 +39,39 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
   const [isRecording, setIsRecording] = useState(false)
   const [files, setFiles] = useState<any[]>([])
   const [selectedFiles, setSelectedFiles] = useState<string[]>([])
-  const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
 
-  const fetchFiles = useCallback(async () => {
-    if (!currentOrganization?.id) return
-
-    try {
-      const { data, error } = await supabase
-        .from('data_files')
-        .select('*')
-        .eq('organization_id', currentOrganization.id)
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        console.error('Error loading files:', error)
-        return
-      }
-
-      setFiles(data || [])
-    } catch (error) {
-      console.error('Error in fetchFiles:', error)
-    }
-  }, [currentOrganization?.id])
-
   useEffect(() => {
-    let isMounted = true
-
-    if (currentOrganization?.id && isMounted) {
+    if (currentOrganization) {
       fetchFiles()
     }
+  }, [currentOrganization])
 
-    return () => {
-      isMounted = false
-    }
-  }, [currentOrganization?.id, fetchFiles])
+  const fetchFiles = async () => {
+    if (!currentOrganization) return
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return
+    const { data, error } = await supabase
+      .from('data_files')
+      .select('*')
+      .eq('organization_id', currentOrganization.id)
+      .order('created_at', { ascending: false })
 
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      content: inputMessage,
-      sender: "user",
-      timestamp: new Date()
-    }
-
-    setMessages(prev => [...prev, newMessage])
-    setInputMessage("")
-    setIsLoading(true)
-
-    try {
-      const { data, error } = await supabase.functions.invoke('chat-with-dona', {
-        body: { 
-          message: inputMessage,
-          context: {
-            selectedFiles,
-            organization: currentOrganization
-          }
-        }
-      })
-
-      if (error) throw error
-
-      if (!data?.response) {
-        throw new Error('Invalid response from DONA')
-      }
-
-      const aiResponse: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        content: data.response,
-        sender: "ai",
-        timestamp: new Date()
-      }
-
-      setMessages(prev => [...prev, aiResponse])
-    } catch (error) {
-      console.error('Error in handleSendMessage:', error)
+    if (error) {
       toast({
-        title: "Erro ao processar mensagem",
-        description: "Não foi possível obter resposta da DONA. Tente novamente.",
+        title: "Erro ao carregar arquivos",
+        description: error.message,
         variant: "destructive",
       })
-    } finally {
-      setIsLoading(false)
+      return
     }
+
+    setFiles(data || [])
   }
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (!file || !currentOrganization?.id) return
+    if (!file || !currentOrganization) return
 
     const fileExt = file.name.split('.').pop()?.toLowerCase()
     if (!fileExt) {
@@ -154,11 +95,19 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
 
     try {
       const fileName = `${crypto.randomUUID()}.${fileExt}`
-      const { error: uploadError } = await supabase.storage
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('data-files')
         .upload(fileName, file)
 
-      if (uploadError) throw uploadError
+      if (uploadError) {
+        toast({
+          title: "Erro no upload",
+          description: uploadError.message,
+          variant: "destructive",
+        })
+        return
+      }
 
       const { error: dbError } = await supabase
         .from('data_files')
@@ -173,7 +122,14 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
           organization_id: currentOrganization.id
         })
 
-      if (dbError) throw dbError
+      if (dbError) {
+        toast({
+          title: "Erro ao salvar arquivo",
+          description: dbError.message,
+          variant: "destructive",
+        })
+        return
+      }
 
       toast({
         title: "Arquivo enviado com sucesso",
@@ -182,7 +138,6 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
 
       fetchFiles()
     } catch (error) {
-      console.error('Error in handleFileUpload:', error)
       toast({
         title: "Erro no upload",
         description: error instanceof Error ? error.message : "Erro desconhecido",
@@ -192,27 +147,25 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
   }
 
   const handleDeleteFile = async (fileId: string) => {
-    try {
-      const { error } = await supabase
-        .from('data_files')
-        .delete()
-        .eq('id', fileId)
+    const { error } = await supabase
+      .from('data_files')
+      .delete()
+      .eq('id', fileId)
 
-      if (error) throw error
-
-      toast({
-        title: "Arquivo deletado com sucesso",
-      })
-
-      fetchFiles()
-    } catch (error) {
-      console.error('Error in handleDeleteFile:', error)
+    if (error) {
       toast({
         title: "Erro ao deletar arquivo",
-        description: error instanceof Error ? error.message : "Erro desconhecido",
+        description: error.message,
         variant: "destructive",
       })
+      return
     }
+
+    toast({
+      title: "Arquivo deletado com sucesso",
+    })
+
+    fetchFiles()
   }
 
   const handleToggleFileSelect = (fileId: string) => {
@@ -222,6 +175,31 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
       }
       return [...prev, fileId]
     })
+  }
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim()) return
+
+    const newMessage: ChatMessage = {
+      id: Date.now().toString(),
+      content: inputMessage,
+      sender: "user",
+      timestamp: new Date()
+    }
+
+    setMessages(prev => [...prev, newMessage])
+    setInputMessage("")
+
+    // Simular resposta da IA
+    setTimeout(() => {
+      const aiResponse: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        content: "Olá! Eu sou a DONA, sua assistente virtual. Como posso ajudar?",
+        sender: "ai",
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, aiResponse])
+    }, 1000)
   }
 
   const toggleFavorite = (messageId: string) => {
@@ -280,7 +258,6 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
           onImageUpload={handleGenerateImage}
           onVoiceRecord={handleVoiceRecord}
           isRecording={isRecording}
-          isLoading={isLoading}
         />
 
         <div className="p-4 border-t bg-background/50 backdrop-blur-sm">

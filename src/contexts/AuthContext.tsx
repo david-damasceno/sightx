@@ -28,21 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null)
 
   useEffect(() => {
-    // Primeiro, tentar recuperar a sessão do localStorage
-    const savedSession = localStorage.getItem('supabase.auth.token')
-    if (savedSession) {
-      try {
-        const parsed = JSON.parse(savedSession)
-        if (parsed?.currentSession) {
-          setSession(parsed.currentSession)
-          setUser(parsed.currentSession.user)
-        }
-      } catch (error) {
-        console.error('Error parsing saved session:', error)
-      }
-    }
-
-    // Então, verificar a sessão atual com o Supabase
+    // Carregar sessão atual
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
@@ -54,53 +40,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
-
-      // Salvar a sessão no localStorage
-      if (session) {
-        localStorage.setItem('supabase.auth.token', JSON.stringify({
-          currentSession: session,
-          expiresAt: session.expires_at
-        }))
-      } else {
-        localStorage.removeItem('supabase.auth.token')
-      }
     })
 
-    return () => {
-      subscription.unsubscribe()
-    }
+    return () => subscription.unsubscribe()
   }, [])
 
   // Carregar organização padrão do usuário
   useEffect(() => {
     const loadDefaultOrganization = async () => {
-      if (!user) {
-        setCurrentOrganization(null)
-        return
-      }
+      if (!user) return
 
       try {
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from('profiles')
           .select('default_organization_id')
           .eq('id', user.id)
-          .maybeSingle()
-
-        if (profileError) throw profileError
+          .single()
 
         if (profile?.default_organization_id) {
-          const { data: org, error: orgError } = await supabase
+          const { data: org } = await supabase
             .from('organizations')
             .select('*')
             .eq('id', profile.default_organization_id)
-            .maybeSingle()
+            .single()
 
-          if (orgError) throw orgError
-          if (org) setCurrentOrganization(org)
+          if (org) {
+            setCurrentOrganization(org)
+          }
         }
       } catch (error) {
         console.error('Error loading default organization:', error)
-        setCurrentOrganization(null)
       }
     }
 
