@@ -13,18 +13,26 @@ import { useOrganization } from "@/hooks/useOrganization"
 
 export default function Onboarding() {
   const [loading, setLoading] = useState(false)
-  const [checkingOrganization, setCheckingOrganization] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(true)
   const [step, setStep] = useState(1)
   const [orgName, setOrgName] = useState("")
   const [companySize, setCompanySize] = useState("")
   const { session } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
-  const { createOrganization, organizations } = useOrganization()
+  const { createOrganization } = useOrganization()
 
   useEffect(() => {
+    let mounted = true
+
     const checkExistingOrganization = async () => {
-      if (!session?.user) return
+      if (!session?.user) {
+        if (mounted) {
+          setInitialLoading(false)
+          navigate('/login')
+        }
+        return
+      }
 
       try {
         const { data: memberData, error: memberError } = await supabase
@@ -35,13 +43,12 @@ export default function Onboarding() {
 
         if (memberError) throw memberError
 
-        if (memberData) {
-          // User already has an organization, redirect to home
-          const { data: profile, error: profileError } = await supabase
+        if (memberData && mounted) {
+          // User already has an organization, update profile and redirect
+          const { error: profileError } = await supabase
             .from('profiles')
             .update({ onboarded: true })
             .eq('id', session.user.id)
-            .select()
 
           if (profileError) throw profileError
 
@@ -50,40 +57,56 @@ export default function Onboarding() {
         }
       } catch (error) {
         console.error('Error checking organization:', error)
+        toast({
+          variant: "destructive",
+          title: "Erro",
+          description: "Não foi possível verificar sua organização. Tente novamente.",
+        })
       } finally {
-        setCheckingOrganization(false)
+        if (mounted) {
+          setInitialLoading(false)
+        }
       }
     }
 
     checkExistingOrganization()
-  }, [session, navigate])
+
+    return () => {
+      mounted = false
+    }
+  }, [session, navigate, toast])
 
   const ensureProfileExists = async () => {
     if (!session?.user) return false
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .maybeSingle()
-
-    if (!profile) {
-      const { error: createError } = await supabase
+    try {
+      const { data: profile } = await supabase
         .from('profiles')
-        .insert({
-          id: session.user.id,
-          email: session.user.email,
-          updated_at: new Date().toISOString(),
-          onboarded: false
-        })
+        .select('*')
+        .eq('id', session.user.id)
+        .maybeSingle()
 
-      if (createError) {
-        console.error('Error creating profile:', createError)
-        return false
+      if (!profile) {
+        const { error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: session.user.id,
+            email: session.user.email,
+            updated_at: new Date().toISOString(),
+            onboarded: false
+          })
+
+        if (createError) {
+          console.error('Error creating profile:', createError)
+          return false
+        }
       }
-    }
 
-    return true
+      return true
+    } catch (error) {
+      console.error('Error checking profile:', error)
+      return false
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -159,7 +182,7 @@ export default function Onboarding() {
     setStep(2)
   }
 
-  if (checkingOrganization) {
+  if (initialLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
