@@ -28,54 +28,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null)
 
   useEffect(() => {
-    // Primeiro, tentar recuperar a sessão do localStorage
-    const savedSession = localStorage.getItem('supabase.auth.token')
-    if (savedSession) {
+    let mounted = true
+
+    const initializeAuth = async () => {
       try {
-        const parsed = JSON.parse(savedSession)
-        if (parsed?.currentSession) {
-          setSession(parsed.currentSession)
-          setUser(parsed.currentSession.user)
+        // Get current session
+        const { data: { session: currentSession } } = await supabase.auth.getSession()
+        
+        if (mounted) {
+          setSession(currentSession)
+          setUser(currentSession?.user ?? null)
+          setLoading(false)
+        }
+
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (mounted) {
+            setSession(session)
+            setUser(session?.user ?? null)
+            setLoading(false)
+          }
+        })
+
+        return () => {
+          subscription.unsubscribe()
         }
       } catch (error) {
-        console.error('Error parsing saved session:', error)
+        console.error('Error initializing auth:', error)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
 
-    // Então, verificar a sessão atual com o Supabase
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
-
-    // Escutar mudanças na autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-
-      // Salvar a sessão no localStorage
-      if (session) {
-        localStorage.setItem('supabase.auth.token', JSON.stringify({
-          currentSession: session,
-          expiresAt: session.expires_at
-        }))
-      } else {
-        localStorage.removeItem('supabase.auth.token')
-      }
-    })
+    initializeAuth()
 
     return () => {
-      subscription.unsubscribe()
+      mounted = false
     }
   }, [])
 
-  // Carregar organização padrão do usuário
+  // Load default organization
   useEffect(() => {
+    let mounted = true
+
     const loadDefaultOrganization = async () => {
       if (!user) {
-        setCurrentOrganization(null)
+        if (mounted) setCurrentOrganization(null)
         return
       }
 
@@ -88,7 +87,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (profileError) throw profileError
 
-        if (profile?.default_organization_id) {
+        if (profile?.default_organization_id && mounted) {
           const { data: org, error: orgError } = await supabase
             .from('organizations')
             .select('*')
@@ -96,15 +95,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             .maybeSingle()
 
           if (orgError) throw orgError
-          if (org) setCurrentOrganization(org)
+          if (org && mounted) setCurrentOrganization(org)
         }
       } catch (error) {
         console.error('Error loading default organization:', error)
-        setCurrentOrganization(null)
+        if (mounted) setCurrentOrganization(null)
       }
     }
 
     loadDefaultOrganization()
+
+    return () => {
+      mounted = false
+    }
   }, [user])
 
   return (

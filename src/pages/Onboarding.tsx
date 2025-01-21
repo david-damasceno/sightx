@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
 import { Card } from "@/components/ui/card"
@@ -13,13 +13,50 @@ import { useOrganization } from "@/hooks/useOrganization"
 
 export default function Onboarding() {
   const [loading, setLoading] = useState(false)
+  const [checkingOrganization, setCheckingOrganization] = useState(true)
   const [step, setStep] = useState(1)
   const [orgName, setOrgName] = useState("")
   const [companySize, setCompanySize] = useState("")
   const { session } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
-  const { createOrganization } = useOrganization()
+  const { createOrganization, organizations } = useOrganization()
+
+  useEffect(() => {
+    const checkExistingOrganization = async () => {
+      if (!session?.user) return
+
+      try {
+        const { data: memberData, error: memberError } = await supabase
+          .from('organization_members')
+          .select('organization_id')
+          .eq('user_id', session.user.id)
+          .maybeSingle()
+
+        if (memberError) throw memberError
+
+        if (memberData) {
+          // User already has an organization, redirect to home
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .update({ onboarded: true })
+            .eq('id', session.user.id)
+            .select()
+
+          if (profileError) throw profileError
+
+          navigate('/')
+          return
+        }
+      } catch (error) {
+        console.error('Error checking organization:', error)
+      } finally {
+        setCheckingOrganization(false)
+      }
+    }
+
+    checkExistingOrganization()
+  }, [session, navigate])
 
   const ensureProfileExists = async () => {
     if (!session?.user) return false
@@ -28,7 +65,7 @@ export default function Onboarding() {
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
-      .single()
+      .maybeSingle()
 
     if (!profile) {
       const { error: createError } = await supabase
@@ -120,6 +157,14 @@ export default function Onboarding() {
       return
     }
     setStep(2)
+  }
+
+  if (checkingOrganization) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
   }
 
   return (
