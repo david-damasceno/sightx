@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { MessageSquare, Sparkles } from "lucide-react"
@@ -44,17 +44,10 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
 
-  // Modificado para evitar loops infinitos
-  useEffect(() => {
-    if (currentOrganization?.id) {
-      fetchFiles()
-    }
-  }, [currentOrganization?.id]) // Dependência mais específica
+  const fetchFiles = useCallback(async () => {
+    if (!currentOrganization?.id) return
 
-  const fetchFiles = async () => {
     try {
-      if (!currentOrganization?.id) return
-
       const { data, error } = await supabase
         .from('data_files')
         .select('*')
@@ -63,11 +56,6 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
 
       if (error) {
         console.error('Error loading files:', error)
-        toast({
-          title: "Erro ao carregar arquivos",
-          description: error.message,
-          variant: "destructive",
-        })
         return
       }
 
@@ -75,7 +63,19 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
     } catch (error) {
       console.error('Error in fetchFiles:', error)
     }
-  }
+  }, [currentOrganization?.id])
+
+  useEffect(() => {
+    let isMounted = true
+
+    if (currentOrganization?.id && isMounted) {
+      fetchFiles()
+    }
+
+    return () => {
+      isMounted = false
+    }
+  }, [currentOrganization?.id, fetchFiles])
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return
