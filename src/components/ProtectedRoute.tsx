@@ -15,6 +15,8 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
   const location = useLocation()
 
   useEffect(() => {
+    let mounted = true
+
     async function checkOnboardingStatus() {
       if (session?.user && checkOnboarding) {
         try {
@@ -22,32 +24,26 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
             .from('profiles')
             .select('onboarded')
             .eq('id', session.user.id)
-            .single()
+            .maybeSingle()
 
           if (error) throw error
-          setIsOnboarded(data.onboarded)
+          if (mounted) setIsOnboarded(data?.onboarded ?? false)
         } catch (error) {
           console.error('Error checking onboarding status:', error)
-          setIsOnboarded(false)
+          if (mounted) setIsOnboarded(false)
         }
       }
-      setCheckingOnboarding(false)
+      if (mounted) setCheckingOnboarding(false)
     }
 
     checkOnboardingStatus()
+
+    return () => {
+      mounted = false
+    }
   }, [session, checkOnboarding])
 
-  // Se estiver na página de login e já estiver autenticado, redireciona para home
-  if (location.pathname === '/login' && session) {
-    return <Navigate to="/" replace />
-  }
-
-  // Se estiver na página de onboarding e não estiver autenticado, redireciona para login
-  if (location.pathname === '/onboarding' && !session) {
-    return <Navigate to="/login" replace />
-  }
-
-  // Mostra loading enquanto verifica a sessão
+  // Mostra loading apenas durante a verificação inicial
   if (loading || (checkOnboarding && checkingOnboarding)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -56,9 +52,15 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
     )
   }
 
-  // Redireciona para login se não houver sessão
+  // Se estiver na página de login e já estiver autenticado, redireciona para home
+  if (location.pathname === '/login' && session) {
+    return <Navigate to="/" replace />
+  }
+
+  // Se não estiver autenticado, redireciona para login
   if (!session) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+    // Salva a URL atual para redirecionar de volta após o login
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />
   }
 
   // Redireciona para onboarding se necessário

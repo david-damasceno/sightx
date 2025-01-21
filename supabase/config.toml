@@ -1,1 +1,4 @@
 project_id = "zzmezxjwhtiwhnhqvnck"
+
+[functions.chat-with-dona]
+verify_jwt = true
