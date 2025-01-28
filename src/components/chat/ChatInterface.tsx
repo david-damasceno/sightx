@@ -103,9 +103,13 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
         <h2 className="text-lg font-semibold">Chat com DONA</h2>
       </div>
 
-      <ChatMessageList messages={messages} onToggleFavorite={toggleFavorite} />
+      <ChatMessageList 
+        messages={messages} 
+        onToggleFavorite={toggleFavorite} 
+        isLoading={isLoading}
+      />
 
-      <div className="border-t bg-white/30 dark:bg-gray-800/30">
+      <div className="border-t bg-white/30 dark:bg-gray-800/30 mt-auto">
         <ChatInput
           inputMessage={inputMessage}
           onInputChange={setInputMessage}

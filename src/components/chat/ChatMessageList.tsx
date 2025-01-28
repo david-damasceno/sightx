@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Star } from "lucide-react"
 
@@ -12,9 +13,20 @@ interface ChatMessage {
 interface ChatMessageListProps {
   messages: ChatMessage[]
   onToggleFavorite: (messageId: string) => void
+  isLoading?: boolean
 }
 
-export function ChatMessageList({ messages, onToggleFavorite }: ChatMessageListProps) {
+export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatMessageListProps) {
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
   return (
     <ScrollArea className="flex-1 p-4">
       <div className="space-y-4">
@@ -26,10 +38,10 @@ export function ChatMessageList({ messages, onToggleFavorite }: ChatMessageListP
             }`}
           >
             <div
-              className={`max-w-[80%] rounded-lg p-4 animate-fade-in ${
+              className={`max-w-[85%] rounded-lg p-4 animate-fade-in ${
                 message.sender === "user"
                   ? "bg-purple-500 text-white"
-                  : "bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border shadow-sm"
+                  : "glass-card"
               }`}
             >
               <p className="whitespace-pre-wrap text-sm">{message.content}</p>
@@ -44,13 +56,22 @@ export function ChatMessageList({ messages, onToggleFavorite }: ChatMessageListP
                     }`}
                   />
                 </button>
-                <span className="text-xs opacity-70">
-                  {message.timestamp.toLocaleTimeString()}
-                </span>
               </div>
             </div>
           </div>
         ))}
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="glass-card max-w-[85%] rounded-lg p-4 animate-pulse">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" />
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:0.2s]" />
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:0.4s]" />
+              </div>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
       </div>
     </ScrollArea>
   )

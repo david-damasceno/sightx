@@ -82,8 +82,8 @@
 
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -96,35 +96,19 @@
          transition-colors duration-200;
 }
 
-/* Card Hover Effects */
-.hover-card {
-  @apply transform transition-all duration-300 
-         hover:scale-[1.02] hover:-translate-y-1;
-}
+/* Mobile Optimizations */
+@media (max-width: 640px) {
+  .chat-container {
+    @apply h-[calc(100vh-4rem)];
+  }
 
-/* Input Fields Dark Mode Enhancement */
-.dark input[type="text"],
-.dark input[type="email"],
-.dark input[type="password"],
-.dark textarea {
-  @apply bg-gray-800/50 border-gray-700 
-         focus:border-gray-600 focus:ring-gray-600;
-}
+  .message-bubble {
+    @apply max-w-[90%];
+  }
 
-/* Button Enhancements */
-.button-transition {
-  @apply transition-all duration-300 
-         hover:shadow-lg active:scale-95;
-}
-
-/* Dark Mode Selection */
-.dark ::selection {
-  @apply bg-gray-700 text-white;
-}
-
-/* Dark Mode Focus Ring */
-.dark :focus-visible {
-  @apply outline-none ring-2 ring-gray-600;
+  .input-area {
+    @apply sticky bottom-0 bg-background/80 backdrop-blur-lg;
+  }
 }
 
 /* Chat Interface Enhancements */
@@ -148,12 +132,25 @@
   @apply glass-card mr-auto;
 }
 
-/* Sidebar Animations */
-.sidebar-slide {
-  @apply transition-all duration-300 ease-in-out;
+/* Loading Animation */
+@keyframes bounce-delay {
+  0%, 80%, 100% { 
+    transform: scale(0);
+  } 
+  40% { 
+    transform: scale(1.0);
+  }
 }
 
-/* Panel Transitions */
-.panel-transition {
-  @apply transition-all duration-300 ease-in-out transform;
+.typing-indicator span {
+  @apply inline-block w-2 h-2 bg-purple-500 rounded-full mx-0.5;
+  animation: bounce-delay 1.4s infinite ease-in-out both;
+}
+
+.typing-indicator span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: -0.16s;
 }

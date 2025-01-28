@@ -20,13 +20,13 @@ export function ChatInput({
   isLoading,
 }: ChatInputProps) {
   return (
-    <div className="p-4">
-      <div className="flex gap-2">
+    <div className="p-4 sticky bottom-0 bg-background/80 backdrop-blur-lg">
+      <div className="flex gap-2 max-w-3xl mx-auto">
         <Button
           variant="outline"
           size="icon"
           onClick={onVoiceRecord}
-          className={`hover:bg-purple-50 dark:hover:bg-purple-900/20 ${
+          className={`flex-shrink-0 hover:bg-purple-50 dark:hover:bg-purple-900/20 ${
             isRecording ? "bg-red-100 text-red-500 dark:bg-red-900/20" : ""
           }`}
           disabled={isLoading}
@@ -37,7 +37,7 @@ export function ChatInput({
           value={inputMessage}
           onChange={(e) => onInputChange(e.target.value)}
           placeholder="Digite sua mensagem para a DONA..."
-          className="min-h-[60px] resize-none bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm"
+          className="min-h-[44px] max-h-[200px] resize-none bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault()
@@ -48,7 +48,7 @@ export function ChatInput({
         />
         <Button
           onClick={onSendMessage}
-          className="bg-purple-500 hover:bg-purple-600 transition-colors"
+          className="flex-shrink-0 bg-purple-500 hover:bg-purple-600 transition-colors"
           disabled={isLoading}
         >
           {isLoading ? (
