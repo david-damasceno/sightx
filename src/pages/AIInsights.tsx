@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Brain, ArrowUpRight, Sparkles, Search, Filter, Download, RefreshCw } from "lucide-react"
+import { Brain, ArrowUpRight, Sparkles, Search, Filter, Download, RefreshCw, PanelLeftClose, PanelRightClose } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { InsightsPanel } from "@/components/InsightsPanel"
 import { InsightsHeader } from "@/components/insights/InsightsHeader"
@@ -15,6 +15,7 @@ export default function AIInsights() {
   const [selectedChat, setSelectedChat] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isInsightsPanelCollapsed, setIsInsightsPanelCollapsed] = useState(false)
   const { toast } = useToast()
 
   const handleExport = () => {
@@ -32,7 +33,7 @@ export default function AIInsights() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-blue-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="container py-2 space-y-3 animate-fade-in">
         <InsightsHeader />
 
@@ -61,55 +62,45 @@ export default function AIInsights() {
 
         <InsightsMetrics />
 
-        <Tabs defaultValue="chat" className="w-full">
-          <TabsList className="w-full justify-start mb-2 p-1 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
-            <TabsTrigger value="chat" className="flex items-center gap-2">
-              <Brain className="h-4 w-4" />
-              Chat com DONA
-            </TabsTrigger>
-            <TabsTrigger value="insights" className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              Insights
-            </TabsTrigger>
-            <TabsTrigger value="trends" className="flex items-center gap-2">
-              <ArrowUpRight className="h-4 w-4" />
-              Tendências
-            </TabsTrigger>
-          </TabsList>
+        <div className="flex h-[calc(100vh-20rem)] gap-4 relative">
+          <div className={`transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-16' : 'w-72'}`}>
+            <ChatSidebar 
+              selectedChat={selectedChat}
+              onSelectChat={setSelectedChat}
+              isCollapsed={isSidebarCollapsed}
+              onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            />
+          </div>
 
-          <TabsContent value="chat" className="mt-0">
-            <div className="grid grid-cols-12 gap-0">
-              <div className={`${isSidebarCollapsed ? 'col-span-1' : 'col-span-3'} transition-all duration-300`}>
-                <ChatSidebar 
-                  selectedChat={selectedChat}
-                  onSelectChat={setSelectedChat}
-                  isCollapsed={isSidebarCollapsed}
-                  onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                />
-              </div>
-              <div className={`${isSidebarCollapsed ? 'col-span-8' : 'col-span-6'} transition-all duration-300`}>
+          <div className="flex-1 flex gap-4">
+            <div className={`flex-1 transition-all duration-300 ${!isInsightsPanelCollapsed ? 'mr-80' : 'mr-0'}`}>
+              <div className="h-full glass-card">
                 <ChatInterface 
                   selectedChat={selectedChat}
                   onSelectChat={setSelectedChat}
                 />
               </div>
-              <div className="col-span-3">
+            </div>
+
+            <div 
+              className={`fixed right-0 top-[calc(4rem+1px)] bottom-0 w-80 transition-all duration-300 transform ${
+                isInsightsPanelCollapsed ? 'translate-x-full' : 'translate-x-0'
+              }`}
+            >
+              <div className="relative h-full">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsInsightsPanelCollapsed(!isInsightsPanelCollapsed)}
+                  className="absolute -left-10 top-1/2 transform -translate-y-1/2 bg-background/50 backdrop-blur-sm"
+                >
+                  {isInsightsPanelCollapsed ? <PanelLeftClose className="h-4 w-4" /> : <PanelRightClose className="h-4 w-4" />}
+                </Button>
                 <InsightsPanel />
               </div>
             </div>
-          </TabsContent>
-
-          <TabsContent value="insights">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-              <InsightsPanel />
-              <InsightsPanel />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="trends">
-            <InsightsTrends />
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
     </div>
   )
