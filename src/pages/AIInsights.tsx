@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Brain, MessageSquare, PanelLeftClose, PanelRightClose } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { Button } from "@/components/ui/button" // Added this import
 import { InsightsPanel } from "@/components/InsightsPanel"
 import { ChatInterface } from "@/components/chat/ChatInterface"
 import { ChatSidebar } from "@/components/chat/ChatSidebar"
