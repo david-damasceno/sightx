@@ -26,20 +26,20 @@ export function ChatMessageList({ messages, onToggleFavorite }: ChatMessageListP
             }`}
           >
             <div
-              className={`max-w-[80%] rounded-lg p-3 animate-in ${
+              className={`max-w-[80%] rounded-lg p-4 animate-fade-in ${
                 message.sender === "user"
                   ? "bg-purple-500 text-white"
-                  : "glass-card"
+                  : "bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border shadow-sm"
               }`}
             >
-              <p className="whitespace-pre-wrap">{message.content}</p>
-              <div className="flex items-center justify-end gap-2 mt-1">
+              <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+              <div className="flex items-center justify-end gap-2 mt-2">
                 <button
                   onClick={() => onToggleFavorite(message.id)}
                   className="text-xs opacity-70 hover:opacity-100 transition-opacity"
                 >
                   <Star
-                    className={`h-4 w-4 ${
+                    className={`h-3 w-3 ${
                       message.isFavorite ? "fill-yellow-400" : ""
                     }`}
                   />

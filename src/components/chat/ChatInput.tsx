@@ -1,13 +1,11 @@
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Send, Paperclip, Image, Mic, Loader2 } from "lucide-react"
+import { Send, Mic, Loader2 } from "lucide-react"
 
 interface ChatInputProps {
   inputMessage: string
   onInputChange: (value: string) => void
   onSendMessage: () => void
-  onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
-  onImageUpload: () => void
   onVoiceRecord: () => void
   isRecording: boolean
   isLoading: boolean
@@ -17,40 +15,13 @@ export function ChatInput({
   inputMessage,
   onInputChange,
   onSendMessage,
-  onFileUpload,
-  onImageUpload,
   onVoiceRecord,
   isRecording,
   isLoading,
 }: ChatInputProps) {
   return (
-    <div className="p-4 border-t bg-background/50 backdrop-blur-sm">
-      <div className="flex gap-2 mb-2">
-        <input
-          type="file"
-          id="file-upload"
-          className="hidden"
-          onChange={onFileUpload}
-          accept=".csv,.xlsx,.xls,.accdb,.json"
-        />
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => document.getElementById("file-upload")?.click()}
-          className="hover:bg-purple-50 dark:hover:bg-purple-900/20"
-          disabled={isLoading}
-        >
-          <Paperclip className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onImageUpload}
-          className="hover:bg-purple-50 dark:hover:bg-purple-900/20"
-          disabled={isLoading}
-        >
-          <Image className="h-4 w-4" />
-        </Button>
+    <div className="p-4">
+      <div className="flex gap-2">
         <Button
           variant="outline"
           size="icon"
@@ -62,13 +33,11 @@ export function ChatInput({
         >
           <Mic className="h-4 w-4" />
         </Button>
-      </div>
-      <div className="flex gap-2">
         <Textarea
           value={inputMessage}
           onChange={(e) => onInputChange(e.target.value)}
           placeholder="Digite sua mensagem para a DONA..."
-          className="min-h-[80px] resize-none bg-background/50 backdrop-blur-sm"
+          className="min-h-[60px] resize-none bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault()

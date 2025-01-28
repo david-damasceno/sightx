@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
-import { MessageSquare, Sparkles } from "lucide-react"
+import { MessageSquare } from "lucide-react"
 import { ChatMessageList } from "./ChatMessageList"
 import { ChatInput } from "./ChatInput"
 import { supabase } from "@/integrations/supabase/client"
@@ -86,13 +86,6 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
     })
   }
 
-  const handleGenerateImage = () => {
-    toast({
-      title: "Gerando imagem",
-      description: "A DONA está processando sua solicitação..."
-    })
-  }
-
   const toggleFavorite = (messageId: string) => {
     setMessages(prev =>
       prev.map(msg =>
@@ -104,34 +97,19 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
   }
 
   return (
-    <div className="flex flex-col h-full bg-card rounded-lg border shadow-sm">
-      <div className="p-4 border-b backdrop-blur-sm bg-background/50 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-purple-500" />
-          <h2 className="text-lg font-semibold">Chat com DONA</h2>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-purple-500 hover:text-purple-600 transition-colors"
-            onClick={handleGenerateImage}
-          >
-            <Sparkles className="h-4 w-4 mr-1" />
-            Gerar Imagem
-          </Button>
-        </div>
+    <div className="flex flex-col h-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-lg border shadow-lg">
+      <div className="p-4 border-b bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm flex items-center gap-2">
+        <MessageSquare className="h-5 w-5 text-purple-500" />
+        <h2 className="text-lg font-semibold">Chat com DONA</h2>
       </div>
 
       <ChatMessageList messages={messages} onToggleFavorite={toggleFavorite} />
 
-      <div className="border-t">
+      <div className="border-t bg-white/30 dark:bg-gray-800/30">
         <ChatInput
           inputMessage={inputMessage}
           onInputChange={setInputMessage}
           onSendMessage={handleSendMessage}
-          onFileUpload={() => {}}
-          onImageUpload={handleGenerateImage}
           onVoiceRecord={handleVoiceRecord}
           isRecording={isRecording}
           isLoading={isLoading}
