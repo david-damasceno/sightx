@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
 
 type Integration = Database['public']['Tables']['integrations']['Row']
+type IntegrationType = Database['public']['Enums']['integration_type']
 
 export function IntegrationsSettings() {
   const { toast } = useToast()
@@ -28,17 +29,19 @@ export function IntegrationsSettings() {
     enabled: !!currentOrganization?.id
   })
 
-  const handleConnect = async (type: string) => {
+  const handleConnect = async (type: IntegrationType) => {
     try {
+      if (!currentOrganization?.id) {
+        throw new Error('Organização não selecionada')
+      }
+
       // Criar ou atualizar registro de integração
       const { data: integration, error: integrationError } = await supabase
         .from('integrations')
         .upsert({
-          organization_id: currentOrganization?.id,
+          organization_id: currentOrganization.id,
           integration_type: type,
           status: 'pending'
-        }, {
-          onConflict: 'organization_id,integration_type'
         })
         .select()
         .single()
@@ -49,7 +52,7 @@ export function IntegrationsSettings() {
       const clientId = 'YOUR_GOOGLE_CLIENT_ID' // Substituir pelo seu Client ID
       const redirectUri = `${window.location.origin}/settings/integrations/callback`
       const scope = 'https://www.googleapis.com/auth/business.manage'
-      const state = currentOrganization?.id // Usar organization_id como state
+      const state = currentOrganization.id // Usar organization_id como state
 
       // Construir URL de autorização
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
@@ -191,7 +194,12 @@ export function IntegrationsSettings() {
               </div>
             </div>
 
-            <Button variant="outline">Conectar</Button>
+            <Button 
+              variant="outline"
+              onClick={() => handleConnect('google_analytics')}
+            >
+              Conectar
+            </Button>
           </div>
         </Card>
 
@@ -214,7 +222,12 @@ export function IntegrationsSettings() {
               </div>
             </div>
 
-            <Button variant="outline">Conectar</Button>
+            <Button 
+              variant="outline"
+              onClick={() => handleConnect('slack')}
+            >
+              Conectar
+            </Button>
           </div>
         </Card>
       </div>
