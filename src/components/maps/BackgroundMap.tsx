@@ -25,7 +25,7 @@ export function BackgroundMap() {
         
         if (!mapRef.current) return
 
-        const mapOptions = {
+        const mapOptions: google.maps.MapOptions = {
           center: { lat: -23.5505, lng: -46.6333 }, // São Paulo
           zoom: 12,
           disableDefaultUI: true,

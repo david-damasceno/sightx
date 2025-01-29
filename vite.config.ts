@@ -43,6 +43,6 @@ export default defineConfig({
     include: ['react', 'react-dom'],
   },
   server: {
-    port: 4000,
+    port: 8080,
   },
 })
