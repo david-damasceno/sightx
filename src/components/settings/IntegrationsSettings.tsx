@@ -14,7 +14,7 @@ export function IntegrationsSettings() {
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
 
-  const { data: integrations, isLoading } = useQuery({
+  const { data: integrations, isLoading, refetch } = useQuery({
     queryKey: ['integrations', currentOrganization?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -29,11 +29,54 @@ export function IntegrationsSettings() {
   })
 
   const handleConnect = async (type: string) => {
-    toast({
-      title: "Iniciando integração",
-      description: "Você será redirecionado para autorizar o acesso.",
-    })
-    // TODO: Implementar fluxo de OAuth
+    try {
+      // Criar ou atualizar registro de integração
+      const { data: integration, error: integrationError } = await supabase
+        .from('integrations')
+        .upsert({
+          organization_id: currentOrganization?.id,
+          integration_type: type,
+          status: 'pending'
+        }, {
+          onConflict: 'organization_id,integration_type'
+        })
+        .select()
+        .single()
+
+      if (integrationError) throw integrationError
+
+      // Configurar parâmetros OAuth
+      const clientId = 'YOUR_GOOGLE_CLIENT_ID' // Substituir pelo seu Client ID
+      const redirectUri = `${window.location.origin}/settings/integrations/callback`
+      const scope = 'https://www.googleapis.com/auth/business.manage'
+      const state = currentOrganization?.id // Usar organization_id como state
+
+      // Construir URL de autorização
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        response_type: 'code',
+        scope,
+        state,
+        access_type: 'offline',
+        prompt: 'consent'
+      })}`
+
+      // Redirecionar para página de autorização do Google
+      window.location.href = authUrl
+
+      toast({
+        title: "Iniciando integração",
+        description: "Você será redirecionado para autorizar o acesso.",
+      })
+    } catch (error) {
+      console.error('Error starting integration:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível iniciar a integração.",
+        variant: "destructive"
+      })
+    }
   }
 
   const getStatusIcon = (status: string) => {
@@ -129,7 +172,7 @@ export function IntegrationsSettings() {
           </div>
         </Card>
 
-        {/* Outros serviços podem ser adicionados aqui */}
+        {/* Google Analytics */}
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -152,6 +195,7 @@ export function IntegrationsSettings() {
           </div>
         </Card>
 
+        {/* Slack */}
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
