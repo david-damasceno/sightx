@@ -156,6 +156,56 @@ export type Database = {
           },
         ]
       }
+      integrations: {
+        Row: {
+          created_at: string | null
+          credentials: Json | null
+          expires_at: string | null
+          id: string
+          integration_type: Database["public"]["Enums"]["integration_type"]
+          last_sync_at: string | null
+          metadata: Json | null
+          organization_id: string
+          settings: Json | null
+          status: Database["public"]["Enums"]["integration_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credentials?: Json | null
+          expires_at?: string | null
+          id?: string
+          integration_type: Database["public"]["Enums"]["integration_type"]
+          last_sync_at?: string | null
+          metadata?: Json | null
+          organization_id: string
+          settings?: Json | null
+          status?: Database["public"]["Enums"]["integration_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credentials?: Json | null
+          expires_at?: string | null
+          id?: string
+          integration_type?: Database["public"]["Enums"]["integration_type"]
+          last_sync_at?: string | null
+          metadata?: Json | null
+          organization_id?: string
+          settings?: Json | null
+          status?: Database["public"]["Enums"]["integration_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integrations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nps_responses: {
         Row: {
           comment: string | null
@@ -432,6 +482,12 @@ export type Database = {
     }
     Enums: {
       file_type: "excel" | "csv" | "access" | "json"
+      integration_status: "pending" | "active" | "error" | "disconnected"
+      integration_type:
+        | "google_business"
+        | "google_analytics"
+        | "salesforce"
+        | "slack"
       survey_status: "draft" | "active" | "inactive" | "archived"
       survey_type: "simple" | "detailed" | "advanced"
       user_role: "owner" | "admin" | "member"
