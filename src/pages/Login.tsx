@@ -3,6 +3,7 @@ import { ThemeSupa } from "@supabase/auth-ui-shared"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
 import { useEffect } from "react"
+import { BackgroundMap } from "@/components/maps/BackgroundMap"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -27,8 +28,9 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="w-full max-w-md space-y-4 p-6 bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl animate-fade-in">
+    <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-blue-50/80 to-indigo-100/80">
+      <BackgroundMap />
+      <div className="w-full max-w-md space-y-4 p-6 bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg rounded-2xl shadow-xl animate-fade-in relative z-10">
         <div className="text-center space-y-3">
           <div className="flex items-center justify-center gap-3">
             <img 
@@ -36,15 +38,15 @@ export default function Login() {
               alt="SightX Logo" 
               className="h-14 w-14"
             />
-            <h2 className="text-4xl font-bold text-gray-900">
+            <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-100">
               SightX
             </h2>
           </div>
           <div className="space-y-1">
-            <h3 className="text-xl font-semibold text-gray-900">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
               Bem-vindo
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Faça login para acessar seu painel de controle
             </p>
           </div>
@@ -87,10 +89,10 @@ export default function Login() {
               },
               className: {
                 container: 'space-y-3',
-                button: 'w-full px-4 py-2.5 text-black font-medium rounded-lg shadow-sm hover:opacity-90 transition-opacity duration-200',
+                button: 'w-full px-4 py-2.5 text-white font-medium rounded-lg shadow-sm hover:opacity-90 transition-opacity duration-200',
                 input: 'w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow duration-200',
-                label: 'block text-sm font-medium text-gray-700 mb-1',
-                message: 'text-sm text-gray-600 mt-1',
+                label: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1',
+                message: 'text-sm text-gray-600 dark:text-gray-400 mt-1',
                 anchor: 'text-blue-600 hover:text-blue-700 font-medium',
                 divider: 'my-4',
               },
