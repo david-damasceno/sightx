@@ -1,7 +1,5 @@
 import { useState, useCallback } from "react"
-import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
-import { MessageSquare } from "lucide-react"
 import { ChatMessageList } from "./ChatMessageList"
 import { ChatInput } from "./ChatInput"
 import { supabase } from "@/integrations/supabase/client"
@@ -98,11 +96,6 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
 
   return (
     <div className="flex flex-col h-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-lg border shadow-lg">
-      <div className="p-4 border-b bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm flex items-center gap-2">
-        <MessageSquare className="h-5 w-5 text-purple-500" />
-        <h2 className="text-lg font-semibold">Chat com DONA</h2>
-      </div>
-
       <ChatMessageList 
         messages={messages} 
         onToggleFavorite={toggleFavorite} 
