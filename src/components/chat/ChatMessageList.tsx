@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Star } from "lucide-react"
+import { Star, Bot, User } from "lucide-react"
 
 interface ChatMessage {
   id: string
@@ -29,7 +29,7 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
 
   return (
     <ScrollArea className="flex-1 p-4">
-      <div className="space-y-4">
+      <div className="space-y-4 max-w-4xl mx-auto">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -37,32 +37,64 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
               message.sender === "user" ? "justify-end" : "justify-start"
             }`}
           >
+            {message.sender === "ai" && (
+              <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
+                <Bot className="w-4 h-4 text-purple-500" />
+              </div>
+            )}
+            
             <div
-              className={`max-w-[85%] rounded-lg p-4 animate-fade-in ${
+              className={`max-w-[85%] rounded-2xl p-4 animate-fade-in ${
                 message.sender === "user"
-                  ? "bg-purple-500 text-white"
-                  : "glass-card"
+                  ? "bg-purple-500 text-white ml-auto rounded-br-sm"
+                  : "bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 dark:border-gray-700 rounded-bl-sm"
               }`}
             >
+              {message.sender === "user" && (
+                <div className="flex items-center gap-2 mb-1 text-white/80">
+                  <User className="w-4 h-4" />
+                  <span className="text-xs">Você</span>
+                </div>
+              )}
+              
               <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+              
               <div className="flex items-center justify-end gap-2 mt-2">
+                <span className="text-xs opacity-70">
+                  {message.timestamp.toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </span>
                 <button
                   onClick={() => onToggleFavorite(message.id)}
-                  className="text-xs opacity-70 hover:opacity-100 transition-opacity"
+                  className={`text-xs opacity-70 hover:opacity-100 transition-opacity ${
+                    message.sender === "user" ? "text-white" : ""
+                  }`}
                 >
                   <Star
                     className={`h-3 w-3 ${
-                      message.isFavorite ? "fill-yellow-400" : ""
+                      message.isFavorite ? "fill-yellow-400 stroke-yellow-400" : ""
                     }`}
                   />
                 </button>
               </div>
             </div>
+
+            {message.sender === "user" && (
+              <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4 text-purple-500" />
+              </div>
+            )}
           </div>
         ))}
+        
         {isLoading && (
           <div className="flex justify-start">
-            <div className="glass-card max-w-[85%] rounded-lg p-4 animate-pulse">
+            <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
+              <Bot className="w-4 h-4 text-purple-500" />
+            </div>
+            <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 dark:border-gray-700 max-w-[85%] rounded-2xl p-4 ml-2">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" />
                 <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:0.2s]" />

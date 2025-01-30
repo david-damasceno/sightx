@@ -1,6 +1,7 @@
+import { useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Send, Mic, Loader2 } from "lucide-react"
+import { Send, Mic, Loader2, Sparkles } from "lucide-react"
 
 interface ChatInputProps {
   inputMessage: string
@@ -19,9 +20,18 @@ export function ChatInput({
   isRecording,
   isLoading,
 }: ChatInputProps) {
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  // Mantém o foco no input após enviar mensagem
+  useEffect(() => {
+    if (!isLoading && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [isLoading])
+
   return (
-    <div className="p-4 sticky bottom-0 bg-background/80 backdrop-blur-lg">
-      <div className="flex gap-2 max-w-3xl mx-auto">
+    <div className="p-4 sticky bottom-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-xl border-t border-white/20 dark:border-gray-800">
+      <div className="flex gap-2 max-w-4xl mx-auto">
         <Button
           variant="outline"
           size="icon"
@@ -33,11 +43,22 @@ export function ChatInput({
         >
           <Mic className="h-4 w-4" />
         </Button>
+
+        <Button
+          variant="outline"
+          size="icon"
+          className="flex-shrink-0 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+          disabled={isLoading}
+        >
+          <Sparkles className="h-4 w-4" />
+        </Button>
+
         <Textarea
+          ref={inputRef}
           value={inputMessage}
           onChange={(e) => onInputChange(e.target.value)}
           placeholder="Digite sua mensagem para a DONA..."
-          className="min-h-[44px] max-h-[200px] resize-none bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm"
+          className="min-h-[44px] max-h-[200px] resize-none bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-white/20 dark:border-gray-700 focus:ring-purple-500"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault()
@@ -46,6 +67,7 @@ export function ChatInput({
           }}
           disabled={isLoading}
         />
+        
         <Button
           onClick={onSendMessage}
           className="flex-shrink-0 bg-purple-500 hover:bg-purple-600 transition-colors"
