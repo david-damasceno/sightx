@@ -1,8 +1,10 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Plus, MessageSquare, Star, ChevronLeft, ChevronRight } from "lucide-react"
+import { Plus, MessageSquare, Star, ChevronLeft, ChevronRight, Brain } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
 
 interface ChatSidebarProps {
   selectedChat: string | null
@@ -22,10 +24,34 @@ export function ChatSidebar({
     { id: "2", title: "Chat Anterior 2", timestamp: new Date() },
   ])
 
+  const insights = [
+    {
+      id: "1",
+      icon: <Brain className="h-4 w-4 text-purple-500" />,
+      text: "DONA sugere: Aumente o estoque dos produtos eletrônicos",
+      priority: "high",
+      category: "Estoque",
+    },
+    {
+      id: "2",
+      icon: <Brain className="h-4 w-4 text-orange-500" />,
+      text: "DONA alerta: Produto B e E estão com estoque abaixo do mínimo",
+      priority: "high",
+      category: "Estoque",
+    },
+    {
+      id: "3",
+      icon: <Brain className="h-4 w-4 text-green-500" />,
+      text: "Vendas superaram a meta em 12.5% este mês",
+      priority: "medium",
+      category: "Vendas",
+    },
+  ]
+
   return (
     <div className={cn(
       "relative bg-card rounded-lg border shadow-sm transition-all duration-300",
-      isCollapsed ? "w-12" : "w-64"
+      isCollapsed ? "w-12" : "w-72"
     )}>
       <Button
         variant="ghost"
@@ -46,30 +72,79 @@ export function ChatSidebar({
           </Button>
         </div>
 
+        <div className="px-2 pt-2">
+          <Tabs defaultValue="chats" className="w-full">
+            <TabsList className="w-full">
+              <TabsTrigger value="chats" className="flex-1">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Chats
+              </TabsTrigger>
+              <TabsTrigger value="insights" className="flex-1">
+                <Brain className="h-4 w-4 mr-2" />
+                Insights
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
         <ScrollArea className="h-[calc(100vh-12rem)]">
           <div className="p-4 space-y-2">
-            <div className="flex items-center gap-2 mb-4">
-              <MessageSquare className="h-4 w-4" />
-              <h3 className="font-medium">Chats Recentes</h3>
+            {/* Chats Section */}
+            <div className="space-y-2">
+              {chats.map((chat) => (
+                <button
+                  key={chat.id}
+                  onClick={() => onSelectChat(chat.id)}
+                  className={`w-full text-left p-2 rounded-lg hover:bg-accent ${
+                    selectedChat === chat.id ? "bg-accent" : ""
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    <span className="text-sm font-medium">{chat.title}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {chat.timestamp.toLocaleDateString()}
+                  </span>
+                </button>
+              ))}
             </div>
-            
-            {chats.map((chat) => (
-              <button
-                key={chat.id}
-                onClick={() => onSelectChat(chat.id)}
-                className={`w-full text-left p-2 rounded-lg hover:bg-accent ${
-                  selectedChat === chat.id ? "bg-accent" : ""
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  <span className="text-sm font-medium">{chat.title}</span>
+
+            {/* Insights Section */}
+            <div className="space-y-2">
+              {insights.map((insight) => (
+                <div
+                  key={insight.id}
+                  className={cn(
+                    "group relative flex flex-col gap-2 p-3 rounded-lg transition-all duration-200 hover:bg-accent cursor-pointer",
+                    {
+                      'border-l-4': true,
+                      'border-l-red-500': insight.priority === 'high',
+                      'border-l-yellow-500': insight.priority === 'medium',
+                      'border-l-blue-500': insight.priority === 'low',
+                    }
+                  )}
+                >
+                  <div className="flex items-start gap-2">
+                    {insight.icon}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm">{insight.text}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="secondary" className="text-xs">
+                          {insight.category}
+                        </Badge>
+                        <Badge 
+                          variant={insight.priority === 'high' ? 'destructive' : 'secondary'}
+                          className="text-xs"
+                        >
+                          {insight.priority}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {chat.timestamp.toLocaleDateString()}
-                </span>
-              </button>
-            ))}
+              ))}
+            </div>
 
             <div className="flex items-center gap-2 mt-6 mb-4">
               <Star className="h-4 w-4" />

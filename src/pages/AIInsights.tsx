@@ -1,15 +1,12 @@
 import { useState } from "react"
-import { Brain, MessageSquare, PanelLeftClose, PanelRightClose } from "lucide-react"
+import { Brain, MessageSquare } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { Button } from "@/components/ui/button" // Added this import
-import { InsightsPanel } from "@/components/InsightsPanel"
 import { ChatInterface } from "@/components/chat/ChatInterface"
 import { ChatSidebar } from "@/components/chat/ChatSidebar"
 
 export default function AIInsights() {
   const [selectedChat, setSelectedChat] = useState<string | null>(null)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [isInsightsPanelCollapsed, setIsInsightsPanelCollapsed] = useState(false)
   const { toast } = useToast()
 
   return (
@@ -37,10 +34,10 @@ export default function AIInsights() {
 
         {/* Área principal com chat e insights */}
         <div className="flex-1 flex gap-4 relative animate-fade-in overflow-hidden">
-          {/* Sidebar do chat com animação suave */}
+          {/* Sidebar unificada */}
           <div 
             className={`transition-all duration-300 ease-in-out ${
-              isSidebarCollapsed ? 'w-12' : 'w-64'
+              isSidebarCollapsed ? 'w-12' : 'w-72'
             }`}
           >
             <ChatSidebar 
@@ -51,42 +48,13 @@ export default function AIInsights() {
             />
           </div>
 
-          {/* Interface do chat com transições suaves */}
-          <div className="flex-1 flex gap-4">
-            <div 
-              className={`flex-1 transition-all duration-300 ${
-                !isInsightsPanelCollapsed ? 'mr-72' : 'mr-0'
-              }`}
-            >
-              <div className="h-full glass-card">
-                <ChatInterface 
-                  selectedChat={selectedChat}
-                  onSelectChat={setSelectedChat}
-                />
-              </div>
-            </div>
-
-            {/* Painel de insights com animação de deslizar */}
-            <div 
-              className={`fixed right-4 top-24 bottom-4 w-72 transition-all duration-300 transform ${
-                isInsightsPanelCollapsed ? 'translate-x-full' : 'translate-x-0'
-              }`}
-            >
-              <div className="relative h-full">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsInsightsPanelCollapsed(!isInsightsPanelCollapsed)}
-                  className="absolute -left-10 top-1/2 transform -translate-y-1/2 bg-background/50 backdrop-blur-sm"
-                >
-                  {isInsightsPanelCollapsed ? (
-                    <PanelLeftClose className="h-4 w-4" />
-                  ) : (
-                    <PanelRightClose className="h-4 w-4" />
-                  )}
-                </Button>
-                <InsightsPanel />
-              </div>
+          {/* Interface do chat */}
+          <div className="flex-1">
+            <div className="h-full glass-card">
+              <ChatInterface 
+                selectedChat={selectedChat}
+                onSelectChat={setSelectedChat}
+              />
             </div>
           </div>
         </div>
