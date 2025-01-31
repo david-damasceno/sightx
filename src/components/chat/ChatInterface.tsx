@@ -84,7 +84,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
     })
   }
 
-  const toggleFavorite = (messageId: string) => {
+  const toggleFavorite = useCallback((messageId: string) => {
     setMessages(prev =>
       prev.map(msg =>
         msg.id === messageId
@@ -92,7 +92,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
           : msg
       )
     )
-  }
+  }, [])
 
   return (
     <div className="flex flex-col h-full">
@@ -101,7 +101,6 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
         onToggleFavorite={toggleFavorite} 
         isLoading={isLoading}
       />
-
       <ChatInput
         inputMessage={inputMessage}
         onInputChange={setInputMessage}

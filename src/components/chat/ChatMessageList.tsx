@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Star, Bot, User } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface ChatMessage {
   id: string
@@ -24,7 +25,8 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
   }
 
   useEffect(() => {
-    scrollToBottom()
+    const timeoutId = setTimeout(scrollToBottom, 100)
+    return () => clearTimeout(timeoutId)
   }, [messages])
 
   return (
@@ -33,31 +35,35 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`flex gap-2 ${
+            className={cn(
+              "flex gap-3",
               message.sender === "user" ? "justify-end" : "justify-start"
-            }`}
+            )}
           >
             {message.sender === "ai" && (
-              <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-4 h-4 text-green-500" />
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-100 to-emerald-200 dark:from-green-900/20 dark:to-emerald-800/20 flex items-center justify-center flex-shrink-0 shadow-lg">
+                <Bot className="w-4 h-4 text-green-600 dark:text-green-400" />
               </div>
             )}
             
             <div
-              className={`max-w-[85%] rounded-2xl p-4 animate-in ${
+              className={cn(
+                "max-w-[85%] rounded-2xl p-4 animate-fade-in shadow-lg",
                 message.sender === "user"
-                  ? "bg-green-500 text-white ml-auto rounded-br-sm"
+                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-br-sm"
                   : "glass-card rounded-bl-sm"
-              }`}
+              )}
             >
               {message.sender === "user" && (
                 <div className="flex items-center gap-2 mb-1 text-white/80">
                   <User className="w-4 h-4" />
-                  <span className="text-xs">Você</span>
+                  <span className="text-xs font-medium">Você</span>
                 </div>
               )}
               
-              <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                {message.content}
+              </p>
               
               <div className="flex items-center justify-end gap-2 mt-2">
                 <span className="text-xs opacity-70">
@@ -68,22 +74,24 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
                 </span>
                 <button
                   onClick={() => onToggleFavorite(message.id)}
-                  className={`text-xs opacity-70 hover:opacity-100 transition-opacity ${
+                  className={cn(
+                    "text-xs opacity-70 hover:opacity-100 transition-opacity",
                     message.sender === "user" ? "text-white" : ""
-                  }`}
+                  )}
                 >
                   <Star
-                    className={`h-3 w-3 ${
+                    className={cn(
+                      "h-3 w-3",
                       message.isFavorite ? "fill-yellow-400 stroke-yellow-400" : ""
-                    }`}
+                    )}
                   />
                 </button>
               </div>
             </div>
 
             {message.sender === "user" && (
-              <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
-                <User className="w-4 h-4 text-green-500" />
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-100 to-emerald-200 dark:from-green-900/20 dark:to-emerald-800/20 flex items-center justify-center flex-shrink-0 shadow-lg">
+                <User className="w-4 h-4 text-green-600 dark:text-green-400" />
               </div>
             )}
           </div>
@@ -91,10 +99,10 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
         
         {isLoading && (
           <div className="flex justify-start">
-            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
-              <Bot className="w-4 h-4 text-green-500" />
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-100 to-emerald-200 dark:from-green-900/20 dark:to-emerald-800/20 flex items-center justify-center flex-shrink-0 shadow-lg">
+              <Bot className="w-4 h-4 text-green-600 dark:text-green-400" />
             </div>
-            <div className="glass-card max-w-[85%] rounded-2xl p-4 ml-2">
+            <div className="glass-card max-w-[85%] rounded-2xl p-4 ml-3 shadow-lg">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" />
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce [animation-delay:0.2s]" />
