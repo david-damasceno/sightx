@@ -36,7 +36,7 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
           <div
             key={message.id}
             className={cn(
-              "flex gap-3",
+              "flex gap-3 animate-fade-in",
               message.sender === "user" ? "justify-end" : "justify-start"
             )}
           >
@@ -48,13 +48,13 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
             
             <div
               className={cn(
-                "max-w-[85%] rounded-lg p-4",
+                "max-w-[85%] rounded-lg p-4 shadow-md transition-all duration-200",
                 message.sender === "user"
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted"
+                  : "glass-card"
               )}
             >
-              <p className="whitespace-pre-wrap text-sm">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed">
                 {message.content}
               </p>
               
@@ -88,11 +88,11 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
         ))}
         
         {isLoading && (
-          <div className="flex justify-start">
+          <div className="flex justify-start animate-fade-in">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
               <Bot className="w-4 h-4 text-primary" />
             </div>
-            <div className="bg-muted max-w-[85%] rounded-lg p-4 ml-3">
+            <div className="glass-card max-w-[85%] rounded-lg p-4 ml-3">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />

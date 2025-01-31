@@ -76,7 +76,8 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
     setIsRecording(!isRecording)
     toast({
       title: isRecording ? "Gravação finalizada" : "Gravando...",
-      description: isRecording ? "Processando sua mensagem..." : "Fale sua mensagem"
+      description: isRecording ? "Processando sua mensagem..." : "Fale sua mensagem",
+      className: "bg-primary text-primary-foreground"
     })
   }
 
@@ -91,7 +92,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gradient-to-br from-background to-accent/10">
       <ChatMessageList 
         messages={messages} 
         onToggleFavorite={toggleFavorite} 
