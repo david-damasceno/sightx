@@ -95,23 +95,21 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
   }
 
   return (
-    <div className="flex flex-col h-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-md rounded-lg border shadow-lg">
+    <div className="flex flex-col h-full">
       <ChatMessageList 
         messages={messages} 
         onToggleFavorite={toggleFavorite} 
         isLoading={isLoading}
       />
 
-      <div className="border-t bg-white/30 dark:bg-gray-800/30 mt-auto">
-        <ChatInput
-          inputMessage={inputMessage}
-          onInputChange={setInputMessage}
-          onSendMessage={handleSendMessage}
-          onVoiceRecord={handleVoiceRecord}
-          isRecording={isRecording}
-          isLoading={isLoading}
-        />
-      </div>
+      <ChatInput
+        inputMessage={inputMessage}
+        onInputChange={setInputMessage}
+        onSendMessage={handleSendMessage}
+        onVoiceRecord={handleVoiceRecord}
+        isRecording={isRecording}
+        isLoading={isLoading}
+      />
     </div>
   )
 }

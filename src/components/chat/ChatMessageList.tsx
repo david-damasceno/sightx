@@ -38,16 +38,16 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
             }`}
           >
             {message.sender === "ai" && (
-              <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-4 h-4 text-purple-500" />
+              <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
+                <Bot className="w-4 h-4 text-green-500" />
               </div>
             )}
             
             <div
-              className={`max-w-[85%] rounded-2xl p-4 animate-fade-in ${
+              className={`max-w-[85%] rounded-2xl p-4 animate-in ${
                 message.sender === "user"
-                  ? "bg-purple-500 text-white ml-auto rounded-br-sm"
-                  : "bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 dark:border-gray-700 rounded-bl-sm"
+                  ? "bg-green-500 text-white ml-auto rounded-br-sm"
+                  : "glass-card rounded-bl-sm"
               }`}
             >
               {message.sender === "user" && (
@@ -82,8 +82,8 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
             </div>
 
             {message.sender === "user" && (
-              <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
-                <User className="w-4 h-4 text-purple-500" />
+              <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4 text-green-500" />
               </div>
             )}
           </div>
@@ -91,14 +91,14 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
         
         {isLoading && (
           <div className="flex justify-start">
-            <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
-              <Bot className="w-4 h-4 text-purple-500" />
+            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
+              <Bot className="w-4 h-4 text-green-500" />
             </div>
-            <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 dark:border-gray-700 max-w-[85%] rounded-2xl p-4 ml-2">
+            <div className="glass-card max-w-[85%] rounded-2xl p-4 ml-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" />
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:0.2s]" />
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:0.4s]" />
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" />
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce [animation-delay:0.2s]" />
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce [animation-delay:0.4s]" />
               </div>
             </div>
           </div>
