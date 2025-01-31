@@ -41,27 +41,20 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
             )}
           >
             {message.sender === "ai" && (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-100 to-emerald-200 dark:from-green-900/20 dark:to-emerald-800/20 flex items-center justify-center flex-shrink-0 shadow-lg">
-                <Bot className="w-4 h-4 text-green-600 dark:text-green-400" />
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Bot className="w-4 h-4 text-primary" />
               </div>
             )}
             
             <div
               className={cn(
-                "max-w-[85%] rounded-2xl p-4 animate-fade-in shadow-lg",
+                "max-w-[85%] rounded-lg p-4",
                 message.sender === "user"
-                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-br-sm"
-                  : "glass-card rounded-bl-sm"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted"
               )}
             >
-              {message.sender === "user" && (
-                <div className="flex items-center gap-2 mb-1 text-white/80">
-                  <User className="w-4 h-4" />
-                  <span className="text-xs font-medium">Você</span>
-                </div>
-              )}
-              
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">
+              <p className="whitespace-pre-wrap text-sm">
                 {message.content}
               </p>
               
@@ -74,15 +67,12 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
                 </span>
                 <button
                   onClick={() => onToggleFavorite(message.id)}
-                  className={cn(
-                    "text-xs opacity-70 hover:opacity-100 transition-opacity",
-                    message.sender === "user" ? "text-white" : ""
-                  )}
+                  className="text-xs opacity-70 hover:opacity-100 transition-opacity"
                 >
                   <Star
                     className={cn(
                       "h-3 w-3",
-                      message.isFavorite ? "fill-yellow-400 stroke-yellow-400" : ""
+                      message.isFavorite && "fill-yellow-400 stroke-yellow-400"
                     )}
                   />
                 </button>
@@ -90,8 +80,8 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
             </div>
 
             {message.sender === "user" && (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-100 to-emerald-200 dark:from-green-900/20 dark:to-emerald-800/20 flex items-center justify-center flex-shrink-0 shadow-lg">
-                <User className="w-4 h-4 text-green-600 dark:text-green-400" />
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4 text-primary" />
               </div>
             )}
           </div>
@@ -99,14 +89,14 @@ export function ChatMessageList({ messages, onToggleFavorite, isLoading }: ChatM
         
         {isLoading && (
           <div className="flex justify-start">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-100 to-emerald-200 dark:from-green-900/20 dark:to-emerald-800/20 flex items-center justify-center flex-shrink-0 shadow-lg">
-              <Bot className="w-4 h-4 text-green-600 dark:text-green-400" />
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Bot className="w-4 h-4 text-primary" />
             </div>
-            <div className="glass-card max-w-[85%] rounded-2xl p-4 ml-3 shadow-lg">
+            <div className="bg-muted max-w-[85%] rounded-lg p-4 ml-3">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" />
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce [animation-delay:0.2s]" />
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce [animation-delay:0.4s]" />
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.4s]" />
               </div>
             </div>
           </div>

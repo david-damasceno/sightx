@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { ChatMessageList } from "./ChatMessageList"
 import { ChatInput } from "./ChatInput"
@@ -52,13 +52,9 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
 
       if (error) throw error
 
-      if (!data?.response) {
-        throw new Error('Invalid response from DONA')
-      }
-
       const aiResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        content: data.response,
+        content: data.response || "Desculpe, não consegui processar sua mensagem.",
         sender: "ai",
         timestamp: new Date()
       }
@@ -68,7 +64,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
       console.error('Error in handleSendMessage:', error)
       toast({
         title: "Erro ao processar mensagem",
-        description: "Não foi possível obter resposta da DONA. Tente novamente.",
+        description: "Não foi possível obter resposta. Tente novamente.",
         variant: "destructive",
       })
     } finally {
@@ -84,7 +80,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
     })
   }
 
-  const toggleFavorite = useCallback((messageId: string) => {
+  const toggleFavorite = (messageId: string) => {
     setMessages(prev =>
       prev.map(msg =>
         msg.id === messageId
@@ -92,7 +88,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
           : msg
       )
     )
-  }, [])
+  }
 
   return (
     <div className="flex flex-col h-full">
