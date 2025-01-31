@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Send, Mic, Loader2, Sparkles } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface ChatInputProps {
   inputMessage: string
