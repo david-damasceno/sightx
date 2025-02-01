@@ -3,7 +3,6 @@ import { ThemeSupa } from "@supabase/auth-ui-shared"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
 import { useEffect } from "react"
-import { BackgroundMap } from "@/components/maps/BackgroundMap"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -28,9 +27,8 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center bg-gradient-to-br from-blue-50/80 to-indigo-100/80">
-      <BackgroundMap />
-      <div className="w-full max-w-md space-y-4 p-6 bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg rounded-2xl shadow-xl animate-fade-in relative z-10">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="w-full max-w-md space-y-4 p-6 bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg rounded-2xl shadow-xl animate-fade-in">
         <div className="text-center space-y-3">
           <div className="flex items-center justify-center gap-3">
             <img 
@@ -99,17 +97,49 @@ export default function Login() {
             }}
             localization={{
               variables: {
-                sign_in: {
-                  email_label: "Email",
-                  password_label: "Senha",
-                  button_label: "Entrar",
-                  loading_button_label: "Entrando...",
-                },
                 sign_up: {
                   email_label: "Email",
                   password_label: "Senha",
+                  email_input_placeholder: "Seu endereço de email",
+                  password_input_placeholder: "Sua senha",
                   button_label: "Criar conta",
                   loading_button_label: "Criando conta...",
+                  social_provider_text: "Entrar com {{provider}}",
+                  link_text: "Não tem uma conta? Cadastre-se",
+                },
+                sign_in: {
+                  email_label: "Email",
+                  password_label: "Senha",
+                  email_input_placeholder: "Seu endereço de email",
+                  password_input_placeholder: "Sua senha",
+                  button_label: "Entrar",
+                  loading_button_label: "Entrando...",
+                  social_provider_text: "Entrar com {{provider}}",
+                  link_text: "Já tem uma conta? Entre",
+                },
+                forgotten_password: {
+                  email_label: "Email",
+                  password_label: "Senha",
+                  email_input_placeholder: "Seu endereço de email",
+                  button_label: "Recuperar senha",
+                  loading_button_label: "Enviando instruções...",
+                  link_text: "Esqueceu sua senha?",
+                },
+                update_password: {
+                  password_label: "Nova senha",
+                  password_input_placeholder: "Sua nova senha",
+                  button_label: "Atualizar senha",
+                  loading_button_label: "Atualizando senha...",
+                },
+                verify_otp: {
+                  email_input_label: "Email",
+                  email_input_placeholder: "Seu endereço de email",
+                  phone_input_label: "Número de telefone",
+                  phone_input_placeholder: "Seu número de telefone",
+                  token_input_label: "Token",
+                  token_input_placeholder: "Seu token de verificação",
+                  button_label: "Verificar",
+                  loading_button_label: "Verificando...",
                 },
               },
             }}
