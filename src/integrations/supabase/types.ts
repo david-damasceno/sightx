@@ -370,11 +370,72 @@ export type Database = {
           },
         ]
       }
+      organization_profiles: {
+        Row: {
+          created_at: string | null
+          facebook_url: string | null
+          id: string
+          instagram_url: string | null
+          linkedin_url: string | null
+          main_objectives: Database["public"]["Enums"]["business_objective"][]
+          monthly_revenue_range: string | null
+          organization_id: string
+          region: string | null
+          sales_channels: Database["public"]["Enums"]["sales_channel"][]
+          sector: Database["public"]["Enums"]["business_sector"]
+          target_market: string | null
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          facebook_url?: string | null
+          id?: string
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          main_objectives?: Database["public"]["Enums"]["business_objective"][]
+          monthly_revenue_range?: string | null
+          organization_id: string
+          region?: string | null
+          sales_channels?: Database["public"]["Enums"]["sales_channel"][]
+          sector: Database["public"]["Enums"]["business_sector"]
+          target_market?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          facebook_url?: string | null
+          id?: string
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          main_objectives?: Database["public"]["Enums"]["business_objective"][]
+          monthly_revenue_range?: string | null
+          organization_id?: string
+          region?: string | null
+          sales_channels?: Database["public"]["Enums"]["sales_channel"][]
+          sector?: Database["public"]["Enums"]["business_sector"]
+          target_market?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string | null
           id: string
           name: string
+          onboarding_completed: boolean | null
+          onboarding_step: number | null
           settings: Json | null
           slug: string
           status: string | null
@@ -384,6 +445,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           name: string
+          onboarding_completed?: boolean | null
+          onboarding_step?: number | null
           settings?: Json | null
           slug: string
           status?: string | null
@@ -393,6 +456,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           name?: string
+          onboarding_completed?: boolean | null
+          onboarding_step?: number | null
           settings?: Json | null
           slug?: string
           status?: string | null
@@ -481,6 +546,22 @@ export type Database = {
       }
     }
     Enums: {
+      business_objective:
+        | "increase_sales"
+        | "improve_customer_satisfaction"
+        | "expand_market"
+        | "optimize_operations"
+        | "reduce_costs"
+        | "other"
+      business_sector:
+        | "retail"
+        | "technology"
+        | "manufacturing"
+        | "services"
+        | "healthcare"
+        | "education"
+        | "finance"
+        | "other"
       file_type: "excel" | "csv" | "access" | "json"
       integration_status: "pending" | "active" | "error" | "disconnected"
       integration_type:
@@ -488,6 +569,13 @@ export type Database = {
         | "google_analytics"
         | "salesforce"
         | "slack"
+      sales_channel:
+        | "physical_store"
+        | "e-commerce"
+        | "marketplace"
+        | "direct_sales"
+        | "distributors"
+        | "other"
       survey_status: "draft" | "active" | "inactive" | "archived"
       survey_type: "simple" | "detailed" | "advanced"
       user_role: "owner" | "admin" | "member"
