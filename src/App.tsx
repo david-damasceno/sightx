@@ -30,7 +30,7 @@ const AppContent = () => {
   return (
     <div className="min-h-screen flex flex-col w-full">
       {!isLoginPage && !isOnboardingPage && <AppNavbar />}
-      <main className="flex-1 pt-16"> {/* Adicionado padding-top para evitar sobreposição */}
+      <main className={`flex-1 ${!isLoginPage && !isOnboardingPage ? 'pt-16' : ''}`}>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route
