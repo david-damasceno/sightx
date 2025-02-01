@@ -44,7 +44,6 @@ export default function Onboarding() {
         if (memberError) throw memberError
 
         if (memberData && mounted) {
-          // User already has an organization, update profile and redirect
           const { error: profileError } = await supabase
             .from('profiles')
             .update({ onboarded: true })
@@ -76,39 +75,6 @@ export default function Onboarding() {
     }
   }, [session, navigate, toast])
 
-  const ensureProfileExists = async () => {
-    if (!session?.user) return false
-
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .maybeSingle()
-
-      if (!profile) {
-        const { error: createError } = await supabase
-          .from('profiles')
-          .insert({
-            id: session.user.id,
-            email: session.user.email,
-            updated_at: new Date().toISOString(),
-            onboarded: false
-          })
-
-        if (createError) {
-          console.error('Error creating profile:', createError)
-          return false
-        }
-      }
-
-      return true
-    } catch (error) {
-      console.error('Error checking profile:', error)
-      return false
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!orgName.trim()) {
@@ -122,17 +88,6 @@ export default function Onboarding() {
 
     try {
       setLoading(true)
-
-      const profileExists = await ensureProfileExists()
-      if (!profileExists) {
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Não foi possível criar seu perfil. Tente novamente.",
-        })
-        return
-      }
-
       const org = await createOrganization(orgName.trim())
 
       const { error: profileError } = await supabase
@@ -184,20 +139,22 @@ export default function Onboarding() {
 
   if (initialLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="w-full max-w-lg animate-fade-in">
-        <Card className="p-8 space-y-8 shadow-lg">
+        <Card className="p-8 space-y-8 shadow-lg backdrop-blur-sm bg-white/80 dark:bg-gray-900/80 border-gray-200/50 dark:border-gray-700/50">
           <div className="space-y-2 text-center">
-            <Building className="w-16 h-16 mx-auto text-primary animate-fade-in" />
-            <h1 className="text-3xl font-bold tracking-tight">Bem-vindo ao SightX</h1>
-            <p className="text-lg text-muted-foreground">
+            <Building className="w-16 h-16 mx-auto text-primary/80 animate-fade-in" />
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+              Bem-vindo ao SightX
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-400">
               Vamos configurar sua organização para começar
             </p>
           </div>
@@ -205,18 +162,18 @@ export default function Onboarding() {
           {step === 1 ? (
             <div className="space-y-6 animate-fade-in">
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Briefcase className="w-5 h-5 text-primary" />
+                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <Briefcase className="w-5 h-5 text-primary/80" />
                   <h2 className="text-lg font-semibold">Sobre sua organização</h2>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Estas informações ajudarão a personalizar sua experiência
                 </p>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="orgName" className="text-base">
+                  <Label htmlFor="orgName" className="text-gray-700 dark:text-gray-300">
                     Nome da organização
                   </Label>
                   <Input
@@ -224,14 +181,14 @@ export default function Onboarding() {
                     placeholder="Digite o nome da sua empresa"
                     value={orgName}
                     onChange={(e) => setOrgName(e.target.value)}
-                    className="text-base"
+                    className="bg-white/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
                     autoFocus
                   />
                 </div>
 
                 <Button 
                   onClick={nextStep}
-                  className="w-full gap-2"
+                  className="w-full gap-2 bg-primary/90 hover:bg-primary"
                 >
                   Próximo passo
                   <ArrowRight className="w-4 h-4" />
@@ -241,23 +198,23 @@ export default function Onboarding() {
           ) : (
             <div className="space-y-6 animate-fade-in">
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" />
+                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <Users className="w-5 h-5 text-primary/80" />
                   <h2 className="text-lg font-semibold">Tamanho da equipe</h2>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Isso nos ajudará a otimizar sua experiência
                 </p>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="companySize" className="text-base">
+                  <Label htmlFor="companySize" className="text-gray-700 dark:text-gray-300">
                     Número de funcionários
                   </Label>
                   <select
                     id="companySize"
-                    className="w-full px-3 py-2 border rounded-md text-base"
+                    className="w-full px-3 py-2 bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-md text-gray-900 dark:text-gray-100"
                     value={companySize}
                     onChange={(e) => setCompanySize(e.target.value)}
                   >
@@ -270,9 +227,9 @@ export default function Onboarding() {
                   </select>
                 </div>
 
-                <div className="flex items-center gap-2 p-4 bg-secondary/50 rounded-lg">
-                  <Info className="w-5 h-5 text-primary shrink-0" />
-                  <span className="text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                  <Info className="w-5 h-5 text-blue-500 dark:text-blue-400 shrink-0" />
+                  <span className="text-sm text-blue-700 dark:text-blue-300">
                     Você poderá convidar membros da equipe depois de criar sua organização
                   </span>
                 </div>
@@ -280,13 +237,14 @@ export default function Onboarding() {
             </div>
           )}
 
-          <Separator />
+          <Separator className="bg-gray-200 dark:bg-gray-700" />
 
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="outline"
               onClick={handleCancel}
               disabled={loading}
+              className="border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
             >
               Cancelar
             </Button>
@@ -294,7 +252,7 @@ export default function Onboarding() {
               <Button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="sm:w-[200px] gap-2"
+                className="sm:w-[200px] gap-2 bg-primary/90 hover:bg-primary"
               >
                 {loading ? (
                   <>
