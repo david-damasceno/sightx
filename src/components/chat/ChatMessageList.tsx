@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Bot } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
 
@@ -31,17 +30,17 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
 
   return (
     <ScrollArea className="flex-1 p-4">
-      <div className="space-y-4 max-w-4xl mx-auto">
+      <div className="space-y-3 max-w-4xl mx-auto">
         {messages.map((message) => (
           <div
             key={message.id}
             className={cn(
-              "flex gap-3 animate-fade-in",
+              "flex gap-2",
               message.sender === "user" ? "justify-end" : "justify-start"
             )}
           >
             {message.sender === "ai" && (
-              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
                   viewBox="0 0 300 187.499995" 
@@ -55,7 +54,7 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
             
             <div
               className={cn(
-                "max-w-[85%] rounded-2xl p-4 shadow-md",
+                "max-w-[85%] rounded-xl p-3",
                 message.sender === "user"
                   ? "bg-primary text-primary-foreground"
                   : "bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-purple-100/20 dark:border-purple-900/20"
@@ -67,7 +66,7 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
             </div>
 
             {message.sender === "user" && (
-              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-primary/10">
+              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-primary/10">
                 {profile?.avatar_url ? (
                   <img 
                     src={profile.avatar_url} 
@@ -86,7 +85,7 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
         
         {isLoading && (
           <div className="flex justify-start animate-fade-in">
-            <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
                 viewBox="0 0 300 187.499995" 
@@ -96,8 +95,8 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
                 <path d="M150 50c-55.225 0-100 44.775-100 100s44.775 100 100 100 100-44.775 100-100-44.775-100-100-100zm0 175c-41.355 0-75-33.645-75-75s33.645-75 75-75 75 33.645 75 75-33.645 75-75 75z" fill="#4A90E2"/>
               </svg>
             </div>
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-purple-100/20 dark:border-purple-900/20 max-w-[85%] rounded-2xl p-4 ml-3">
-              <div className="flex items-center gap-2">
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-purple-100/20 dark:border-purple-900/20 max-w-[85%] rounded-xl p-3 ml-2">
+              <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.4s]" />
