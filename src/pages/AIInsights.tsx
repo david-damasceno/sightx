@@ -7,9 +7,9 @@ export default function AIInsights() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   return (
-    <div className="fixed inset-0 top-16 bg-gradient-to-br from-background to-accent/20">
+    <div className="fixed inset-0 top-16 bg-gradient-to-br from-background via-accent/5 to-background">
       <div className="h-full p-4">
-        <div className="flex gap-4 h-full rounded-xl border bg-background/50 backdrop-blur-sm shadow-lg">
+        <div className="flex gap-4 h-full rounded-2xl border bg-white/40 dark:bg-gray-900/40 backdrop-blur-md shadow-lg">
           <aside 
             className={`transition-all duration-300 ease-in-out ${
               isSidebarCollapsed ? 'w-12' : 'w-80'
@@ -23,7 +23,7 @@ export default function AIInsights() {
             />
           </aside>
 
-          <main className="flex-1 relative rounded-xl overflow-hidden border-l bg-background/30 backdrop-blur-md">
+          <main className="flex-1 relative rounded-2xl overflow-hidden border-l bg-white/20 dark:bg-gray-900/20 backdrop-blur-md">
             <ChatInterface 
               selectedChat={selectedChat}
               onSelectChat={setSelectedChat}

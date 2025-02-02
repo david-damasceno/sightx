@@ -29,44 +29,44 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
   }, [messages])
 
   return (
-    <ScrollArea className="flex-1 p-4">
-      <div className="space-y-3 max-w-4xl mx-auto">
+    <ScrollArea className="flex-1 px-4 py-6">
+      <div className="space-y-4 max-w-3xl mx-auto">
         {messages.map((message) => (
           <div
             key={message.id}
             className={cn(
-              "flex gap-2",
+              "flex gap-3",
               message.sender === "user" ? "justify-end" : "justify-start"
             )}
           >
             {message.sender === "ai" && (
-              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+              <div className="w-8 h-8 rounded-xl overflow-hidden flex-shrink-0 bg-primary/10 p-1">
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
                   viewBox="0 0 300 187.499995" 
                   className="w-full h-full scale-150"
                 >
-                  <path d="M150 0C67.157 0 0 67.157 0 150s67.157 150 150 150 150-67.157 150-150S232.843 0 150 0zm0 275c-68.5 0-125-56.5-125-125S81.5 25 150 25s125 56.5 125 125-56.5 125-125 125z" fill="#4A90E2"/>
-                  <path d="M150 50c-55.225 0-100 44.775-100 100s44.775 100 100 100 100-44.775 100-100-44.775-100-100-100zm0 175c-41.355 0-75-33.645-75-75s33.645-75 75-75 75 33.645 75 75-33.645 75-75 75z" fill="#4A90E2"/>
+                  <path d="M150 0C67.157 0 0 67.157 0 150s67.157 150 150 150 150-67.157 150-150S232.843 0 150 0zm0 275c-68.5 0-125-56.5-125-125S81.5 25 150 25s125 56.5 125 125-56.5 125-125 125z" fill="currentColor" className="text-primary"/>
+                  <path d="M150 50c-55.225 0-100 44.775-100 100s44.775 100 100 100 100-44.775 100-100-44.775-100-100-100zm0 175c-41.355 0-75-33.645-75-75s33.645-75 75-75 75 33.645 75 75-33.645 75-75 75z" fill="currentColor" className="text-primary"/>
                 </svg>
               </div>
             )}
             
             <div
               className={cn(
-                "max-w-[85%] rounded-xl p-3",
+                "max-w-[85%] rounded-2xl p-3",
                 message.sender === "user"
                   ? "bg-primary text-primary-foreground"
-                  : "bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-purple-100/20 dark:border-purple-900/20"
+                  : "bg-white/40 dark:bg-gray-800/40 backdrop-blur-md border border-purple-100/20 dark:border-purple-900/20"
               )}
             >
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">
+              <p className="text-sm leading-relaxed">
                 {message.content}
               </p>
             </div>
 
             {message.sender === "user" && (
-              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-primary/10">
+              <div className="w-8 h-8 rounded-xl overflow-hidden flex-shrink-0 bg-primary/10">
                 {profile?.avatar_url ? (
                   <img 
                     src={profile.avatar_url} 
@@ -74,7 +74,7 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-primary text-lg font-semibold">
+                  <div className="w-full h-full flex items-center justify-center text-primary text-sm font-semibold">
                     {(profile?.full_name || "U")[0].toUpperCase()}
                   </div>
                 )}
@@ -85,17 +85,17 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
         
         {isLoading && (
           <div className="flex justify-start animate-fade-in">
-            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl overflow-hidden flex-shrink-0 bg-primary/10 p-1">
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
                 viewBox="0 0 300 187.499995" 
                 className="w-full h-full scale-150"
               >
-                <path d="M150 0C67.157 0 0 67.157 0 150s67.157 150 150 150 150-67.157 150-150S232.843 0 150 0zm0 275c-68.5 0-125-56.5-125-125S81.5 25 150 25s125 56.5 125 125-56.5 125-125 125z" fill="#4A90E2"/>
-                <path d="M150 50c-55.225 0-100 44.775-100 100s44.775 100 100 100 100-44.775 100-100-44.775-100-100-100zm0 175c-41.355 0-75-33.645-75-75s33.645-75 75-75 75 33.645 75 75-33.645 75-75 75z" fill="#4A90E2"/>
+                <path d="M150 0C67.157 0 0 67.157 0 150s67.157 150 150 150 150-67.157 150-150S232.843 0 150 0zm0 275c-68.5 0-125-56.5-125-125S81.5 25 150 25s125 56.5 125 125-56.5 125-125 125z" fill="currentColor" className="text-primary"/>
+                <path d="M150 50c-55.225 0-100 44.775-100 100s44.775 100 100 100 100-44.775 100-100-44.775-100-100-100zm0 175c-41.355 0-75-33.645-75-75s33.645-75 75-75 75 33.645 75 75-33.645 75-75 75z" fill="currentColor" className="text-primary"/>
               </svg>
             </div>
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-purple-100/20 dark:border-purple-900/20 max-w-[85%] rounded-xl p-3 ml-2">
+            <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-md border border-purple-100/20 dark:border-purple-900/20 max-w-[85%] rounded-2xl p-3 ml-3">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
