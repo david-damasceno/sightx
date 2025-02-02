@@ -9,8 +9,6 @@ interface ChatMessage {
   id: string
   content: string
   sender: "user" | "ai"
-  timestamp: Date
-  isFavorite?: boolean
 }
 
 interface ChatInterfaceProps {
@@ -33,7 +31,6 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
       id: Date.now().toString(),
       content: inputMessage,
       sender: "user",
-      timestamp: new Date()
     }
 
     setMessages(prev => [...prev, newMessage])
@@ -56,7 +53,6 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
         id: (Date.now() + 1).toString(),
         content: data.response || "Desculpe, não consegui processar sua mensagem.",
         sender: "ai",
-        timestamp: new Date()
       }
 
       setMessages(prev => [...prev, aiResponse])
@@ -81,21 +77,10 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
     })
   }
 
-  const toggleFavorite = (messageId: string) => {
-    setMessages(prev =>
-      prev.map(msg =>
-        msg.id === messageId
-          ? { ...msg, isFavorite: !msg.isFavorite }
-          : msg
-      )
-    )
-  }
-
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-background to-accent/10">
+    <div className="flex flex-col h-full bg-gradient-to-br from-background via-accent/5 to-background rounded-xl border shadow-lg">
       <ChatMessageList 
-        messages={messages} 
-        onToggleFavorite={toggleFavorite} 
+        messages={messages}
         isLoading={isLoading}
       />
       <ChatInput
