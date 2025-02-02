@@ -5,8 +5,8 @@ export function Logo() {
     <Link to="/" className="flex items-center gap-2">
       <svg 
         xmlns="http://www.w3.org/2000/svg" 
-        width="40" 
-        height="25" 
+        width="64" 
+        height="40" 
         viewBox="0 0 300 187.499995" 
         preserveAspectRatio="xMidYMid meet" 
         className="hover:opacity-80 transition-opacity"

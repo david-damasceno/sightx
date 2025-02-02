@@ -35,8 +35,8 @@ export default function Login() {
               <div className="flex items-center justify-center gap-3 mb-4">
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
-                  width="56" 
-                  height="35" 
+                  width="80" 
+                  height="50" 
                   viewBox="0 0 300 187.499995" 
                   preserveAspectRatio="xMidYMid meet" 
                   className="hover:opacity-80 transition-opacity"
