@@ -9,6 +9,7 @@ interface ChatMessage {
   id: string
   content: string
   sender: "user" | "ai"
+  timestamp: Date
 }
 
 interface ChatInterfaceProps {
@@ -31,6 +32,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
       id: Date.now().toString(),
       content: inputMessage,
       sender: "user",
+      timestamp: new Date()
     }
 
     setMessages(prev => [...prev, newMessage])
@@ -53,6 +55,7 @@ export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps
         id: (Date.now() + 1).toString(),
         content: data.response || "Desculpe, não consegui processar sua mensagem.",
         sender: "ai",
+        timestamp: new Date()
       }
 
       setMessages(prev => [...prev, aiResponse])

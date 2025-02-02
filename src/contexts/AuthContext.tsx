@@ -4,10 +4,12 @@ import { supabase } from "@/integrations/supabase/client"
 import { Database } from "@/integrations/supabase/types"
 
 type Organization = Database['public']['Tables']['organizations']['Row']
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 interface AuthContextType {
   session: Session | null
   user: User | null
+  profile: Profile | null
   loading: boolean
   currentOrganization: Organization | null
   setCurrentOrganization: (org: Organization | null) => void
@@ -16,6 +18,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
+  profile: null,
   loading: true,
   currentOrganization: null,
   setCurrentOrganization: () => {}
@@ -24,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null)
 
@@ -67,6 +71,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       mounted = false
     }
   }, [])
+
+  // Load user profile
+  useEffect(() => {
+    let mounted = true
+
+    const loadProfile = async () => {
+      if (!user) {
+        if (mounted) setProfile(null)
+        return
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        if (error) throw error
+        if (mounted) setProfile(data)
+      } catch (error) {
+        console.error('Error loading profile:', error)
+        if (mounted) setProfile(null)
+      }
+    }
+
+    loadProfile()
+
+    return () => {
+      mounted = false
+    }
+  }, [user])
 
   // Load default organization
   useEffect(() => {
@@ -114,6 +150,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     <AuthContext.Provider value={{
       session,
       user,
+      profile,
       loading,
       currentOrganization,
       setCurrentOrganization
