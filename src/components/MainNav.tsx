@@ -1,4 +1,4 @@
-import { Home, Share2, Users, Brain, MessageSquare, FileText, Settings } from "lucide-react"
+import { Home, BarChart2, Users, MapPin, Share2, Brain, MessageSquare, FileText, Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Link, useLocation } from "react-router-dom"
 
@@ -12,6 +12,11 @@ const menuItems = [
     title: "Redes Sociais",
     href: "/social",
     icon: Share2
+  },
+  {
+    title: "Localização",
+    href: "/location",
+    icon: MapPin
   },
   {
     title: "Demografia",

@@ -15,6 +15,8 @@ import Demographics from "./pages/Demographics"
 import AIInsights from "./pages/AIInsights"
 import Feedback from "./pages/Feedback"
 import Reports from "./pages/Reports"
+import Sales from "./pages/Sales"
+import Performance from "./pages/Performance"
 import Profile from "./pages/Profile"
 import Settings from "./pages/Settings"
 
@@ -44,6 +46,22 @@ const AppContent = () => {
             element={
               <ProtectedRoute checkOnboarding>
                 <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sales"
+            element={
+              <ProtectedRoute checkOnboarding>
+                <Sales />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/performance"
+            element={
+              <ProtectedRoute checkOnboarding>
+                <Performance />
               </ProtectedRoute>
             }
           />
