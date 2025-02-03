@@ -10,19 +10,19 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 267 83% 28%;
+    --primary: 255 92% 76%;
     --primary-foreground: 0 0% 98%;
     --secondary: 240 4.8% 95.9%;
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
-    --accent: 267 83% 28%;
+    --accent: 262 83% 96%;
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 267 83% 28%;
+    --ring: 255 92% 76%;
     --radius: 1rem;
   }
 
@@ -33,19 +33,19 @@
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 4%;
     --popover-foreground: 0 0% 98%;
-    --primary: 267 83% 28%;
+    --primary: 255 92% 76%;
     --primary-foreground: 240 5.9% 10%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 267 83% 28%;
+    --accent: 255 92% 24%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 267 83% 28%;
+    --ring: 255 92% 76%;
   }
 }
 
@@ -125,7 +125,7 @@
 }
 
 .user-message {
-  @apply bg-primary text-white ml-auto;
+  @apply bg-green-500 text-white ml-auto;
 }
 
 .ai-message {
@@ -143,7 +143,7 @@
 }
 
 .typing-indicator span {
-  @apply inline-block w-2 h-2 bg-primary rounded-full mx-0.5;
+  @apply inline-block w-2 h-2 bg-purple-500 rounded-full mx-0.5;
   animation: bounce-delay 1.4s infinite ease-in-out both;
 }
 
@@ -154,3 +154,5 @@
 .typing-indicator span:nth-child(2) {
   animation-delay: -0.16s;
 }
+
+
