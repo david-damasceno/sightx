@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedRouteProps) {
-  const { session, loading, organizationLoading, profileLoading, currentOrganization } = useAuth()
+  const { session, loading } = useAuth()
   const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null)
   const [checkingOnboarding, setCheckingOnboarding] = useState(true)
   const location = useLocation()
@@ -43,8 +43,8 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
     }
   }, [session, checkOnboarding])
 
-  // Mostra loading durante qualquer verificação inicial
-  if (loading || (checkOnboarding && checkingOnboarding) || organizationLoading || profileLoading) {
+  // Mostra loading apenas durante a verificação inicial
+  if (loading || (checkOnboarding && checkingOnboarding)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -59,12 +59,8 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
 
   // Se não estiver autenticado, redireciona para login
   if (!session) {
+    // Salva a URL atual para redirecionar de volta após o login
     return <Navigate to="/login" state={{ from: location.pathname }} replace />
-  }
-
-  // Se não tiver organização e não estiver na página de onboarding, redireciona para onboarding
-  if (!currentOrganization && location.pathname !== '/onboarding') {
-    return <Navigate to="/onboarding" replace />
   }
 
   // Redireciona para onboarding se necessário
