@@ -32,6 +32,9 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
           console.error('Error checking onboarding status:', error)
           if (mounted) setIsOnboarded(false)
         }
+      } else {
+        // Se não precisamos verificar onboarding, setamos como true para não bloquear
+        if (mounted) setIsOnboarded(true)
       }
       if (mounted) setCheckingOnboarding(false)
     }
@@ -67,7 +70,7 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
     return <Navigate to="/onboarding" replace />
   }
 
-  // Redireciona para onboarding se necessário
+  // Redireciona para onboarding se necessário e não estiver já na página de onboarding
   if (checkOnboarding && !isOnboarded && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />
   }
