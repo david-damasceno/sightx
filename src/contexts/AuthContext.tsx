@@ -11,6 +11,8 @@ interface AuthContextType {
   user: User | null
   profile: Profile | null
   loading: boolean
+  organizationLoading: boolean
+  profileLoading: boolean
   currentOrganization: Organization | null
   setCurrentOrganization: (org: Organization | null) => void
 }
@@ -20,6 +22,8 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  organizationLoading: true,
+  profileLoading: true,
   currentOrganization: null,
   setCurrentOrganization: () => {}
 })
@@ -29,6 +33,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [organizationLoading, setOrganizationLoading] = useState(true)
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null)
 
   useEffect(() => {
@@ -36,7 +42,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const initializeAuth = async () => {
       try {
-        // Get current session
         const { data: { session: currentSession } } = await supabase.auth.getSession()
         
         if (mounted) {
@@ -45,7 +50,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setLoading(false)
         }
 
-        // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
           if (mounted) {
             setSession(session)
@@ -77,8 +81,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     let mounted = true
 
     const loadProfile = async () => {
+      setProfileLoading(true)
       if (!user) {
-        if (mounted) setProfile(null)
+        if (mounted) {
+          setProfile(null)
+          setProfileLoading(false)
+        }
         return
       }
 
@@ -90,10 +98,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .single()
 
         if (error) throw error
-        if (mounted) setProfile(data)
+        if (mounted) {
+          setProfile(data)
+        }
       } catch (error) {
         console.error('Error loading profile:', error)
         if (mounted) setProfile(null)
+      } finally {
+        if (mounted) setProfileLoading(false)
       }
     }
 
@@ -109,33 +121,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     let mounted = true
 
     const loadDefaultOrganization = async () => {
+      setOrganizationLoading(true)
       if (!user) {
-        if (mounted) setCurrentOrganization(null)
+        if (mounted) {
+          setCurrentOrganization(null)
+          setOrganizationLoading(false)
+        }
         return
       }
 
       try {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('default_organization_id')
-          .eq('id', user.id)
+        const { data: memberData, error: memberError } = await supabase
+          .from('organization_members')
+          .select('organization_id')
+          .eq('user_id', user.id)
           .maybeSingle()
 
-        if (profileError) throw profileError
+        if (memberError) throw memberError
 
-        if (profile?.default_organization_id && mounted) {
+        if (memberData?.organization_id) {
           const { data: org, error: orgError } = await supabase
             .from('organizations')
             .select('*')
-            .eq('id', profile.default_organization_id)
+            .eq('id', memberData.organization_id)
             .maybeSingle()
 
           if (orgError) throw orgError
-          if (org && mounted) setCurrentOrganization(org)
+          if (mounted) setCurrentOrganization(org)
         }
       } catch (error) {
         console.error('Error loading default organization:', error)
         if (mounted) setCurrentOrganization(null)
+      } finally {
+        if (mounted) setOrganizationLoading(false)
       }
     }
 
@@ -152,6 +170,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       user,
       profile,
       loading,
+      profileLoading,
+      organizationLoading,
       currentOrganization,
       setCurrentOrganization
     }}>
