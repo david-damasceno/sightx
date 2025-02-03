@@ -15,6 +15,7 @@ import Demographics from "./pages/Demographics"
 import AIInsights from "./pages/AIInsights"
 import Feedback from "./pages/Feedback"
 import Reports from "./pages/Reports"
+import DataContext from "./pages/DataContext"
 import Sales from "./pages/Sales"
 import Performance from "./pages/Performance"
 import Profile from "./pages/Profile"
@@ -102,6 +103,14 @@ const AppContent = () => {
             element={
               <ProtectedRoute checkOnboarding>
                 <Reports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports/data-context"
+            element={
+              <ProtectedRoute checkOnboarding>
+                <DataContext />
               </ProtectedRoute>
             }
           />
