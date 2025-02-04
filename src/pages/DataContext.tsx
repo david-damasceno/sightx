@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Upload, FileText, List, LayoutGrid, Search, Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -17,10 +18,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { FileUploader } from "@/components/data-import/FileUploader"
 
 export default function DataContext() {
   const [activeFile, setActiveFile] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list')
+  const [showUploader, setShowUploader] = useState(false)
+  const [fileData, setFileData] = useState<any>(null)
+
+  const handleUploadSuccess = (data: any) => {
+    setFileData(data)
+    setShowUploader(false)
+    console.log("Upload success:", data)
+  }
 
   const mockData = [
     {
@@ -52,11 +62,28 @@ export default function DataContext() {
             Gerencie e contextualize seus dados de forma inteligente
           </p>
         </div>
-        <Button className="gap-2">
+        <Button 
+          className="gap-2" 
+          onClick={() => setShowUploader(true)}
+        >
           <Upload className="h-4 w-4" />
           Importar Dados
         </Button>
       </div>
+
+      {showUploader && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Upload de Arquivo</CardTitle>
+            <CardDescription>
+              Selecione um arquivo CSV ou Excel para importar
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FileUploader onUploadSuccess={handleUploadSuccess} />
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-12 gap-6">
         {/* Lista de Arquivos */}
@@ -72,23 +99,26 @@ export default function DataContext() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button variant="outline" className="w-full justify-start gap-2">
-              <Upload className="h-4 w-4" />
-              Upload
-            </Button>
-            <div className="space-y-2">
-              {["Faturamento.csv", "Vendas.xlsx", "Clientes.json"].map((file) => (
+            {fileData ? (
+              <div className="space-y-2">
                 <Button
-                  key={file}
-                  variant={activeFile === file ? "secondary" : "ghost"}
+                  variant="secondary"
                   className="w-full justify-start gap-2"
-                  onClick={() => setActiveFile(file)}
                 >
                   <FileText className="h-4 w-4" />
-                  {file}
+                  {fileData.columns.length} colunas, {fileData.totalRows} linhas
                 </Button>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <Button 
+                variant="outline" 
+                className="w-full justify-start gap-2"
+                onClick={() => setShowUploader(true)}
+              >
+                <Upload className="h-4 w-4" />
+                Upload
+              </Button>
+            )}
           </CardContent>
         </Card>
 
@@ -132,50 +162,54 @@ export default function DataContext() {
               </div>
             </CardHeader>
             <CardContent>
-              {viewMode === 'list' ? (
-                <div className="space-y-4">
-                  {mockData.map((item) => (
-                    <div
-                      key={item.column}
-                      className="p-4 rounded-lg border hover:bg-accent transition-colors"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-medium">{item.column}</h3>
-                        <span className="text-sm text-muted-foreground">
-                          {item.lastUpdate}
-                        </span>
+              {fileData ? (
+                viewMode === 'list' ? (
+                  <div className="space-y-4">
+                    {fileData.columns.map((column: any) => (
+                      <div
+                        key={column.name}
+                        className="p-4 rounded-lg border hover:bg-accent transition-colors"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-medium">{column.name}</h3>
+                          <span className="text-sm text-muted-foreground">
+                            {new Date().toISOString().split('T')[0]}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          Tipo: {column.type}
+                        </p>
+                        <p className="text-sm">Exemplo: {column.sample}</p>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Tipo: {item.type}
-                      </p>
-                      <p className="text-sm">{item.description}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Coluna</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead>Última Atualização</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {mockData.map((row) => (
-                        <TableRow key={row.column}>
-                          <TableCell className="font-medium">
-                            {row.column}
-                          </TableCell>
-                          <TableCell>{row.type}</TableCell>
-                          <TableCell>{row.description}</TableCell>
-                          <TableCell>{row.lastUpdate}</TableCell>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Coluna</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Exemplo</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {fileData.columns.map((column: any) => (
+                          <TableRow key={column.name}>
+                            <TableCell className="font-medium">
+                              {column.name}
+                            </TableCell>
+                            <TableCell>{column.type}</TableCell>
+                            <TableCell>{column.sample}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum arquivo selecionado. Faça o upload de um arquivo para visualizar seus dados.
                 </div>
               )}
             </CardContent>
