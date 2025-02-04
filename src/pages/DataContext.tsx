@@ -1,6 +1,6 @@
 
 import { useState } from "react"
-import { Upload, FileText, List, LayoutGrid, Search, Filter } from "lucide-react"
+import { FileText, List, LayoutGrid, Search, Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -32,27 +32,6 @@ export default function DataContext() {
     console.log("Upload success:", data)
   }
 
-  const mockData = [
-    {
-      column: "revenue",
-      type: "Monetário",
-      description: "Faturamento mensal em reais",
-      lastUpdate: "2024-03-15",
-    },
-    {
-      column: "customer_id",
-      type: "ID",
-      description: "Identificador único do cliente",
-      lastUpdate: "2024-03-15",
-    },
-    {
-      column: "purchase_date",
-      type: "Data",
-      description: "Data da compra",
-      lastUpdate: "2024-03-15",
-    },
-  ]
-
   return (
     <div className="container py-6 animate-fade-in">
       <div className="flex justify-between items-center mb-6">
@@ -62,28 +41,7 @@ export default function DataContext() {
             Gerencie e contextualize seus dados de forma inteligente
           </p>
         </div>
-        <Button 
-          className="gap-2" 
-          onClick={() => setShowUploader(true)}
-        >
-          <Upload className="h-4 w-4" />
-          Importar Dados
-        </Button>
       </div>
-
-      {showUploader && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Upload de Arquivo</CardTitle>
-            <CardDescription>
-              Selecione um arquivo CSV ou Excel para importar
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FileUploader onUploadSuccess={handleUploadSuccess} />
-          </CardContent>
-        </Card>
-      )}
 
       <div className="grid grid-cols-12 gap-6">
         {/* Lista de Arquivos */}
@@ -99,7 +57,9 @@ export default function DataContext() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {fileData ? (
+            {showUploader ? (
+              <FileUploader onUploadSuccess={handleUploadSuccess} />
+            ) : fileData ? (
               <div className="space-y-2">
                 <Button
                   variant="secondary"
@@ -115,7 +75,7 @@ export default function DataContext() {
                 className="w-full justify-start gap-2"
                 onClick={() => setShowUploader(true)}
               >
-                <Upload className="h-4 w-4" />
+                <FileText className="h-4 w-4" />
                 Upload
               </Button>
             )}
