@@ -26,9 +26,9 @@ enabled = true
 enabled = true
 
 [[functions]]
-name = "analyze-file"
+[functions.analyze-file]
 verify_jwt = true
 
 [[functions]]
-name = "create-data-table"
+[functions.create-data-table]
 verify_jwt = true
