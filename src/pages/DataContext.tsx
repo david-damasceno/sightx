@@ -23,13 +23,23 @@ import { FileUploader } from "@/components/data-import/FileUploader"
 export default function DataContext() {
   const [activeFile, setActiveFile] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list')
-  const [showUploader, setShowUploader] = useState(false)
   const [fileData, setFileData] = useState<any>(null)
 
   const handleUploadSuccess = (data: any) => {
-    setFileData(data)
-    setShowUploader(false)
-    console.log("Upload success:", data)
+    if (!data) return
+    
+    // Process the file data properly
+    const processedData = {
+      columns: data.columns.map((col: any) => ({
+        name: col.name,
+        type: col.type,
+        sample: col.sample
+      })),
+      totalRows: data.totalRows || 0
+    }
+    
+    setFileData(processedData)
+    console.log("Upload success:", processedData)
   }
 
   return (
@@ -57,10 +67,12 @@ export default function DataContext() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {showUploader ? (
-              <FileUploader onUploadSuccess={handleUploadSuccess} />
-            ) : fileData ? (
-              <div className="space-y-2">
+            {/* Sempre mostra o FileUploader */}
+            <FileUploader onUploadSuccess={handleUploadSuccess} />
+            
+            {/* Lista de arquivos processados */}
+            {fileData && (
+              <div className="space-y-2 mt-4">
                 <Button
                   variant="secondary"
                   className="w-full justify-start gap-2"
@@ -69,15 +81,6 @@ export default function DataContext() {
                   {fileData.columns.length} colunas, {fileData.totalRows} linhas
                 </Button>
               </div>
-            ) : (
-              <Button 
-                variant="outline" 
-                className="w-full justify-start gap-2"
-                onClick={() => setShowUploader(true)}
-              >
-                <FileText className="h-4 w-4" />
-                Upload
-              </Button>
             )}
           </CardContent>
         </Card>
@@ -117,7 +120,6 @@ export default function DataContext() {
                     Filtrar
                   </Button>
                   <Button variant="outline">Exportar</Button>
-                  <Button>Adicionar Dados</Button>
                 </div>
               </div>
             </CardHeader>
