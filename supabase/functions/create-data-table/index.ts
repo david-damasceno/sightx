@@ -1,3 +1,4 @@
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { Pool } from 'https://deno.land/x/postgres@v0.17.0/mod.ts'
@@ -23,7 +24,7 @@ serve(async (req) => {
     const connection = await pool.connect()
 
     try {
-      // Criar tabela dinâmica
+      // Create dynamic table
       const columnDefinitions = Object.entries(columns)
         .map(([name, info]: [string, any]) => {
           const sanitizedName = name.toLowerCase().replace(/[^a-z0-9_]/g, '_')
@@ -39,7 +40,7 @@ serve(async (req) => {
           created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
         );
 
-        -- Adicionar políticas de segurança
+        -- Add security policies
         ALTER TABLE ${tableName} ENABLE ROW LEVEL SECURITY;
 
         CREATE POLICY "Users can view their organization data" ON ${tableName}
@@ -51,7 +52,7 @@ serve(async (req) => {
 
       await connection.queryObject(createTableSQL)
 
-      // Inserir dados de preview
+      // Insert preview data
       const columnNames = Object.keys(columns).map(name => 
         name.toLowerCase().replace(/[^a-z0-9_]/g, '_')
       )
@@ -74,7 +75,7 @@ serve(async (req) => {
 
       await connection.queryObject(insertSQL, values)
 
-      // Atualizar o status da importação
+      // Update import status
       const supabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''

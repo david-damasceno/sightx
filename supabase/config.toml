@@ -1,3 +1,4 @@
+
 project_id = "zzmezxjwhtiwhnhqvnck"
 
 [api]
@@ -26,9 +27,9 @@ enabled = true
 enabled = true
 
 [[functions]]
-[functions.analyze-file]
+name = "analyze-file"
 verify_jwt = true
 
 [[functions]]
-[functions.create-data-table]
+name = "create-data-table"
 verify_jwt = true
