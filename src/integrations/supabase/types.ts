@@ -109,6 +109,56 @@ export type Database = {
           },
         ]
       }
+      data_imports: {
+        Row: {
+          columns_metadata: Json
+          created_at: string | null
+          created_by: string | null
+          error_message: string | null
+          id: string
+          name: string
+          organization_id: string
+          original_filename: string
+          row_count: number | null
+          status: Database["public"]["Enums"]["import_status"] | null
+          table_name: string
+        }
+        Insert: {
+          columns_metadata?: Json
+          created_at?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          original_filename: string
+          row_count?: number | null
+          status?: Database["public"]["Enums"]["import_status"] | null
+          table_name: string
+        }
+        Update: {
+          columns_metadata?: Json
+          created_at?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          original_filename?: string
+          row_count?: number | null
+          status?: Database["public"]["Enums"]["import_status"] | null
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_imports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demographic_data: {
         Row: {
           age_distribution: Json | null
@@ -563,6 +613,7 @@ export type Database = {
         | "finance"
         | "other"
       file_type: "excel" | "csv" | "access" | "json"
+      import_status: "pending" | "processing" | "completed" | "error"
       integration_status: "pending" | "active" | "error" | "disconnected"
       integration_type:
         | "google_business"
