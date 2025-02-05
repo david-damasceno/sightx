@@ -8,6 +8,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+function generateTableName(fileName: string): string {
+  // Remove extensão e caracteres especiais
+  const baseName = fileName.toLowerCase()
+    .replace(/\.[^/.]+$/, "") // remove extensão
+    .replace(/[^a-z0-9]/g, "_") // substitui caracteres especiais por _
+    .replace(/_+/g, "_") // remove underscores múltiplos
+    .replace(/^_|_$/g, "") // remove underscores do início e fim
+
+  // Adiciona timestamp para garantir unicidade
+  const timestamp = new Date().getTime()
+  
+  // Retorna nome único limitado a 63 caracteres (limite do Postgres)
+  return `${baseName}_${timestamp}`.slice(0, 63)
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -83,12 +98,16 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Gerar nome único para a tabela
+    const tableName = generateTableName(file.name)
+    console.log('Generated table name:', tableName)
+
     const { error: uploadError } = await supabase
       .from('data_imports')
       .insert({
         organization_id: organizationId,
         name: file.name,
-        table_name: '',
+        table_name: tableName,
         original_filename: file.name,
         columns_metadata: { columns },
         status: 'pending',
@@ -104,7 +123,8 @@ serve(async (req) => {
       JSON.stringify({
         columns,
         previewData,
-        totalRows: jsonData.length - 1
+        totalRows: jsonData.length - 1,
+        tableName
       }),
       { 
         headers: { 
