@@ -19,27 +19,63 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { FileUploader } from "@/components/data-import/FileUploader"
+import { useQuery } from "@tanstack/react-query"
+import { supabase } from "@/integrations/supabase/client"
+import { format } from "date-fns"
+import { useToast } from "@/components/ui/use-toast"
+import { useAuth } from "@/contexts/AuthContext"
+
+interface DataImport {
+  id: string
+  name: string
+  original_filename: string
+  columns_metadata: {
+    columns: Array<{
+      name: string
+      type: string
+      sample: string
+    }>
+  }
+  status: 'pending' | 'processed' | 'failed'
+  row_count: number
+  created_at: string
+}
 
 export default function DataContext() {
-  const [activeFile, setActiveFile] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list')
-  const [fileData, setFileData] = useState<any>(null)
+  const [selectedFile, setSelectedFile] = useState<DataImport | null>(null)
+  const { toast } = useToast()
+  const { currentOrganization } = useAuth()
 
-  const handleUploadSuccess = (data: any) => {
+  const { data: dataImports, refetch } = useQuery({
+    queryKey: ['data-imports', currentOrganization?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('data_imports')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        toast({
+          title: "Erro ao carregar arquivos",
+          description: "Não foi possível carregar a lista de arquivos importados.",
+          variant: "destructive",
+        })
+        throw error
+      }
+
+      return data as DataImport[]
+    },
+    enabled: !!currentOrganization?.id
+  })
+
+  const handleUploadSuccess = async (data: any) => {
     if (!data) return
-    
-    // Process the file data properly
-    const processedData = {
-      columns: data.columns.map((col: any) => ({
-        name: col.name,
-        type: col.type,
-        sample: col.sample
-      })),
-      totalRows: data.totalRows || 0
-    }
-    
-    setFileData(processedData)
-    console.log("Upload success:", processedData)
+    await refetch()
+    toast({
+      title: "Arquivo importado com sucesso",
+      description: "O arquivo foi processado e está pronto para contextualização.",
+    })
   }
 
   return (
@@ -71,17 +107,35 @@ export default function DataContext() {
             <FileUploader onUploadSuccess={handleUploadSuccess} />
             
             {/* Lista de arquivos processados */}
-            {fileData && (
-              <div className="space-y-2 mt-4">
+            <div className="space-y-2 mt-4">
+              {dataImports?.map((file) => (
                 <Button
-                  variant="secondary"
-                  className="w-full justify-start gap-2"
+                  key={file.id}
+                  variant={selectedFile?.id === file.id ? "secondary" : "ghost"}
+                  className="w-full justify-start gap-2 p-4 h-auto"
+                  onClick={() => setSelectedFile(file)}
                 >
-                  <FileText className="h-4 w-4" />
-                  {fileData.columns.length} colunas, {fileData.totalRows} linhas
+                  <FileText className="h-4 w-4 shrink-0" />
+                  <div className="flex flex-col items-start text-left">
+                    <span className="font-medium truncate w-full">
+                      {file.original_filename}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {file.columns_metadata.columns.length} colunas, {file.row_count} linhas • {format(new Date(file.created_at), 'dd/MM/yyyy')}
+                    </span>
+                    <span className={`text-xs ${
+                      file.status === 'processed' ? 'text-green-500' :
+                      file.status === 'failed' ? 'text-red-500' :
+                      'text-yellow-500'
+                    }`}>
+                      {file.status === 'processed' ? 'Processado' :
+                       file.status === 'failed' ? 'Falhou' :
+                       'Pendente'}
+                    </span>
+                  </div>
                 </Button>
-              </div>
-            )}
+              ))}
+            </div>
           </CardContent>
         </Card>
 
@@ -93,7 +147,11 @@ export default function DataContext() {
                 <div>
                   <CardTitle>Visualização de Dados</CardTitle>
                   <CardDescription>
-                    Clique nas células para adicionar contexto
+                    {selectedFile ? (
+                      `Visualizando ${selectedFile.original_filename}`
+                    ) : (
+                      'Selecione um arquivo para visualizar os dados'
+                    )}
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
@@ -124,10 +182,10 @@ export default function DataContext() {
               </div>
             </CardHeader>
             <CardContent>
-              {fileData ? (
+              {selectedFile ? (
                 viewMode === 'list' ? (
                   <div className="space-y-4">
-                    {fileData.columns.map((column: any) => (
+                    {selectedFile.columns_metadata.columns.map((column) => (
                       <div
                         key={column.name}
                         className="p-4 rounded-lg border hover:bg-accent transition-colors"
@@ -135,7 +193,7 @@ export default function DataContext() {
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-medium">{column.name}</h3>
                           <span className="text-sm text-muted-foreground">
-                            {new Date().toISOString().split('T')[0]}
+                            {format(new Date(selectedFile.created_at), 'dd/MM/yyyy')}
                           </span>
                         </div>
                         <p className="text-sm text-muted-foreground mb-1">
@@ -156,7 +214,7 @@ export default function DataContext() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {fileData.columns.map((column: any) => (
+                        {selectedFile.columns_metadata.columns.map((column) => (
                           <TableRow key={column.name}>
                             <TableCell className="font-medium">
                               {column.name}
@@ -171,7 +229,7 @@ export default function DataContext() {
                 )
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  Nenhum arquivo selecionado. Faça o upload de um arquivo para visualizar seus dados.
+                  Nenhum arquivo selecionado. Selecione um arquivo da lista para visualizar seus dados.
                 </div>
               )}
             </CardContent>
