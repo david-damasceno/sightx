@@ -21,9 +21,18 @@ serve(async (req) => {
       throw new Error('File and organizationId are required')
     }
 
-    const fileBuffer = await file.arrayBuffer()
-    const workbook = XLSX.read(fileBuffer, { type: 'array' })
+    console.log('Processing file:', file.name, 'type:', file.type)
+
+    const arrayBuffer = await file.arrayBuffer()
+    const data = new Uint8Array(arrayBuffer)
+    
+    const workbook = XLSX.read(data, { type: 'array' })
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
+    
+    if (!firstSheet) {
+      throw new Error('No sheet found in the workbook')
+    }
+
     const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 })
 
     if (jsonData.length < 2) {
@@ -34,6 +43,9 @@ serve(async (req) => {
     const sampleData = jsonData[1] as any[]
     const previewData = jsonData.slice(1, 6)
 
+    console.log('Headers:', headers)
+    console.log('Sample data:', sampleData)
+
     const columns = headers.map((header, index) => {
       const sample = sampleData[index]
       let type = 'text'
@@ -42,14 +54,14 @@ serve(async (req) => {
         type = Number.isInteger(sample) ? 'integer' : 'numeric'
       } else if (typeof sample === 'boolean') {
         type = 'boolean'
-      } else if (!isNaN(Date.parse(sample))) {
+      } else if (sample && !isNaN(Date.parse(sample))) {
         type = 'timestamp'
       }
 
       return {
         name: header,
         type,
-        sample
+        sample: sample?.toString() || ''
       }
     })
 
@@ -70,7 +82,10 @@ serve(async (req) => {
         row_count: jsonData.length - 1
       })
 
-    if (uploadError) throw uploadError
+    if (uploadError) {
+      console.error('Error saving to data_imports:', uploadError)
+      throw uploadError
+    }
 
     return new Response(
       JSON.stringify({
@@ -78,13 +93,27 @@ serve(async (req) => {
         previewData,
         totalRows: jsonData.length - 1
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     )
   } catch (error) {
     console.error('Error processing file:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        }, 
+        status: 400 
+      }
     )
   }
 })
