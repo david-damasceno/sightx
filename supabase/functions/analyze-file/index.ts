@@ -1,3 +1,4 @@
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
@@ -26,7 +27,14 @@ serve(async (req) => {
     const arrayBuffer = await file.arrayBuffer()
     const data = new Uint8Array(arrayBuffer)
     
-    const workbook = XLSX.read(data, { type: 'array' })
+    let workbook
+    try {
+      workbook = XLSX.read(data, { type: 'array' })
+    } catch (error) {
+      console.error('Error reading file:', error)
+      throw new Error('Invalid file format. Please upload a valid Excel or CSV file.')
+    }
+
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
     
     if (!firstSheet) {
@@ -35,11 +43,15 @@ serve(async (req) => {
 
     const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 })
 
-    if (jsonData.length < 2) {
+    if (!Array.isArray(jsonData) || jsonData.length < 2) {
       throw new Error('File must contain at least a header row and one data row')
     }
 
     const headers = jsonData[0] as string[]
+    if (!Array.isArray(headers) || headers.length === 0) {
+      throw new Error('Invalid file format: No headers found')
+    }
+
     const sampleData = jsonData[1] as any[]
     const previewData = jsonData.slice(1, 6)
 
@@ -50,18 +62,19 @@ serve(async (req) => {
       const sample = sampleData[index]
       let type = 'text'
 
+      // Simplified type inference
       if (typeof sample === 'number') {
         type = Number.isInteger(sample) ? 'integer' : 'numeric'
       } else if (typeof sample === 'boolean') {
         type = 'boolean'
-      } else if (sample && !isNaN(Date.parse(sample))) {
+      } else if (sample && !isNaN(Date.parse(String(sample)))) {
         type = 'timestamp'
       }
 
       return {
         name: header,
         type,
-        sample: sample?.toString() || ''
+        sample: sample !== undefined ? String(sample) : ''
       }
     })
 
@@ -78,7 +91,7 @@ serve(async (req) => {
         table_name: '',
         original_filename: file.name,
         columns_metadata: { columns },
-        status: 'analyzing',
+        status: 'pending',
         row_count: jsonData.length - 1
       })
 
