@@ -49,9 +49,14 @@ export default function DataContext() {
   const { data: dataImports, refetch } = useQuery({
     queryKey: ['data-imports', currentOrganization?.id],
     queryFn: async () => {
+      if (!currentOrganization?.id) {
+        return []
+      }
+
       const { data, error } = await supabase
         .from('data_imports')
         .select('*')
+        .eq('organization_id', currentOrganization.id)
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -65,17 +70,26 @@ export default function DataContext() {
 
       return data?.map(item => ({
         id: item.id,
-        file_name: item.original_filename,
+        file_name: item.original_filename || 'Arquivo sem nome',
         file_type: 'csv',
-        created_at: item.created_at || '',
-        status: item.status || '',
-        preview_data: item.columns_metadata
+        created_at: item.created_at || new Date().toISOString(),
+        status: item.status || 'pending',
+        preview_data: item.columns_metadata || {}
       })) || []
     },
     enabled: !!currentOrganization?.id
   })
 
   const handleUploadSuccess = async (data: any) => {
+    if (!data) {
+      toast({
+        title: "Erro no upload",
+        description: "Dados do arquivo não foram recebidos corretamente.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setUploadedFile(data)
     await refetch()
     toast({
@@ -86,6 +100,10 @@ export default function DataContext() {
 
   const handleDeleteFile = async (fileId: string) => {
     try {
+      if (!fileId) {
+        throw new Error("ID do arquivo não fornecido")
+      }
+
       const { error } = await supabase
         .from('data_imports')
         .delete()
@@ -123,6 +141,15 @@ export default function DataContext() {
   }
 
   const handleMappingComplete = async (tableName: string) => {
+    if (!tableName) {
+      toast({
+        title: "Erro na importação",
+        description: "Nome da tabela não fornecido.",
+        variant: "destructive",
+      })
+      return
+    }
+
     toast({
       title: "Dados importados",
       description: `Os dados foram importados para a tabela ${tableName}.`,
@@ -137,7 +164,7 @@ export default function DataContext() {
 
   const filteredFiles = dataImports?.filter(file =>
     file.file_name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  ) || []
 
   return (
     <div className="container py-6 animate-fade-in">
@@ -173,7 +200,7 @@ export default function DataContext() {
             <FileUploader onUploadSuccess={handleUploadSuccess} />
             
             {/* Lista de arquivos processados */}
-            {filteredFiles && filteredFiles.length > 0 && (
+            {Array.isArray(filteredFiles) && filteredFiles.length > 0 && (
               <FileList
                 files={filteredFiles}
                 onDelete={handleDeleteFile}
@@ -213,8 +240,10 @@ export default function DataContext() {
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => {
-                            handleDeleteFile(uploadedFile.id)
-                            setUploadedFile(null)
+                            if (uploadedFile?.id) {
+                              handleDeleteFile(uploadedFile.id)
+                              setUploadedFile(null)
+                            }
                           }}
                           className="bg-red-500 hover:bg-red-600"
                         >
@@ -227,8 +256,8 @@ export default function DataContext() {
               </CardHeader>
               <CardContent>
                 <ColumnMapper
-                  columns={uploadedFile.columns}
-                  previewData={uploadedFile.preview_data}
+                  columns={uploadedFile.columns || []}
+                  previewData={uploadedFile.preview_data || []}
                   onMappingComplete={handleMappingComplete}
                   onCancel={handleCancelContext}
                 />
@@ -242,7 +271,7 @@ export default function DataContext() {
                     <CardTitle>Visualização de Dados</CardTitle>
                     <CardDescription>
                       {selectedFile ? (
-                        `Visualizando ${selectedFile.original_filename}`
+                        `Visualizando ${selectedFile.original_filename || 'Arquivo sem nome'}`
                       ) : (
                         'Selecione um arquivo para visualizar os dados'
                       )}
@@ -290,23 +319,23 @@ export default function DataContext() {
                   <div className="animate-fade-in">
                     {viewMode === 'list' ? (
                       <div className="space-y-4">
-                        {selectedFile.columns_metadata.columns.map((column: any) => (
+                        {selectedFile.columns_metadata?.columns?.map((column: any) => (
                           <div
                             key={column.name}
                             className="p-4 rounded-lg border hover:bg-accent/5 transition-colors"
                           >
                             <div className="flex justify-between items-start mb-2">
-                              <h3 className="font-medium">{column.name}</h3>
+                              <h3 className="font-medium">{column.name || 'Coluna sem nome'}</h3>
                               <span className="text-sm text-muted-foreground">
-                                {format(new Date(selectedFile.created_at || ''), 'dd/MM/yyyy')}
+                                {format(new Date(selectedFile.created_at || new Date()), 'dd/MM/yyyy')}
                               </span>
                             </div>
                             <p className="text-sm text-muted-foreground mb-1">
-                              Tipo: {column.type}
+                              Tipo: {column.type || 'Não especificado'}
                             </p>
-                            <p className="text-sm">Exemplo: {column.sample}</p>
+                            <p className="text-sm">Exemplo: {column.sample || 'Sem exemplo'}</p>
                           </div>
-                        ))}
+                        )) || <p>Nenhuma coluna encontrada</p>}
                       </div>
                     ) : (
                       <div className="rounded-md border">
@@ -319,15 +348,21 @@ export default function DataContext() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {selectedFile.columns_metadata.columns.map((column: any) => (
-                              <TableRow key={column.name}>
+                            {selectedFile.columns_metadata?.columns?.map((column: any) => (
+                              <TableRow key={column.name || 'unnamed'}>
                                 <TableCell className="font-medium">
-                                  {column.name}
+                                  {column.name || 'Coluna sem nome'}
                                 </TableCell>
-                                <TableCell>{column.type}</TableCell>
-                                <TableCell>{column.sample}</TableCell>
+                                <TableCell>{column.type || 'Não especificado'}</TableCell>
+                                <TableCell>{column.sample || 'Sem exemplo'}</TableCell>
                               </TableRow>
-                            ))}
+                            )) || (
+                              <TableRow>
+                                <TableCell colSpan={3} className="text-center">
+                                  Nenhuma coluna encontrada
+                                </TableCell>
+                              </TableRow>
+                            )}
                           </TableBody>
                         </Table>
                       </div>
