@@ -22,6 +22,16 @@ serve(async (req) => {
 
     const { description, columns, sampleData } = await req.json()
 
+    if (!description || !columns || !Array.isArray(columns)) {
+      throw new Error('Invalid request data')
+    }
+
+    console.log('Processing request with:', {
+      description,
+      columns,
+      sampleDataCount: sampleData?.length
+    })
+
     const prompt = `
       Como um especialista em análise de dados, sugira nomes apropriados para as colunas de uma tabela de dados.
       
@@ -29,11 +39,11 @@ serve(async (req) => {
       
       Colunas originais e exemplos de dados:
       ${columns.map((col: string, index: number) => 
-        `${col}: ${sampleData.map((row: any) => row[col]).join(', ')}`
+        `${col}: ${sampleData?.slice(0, 3).map((row: any) => row[col]).join(', ')}`
       ).join('\n')}
       
       Por favor, sugira nomes de colunas mais descritivos e seus tipos de dados apropriados.
-      Retorne apenas um objeto JSON com o seguinte formato para cada coluna:
+      Retorne apenas um array JSON com o seguinte formato para cada coluna:
       {
         "original_name": "nome_original",
         "suggested_name": "nome_sugerido",
@@ -44,7 +54,7 @@ serve(async (req) => {
 
     const url = `${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-07-01-preview`
     
-    console.log('Calling Azure OpenAI with prompt:', prompt)
+    console.log('Calling Azure OpenAI with URL:', url)
 
     const azureResponse = await fetch(url, {
       method: 'POST',
@@ -81,7 +91,14 @@ serve(async (req) => {
     const data = await azureResponse.json()
     console.log('Azure OpenAI Response:', data)
 
-    const suggestions = JSON.parse(data.choices[0].message.content)
+    let suggestions
+    try {
+      suggestions = JSON.parse(data.choices[0].message.content)
+    } catch (error) {
+      console.error('Error parsing suggestions:', error)
+      console.log('Raw content:', data.choices[0].message.content)
+      throw new Error('Failed to parse suggestions from AI response')
+    }
 
     return new Response(
       JSON.stringify({ suggestions }),
