@@ -40,22 +40,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-
-interface DataImport {
-  id: string
-  name: string
-  original_filename: string
-  columns_metadata: {
-    columns: Array<{
-      name: string
-      type: string
-      sample: string
-    }>
-  }
-  status: 'pending' | 'processed' | 'failed'
-  row_count: number
-  created_at: string
-}
+import { DataImport } from "@/types/data-imports"
 
 export default function DataContext() {
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list')
@@ -81,7 +66,13 @@ export default function DataContext() {
         throw error
       }
 
-      return data as DataImport[]
+      // Transform the data to match our DataImport type
+      return (data as any[]).map(item => ({
+        ...item,
+        columns_metadata: typeof item.columns_metadata === 'string' 
+          ? JSON.parse(item.columns_metadata)
+          : item.columns_metadata
+      })) as DataImport[]
     },
     enabled: !!currentOrganization?.id
   })
@@ -192,15 +183,15 @@ export default function DataContext() {
                         {file.original_filename}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {file.columns_metadata.columns.length} colunas, {file.row_count} linhas • {format(new Date(file.created_at), 'dd/MM/yyyy')}
+                        {file.columns_metadata.columns.length} colunas, {file.row_count} linhas • {format(new Date(file.created_at || ''), 'dd/MM/yyyy')}
                       </span>
                       <span className={`text-xs ${
-                        file.status === 'processed' ? 'text-green-500' :
-                        file.status === 'failed' ? 'text-red-500' :
+                        file.status === 'completed' ? 'text-green-500' :
+                        file.status === 'error' ? 'text-red-500' :
                         'text-yellow-500'
                       }`}>
-                        {file.status === 'processed' ? 'Processado' :
-                         file.status === 'failed' ? 'Falhou' :
+                        {file.status === 'completed' ? 'Processado' :
+                         file.status === 'error' ? 'Falhou' :
                          'Pendente'}
                       </span>
                     </div>
@@ -322,7 +313,7 @@ export default function DataContext() {
                           <div className="flex justify-between items-start mb-2">
                             <h3 className="font-medium">{column.name}</h3>
                             <span className="text-sm text-muted-foreground">
-                              {format(new Date(selectedFile.created_at), 'dd/MM/yyyy')}
+                              {format(new Date(selectedFile.created_at || ''), 'dd/MM/yyyy')}
                             </span>
                           </div>
                           <p className="text-sm text-muted-foreground mb-1">
