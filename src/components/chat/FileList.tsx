@@ -30,23 +30,36 @@ export function FileList({ files, onDelete, selectedFiles, onToggleSelect }: Fil
   const [selectedFile, setSelectedFile] = useState<any>(null)
 
   const renderPreviewContent = (file: any) => {
-    if (!file.preview_data) return <p>Sem dados para visualizar</p>
+    // Adiciona verificação de segurança para preview_data
+    const previewData = file?.preview_data
+    if (!previewData) return <p>Sem dados para visualizar</p>
 
     if (file.file_type === "json") {
       return (
         <pre className="bg-muted p-4 rounded-lg overflow-auto">
-          {JSON.stringify(file.preview_data, null, 2)}
+          {JSON.stringify(previewData, null, 2)}
         </pre>
       )
     }
 
     if (file.file_type === "csv" || file.file_type === "excel") {
+      // Verifica se há dados para exibir
+      if (!Array.isArray(previewData) || previewData.length === 0) {
+        return <p>Sem dados para visualizar</p>
+      }
+
+      // Verifica se o primeiro item existe antes de tentar acessar suas chaves
+      const firstItem = previewData[0]
+      if (!firstItem) {
+        return <p>Sem dados para visualizar</p>
+      }
+
       return (
         <div className="overflow-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                {Object.keys(file.preview_data[0] || {}).map((header) => (
+                {Object.keys(firstItem).map((header) => (
                   <th key={header} className="border p-2 bg-muted">
                     {header}
                   </th>
@@ -54,11 +67,11 @@ export function FileList({ files, onDelete, selectedFiles, onToggleSelect }: Fil
               </tr>
             </thead>
             <tbody>
-              {file.preview_data.map((row: any, index: number) => (
+              {previewData.map((row: any, index: number) => (
                 <tr key={index}>
                   {Object.values(row).map((cell: any, cellIndex: number) => (
                     <td key={cellIndex} className="border p-2">
-                      {cell}
+                      {String(cell)}
                     </td>
                   ))}
                 </tr>
