@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { FileText, List, LayoutGrid, Search, Filter, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -369,3 +368,4 @@ export default function DataContext() {
       </div>
     </div>
   )
+}

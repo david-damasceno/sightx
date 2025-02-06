@@ -1,6 +1,6 @@
 
 import { useState } from "react"
-import { Upload, FileText, X } from "lucide-react"
+import { Upload, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "@/integrations/supabase/client"
@@ -139,3 +139,5 @@ export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: 
       </label>
     </div>
   )
+}
+
