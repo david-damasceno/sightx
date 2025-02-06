@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { FileText, List, LayoutGrid, Search, Filter, X } from "lucide-react"
+import { FileText, List, LayoutGrid, Search, Filter, X, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -17,6 +17,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { FileUploader } from "@/components/data-import/FileUploader"
 import { ColumnMapper } from "@/components/data-import/ColumnMapper"
 import { FileList } from "@/components/chat/FileList"
@@ -52,11 +63,10 @@ export default function DataContext() {
         throw error
       }
 
-      // Mapear os dados para o formato esperado pelo FileList
       return data?.map(item => ({
         id: item.id,
         file_name: item.original_filename,
-        file_type: 'csv', // ou determinar dinamicamente baseado no nome do arquivo
+        file_type: 'csv',
         created_at: item.created_at || '',
         status: item.status || '',
         preview_data: item.columns_metadata
@@ -121,6 +131,10 @@ export default function DataContext() {
     await refetch()
   }
 
+  const handleCancelContext = () => {
+    setUploadedFile(null)
+  }
+
   const filteredFiles = dataImports?.filter(file =>
     file.file_name.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -182,13 +196,33 @@ export default function DataContext() {
                       Descreva o conteúdo dos dados para receber sugestões de nomes mais descritivos
                     </CardDescription>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setUploadedFile(null)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="icon">
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir arquivo?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação não pode ser desfeita. O arquivo será permanentemente excluído.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            handleDeleteFile(uploadedFile.id)
+                            setUploadedFile(null)
+                          }}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </CardHeader>
               <CardContent>
@@ -196,6 +230,7 @@ export default function DataContext() {
                   columns={uploadedFile.columns}
                   previewData={uploadedFile.preview_data}
                   onMappingComplete={handleMappingComplete}
+                  onCancel={handleCancelContext}
                 />
               </CardContent>
             </Card>
@@ -258,7 +293,7 @@ export default function DataContext() {
                         {selectedFile.columns_metadata.columns.map((column: any) => (
                           <div
                             key={column.name}
-                            className="p-4 rounded-lg border hover:bg-accent transition-colors"
+                            className="p-4 rounded-lg border hover:bg-accent/5 transition-colors"
                           >
                             <div className="flex justify-between items-start mb-2">
                               <h3 className="font-medium">{column.name}</h3>

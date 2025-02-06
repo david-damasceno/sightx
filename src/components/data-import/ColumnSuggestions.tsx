@@ -9,10 +9,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
-import { Check, X } from "lucide-react"
+import { Check, X, ArrowRight, Wand2 } from "lucide-react"
 
 interface ColumnSuggestion {
   original_name: string
@@ -25,9 +26,17 @@ interface ColumnSuggestionsProps {
   columns: string[]
   sampleData: any[]
   onSuggestionsApplied: (suggestions: { [key: string]: string }) => void
+  onCancel: () => void
+  onContinue: () => void
 }
 
-export function ColumnSuggestions({ columns, sampleData, onSuggestionsApplied }: ColumnSuggestionsProps) {
+export function ColumnSuggestions({ 
+  columns, 
+  sampleData, 
+  onSuggestionsApplied, 
+  onCancel,
+  onContinue 
+}: ColumnSuggestionsProps) {
   const [description, setDescription] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [suggestions, setSuggestions] = useState<ColumnSuggestion[]>([])
@@ -50,7 +59,7 @@ export function ColumnSuggestions({ columns, sampleData, onSuggestionsApplied }:
         body: {
           description,
           columns,
-          sampleData: sampleData.slice(0, 10)
+          sampleData: sampleData?.slice(0, 5) || []
         },
       })
 
@@ -117,8 +126,9 @@ export function ColumnSuggestions({ columns, sampleData, onSuggestionsApplied }:
           <Button 
             onClick={handleGetSuggestions}
             disabled={isLoading || !description}
-            className="w-full"
+            className="w-full gap-2"
           >
+            <Wand2 className="h-4 w-4" />
             {isLoading ? "Gerando sugestões..." : "Obter Sugestões"}
           </Button>
         </div>
@@ -127,7 +137,8 @@ export function ColumnSuggestions({ columns, sampleData, onSuggestionsApplied }:
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">Sugestões Geradas</h3>
-              <Button onClick={handleAcceptAll} variant="outline">
+              <Button onClick={handleAcceptAll} variant="outline" className="gap-2">
+                <Check className="h-4 w-4" />
                 Aplicar Todos
               </Button>
             </div>
@@ -136,7 +147,7 @@ export function ColumnSuggestions({ columns, sampleData, onSuggestionsApplied }:
               {suggestions.map((suggestion) => (
                 <div
                   key={suggestion.original_name}
-                  className="p-4 border rounded-lg space-y-2"
+                  className="p-4 border rounded-lg space-y-2 hover:bg-accent/5 transition-colors"
                 >
                   <div className="flex justify-between items-start">
                     <div>
@@ -150,15 +161,17 @@ export function ColumnSuggestions({ columns, sampleData, onSuggestionsApplied }:
                         variant="ghost"
                         size="icon"
                         onClick={() => handleAcceptSuggestion(suggestion)}
+                        className="hover:text-green-500"
                       >
-                        <Check className="h-4 w-4 text-green-500" />
+                        <Check className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRejectSuggestion(suggestion.original_name)}
+                        className="hover:text-red-500"
                       >
-                        <X className="h-4 w-4 text-red-500" />
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -178,6 +191,16 @@ export function ColumnSuggestions({ columns, sampleData, onSuggestionsApplied }:
           </div>
         )}
       </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button variant="outline" onClick={onCancel} className="gap-2">
+          <X className="h-4 w-4" />
+          Cancelar
+        </Button>
+        <Button onClick={onContinue} className="gap-2">
+          Continuar
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </CardFooter>
     </Card>
   )
 }
