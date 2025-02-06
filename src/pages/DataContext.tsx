@@ -52,7 +52,15 @@ export default function DataContext() {
         throw error
       }
 
-      return data
+      // Mapear os dados para o formato esperado pelo FileList
+      return data?.map(item => ({
+        id: item.id,
+        file_name: item.original_filename,
+        file_type: 'csv', // ou determinar dinamicamente baseado no nome do arquivo
+        created_at: item.created_at || '',
+        status: item.status || '',
+        preview_data: item.columns_metadata
+      })) || []
     },
     enabled: !!currentOrganization?.id
   })
@@ -114,7 +122,7 @@ export default function DataContext() {
   }
 
   const filteredFiles = dataImports?.filter(file =>
-    file.original_filename.toLowerCase().includes(searchTerm.toLowerCase())
+    file.file_name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   return (
