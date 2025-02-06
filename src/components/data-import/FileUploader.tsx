@@ -139,4 +139,3 @@ export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: 
       </label>
     </div>
   )
-}

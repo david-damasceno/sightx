@@ -82,7 +82,7 @@ export default function DataContext() {
         throw error
       }
 
-      return data as unknown as DataImport[]
+      return data as DataImport[]
     },
     enabled: !!currentOrganization?.id
   })
@@ -369,4 +369,3 @@ export default function DataContext() {
       </div>
     </div>
   )
-}
