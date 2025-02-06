@@ -9,9 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { ColumnSuggestions } from "./ColumnSuggestions"
 
 interface Column {
   name: string
@@ -44,6 +45,15 @@ export function ColumnMapper({ columns, previewData, onMappingComplete }: Column
       ...prev,
       [columnName]: { ...prev[columnName], type }
     }))
+  }
+
+  const handleSuggestionsApplied = (suggestions: { [key: string]: string }) => {
+    // Atualiza os mapeamentos com os nomes sugeridos
+    const newMappings: Record<string, { description: string, type: string }> = {}
+    Object.entries(suggestions).forEach(([originalName, suggestedName]) => {
+      newMappings[suggestedName] = columnMappings[originalName] || { description: "", type: "text" }
+    })
+    setColumnMappings(newMappings)
   }
 
   const handleCreateTable = async () => {
@@ -82,6 +92,12 @@ export function ColumnMapper({ columns, previewData, onMappingComplete }: Column
 
   return (
     <div className="space-y-6">
+      <ColumnSuggestions
+        columns={columns.map(c => c.name)}
+        sampleData={previewData}
+        onSuggestionsApplied={handleSuggestionsApplied}
+      />
+
       <div>
         <Label htmlFor="table-name">Nome da Tabela</Label>
         <Input
