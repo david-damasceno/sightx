@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { FileText, List, LayoutGrid, Search, Filter, Trash2, X } from "lucide-react"
+import { FileText, List, LayoutGrid, Search, Filter, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -18,34 +18,20 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { FileUploader } from "@/components/data-import/FileUploader"
+import { ColumnMapper } from "@/components/data-import/ColumnMapper"
+import { FileList } from "@/components/chat/FileList"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { format } from "date-fns"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { DataImport } from "@/types/data-imports"
 
 export default function DataContext() {
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list')
-  const [selectedFile, setSelectedFile] = useState<DataImport | null>(null)
+  const [selectedFile, setSelectedFile] = useState<any | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([])
+  const [uploadedFile, setUploadedFile] = useState<any>(null)
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
 
@@ -66,23 +52,17 @@ export default function DataContext() {
         throw error
       }
 
-      // Transform the data to match our DataImport type
-      return (data as any[]).map(item => ({
-        ...item,
-        columns_metadata: typeof item.columns_metadata === 'string' 
-          ? JSON.parse(item.columns_metadata)
-          : item.columns_metadata
-      })) as DataImport[]
+      return data
     },
     enabled: !!currentOrganization?.id
   })
 
   const handleUploadSuccess = async (data: any) => {
-    if (!data) return
+    setUploadedFile(data)
     await refetch()
     toast({
-      title: "Arquivo importado com sucesso",
-      description: "O arquivo foi processado e está pronto para contextualização.",
+      title: "Arquivo processado",
+      description: "Agora você pode contextualizar os dados.",
     })
   }
 
@@ -115,6 +95,24 @@ export default function DataContext() {
     }
   }
 
+  const handleToggleSelect = (fileId: string) => {
+    setSelectedFiles(prev => {
+      if (prev.includes(fileId)) {
+        return prev.filter(id => id !== fileId)
+      }
+      return [...prev, fileId]
+    })
+  }
+
+  const handleMappingComplete = async (tableName: string) => {
+    toast({
+      title: "Dados importados",
+      description: `Os dados foram importados para a tabela ${tableName}.`,
+    })
+    setUploadedFile(null)
+    await refetch()
+  }
+
   const filteredFiles = dataImports?.filter(file =>
     file.original_filename.toLowerCase().includes(searchTerm.toLowerCase())
   )
@@ -143,218 +141,163 @@ export default function DataContext() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon">
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Buscar por nome do arquivo</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Button variant="outline" size="icon">
+                <Search className="h-4 w-4" />
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
-            {/* Sempre mostra o FileUploader */}
+            {/* Uploader de arquivos */}
             <FileUploader onUploadSuccess={handleUploadSuccess} />
             
             {/* Lista de arquivos processados */}
-            <div className="space-y-2 mt-4 max-h-[calc(100vh-24rem)] overflow-y-auto pr-2">
-              {filteredFiles?.map((file) => (
-                <div
-                  key={file.id}
-                  className={`relative group rounded-lg transition-all ${
-                    selectedFile?.id === file.id
-                      ? "bg-secondary"
-                      : "hover:bg-accent"
-                  }`}
-                >
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-2 p-4 h-auto pr-12"
-                    onClick={() => setSelectedFile(file)}
-                  >
-                    <FileText className="h-4 w-4 shrink-0" />
-                    <div className="flex flex-col items-start text-left">
-                      <span className="font-medium truncate w-full">
-                        {file.original_filename}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {file.columns_metadata.columns.length} colunas, {file.row_count} linhas • {format(new Date(file.created_at || ''), 'dd/MM/yyyy')}
-                      </span>
-                      <span className={`text-xs ${
-                        file.status === 'completed' ? 'text-green-500' :
-                        file.status === 'error' ? 'text-red-500' :
-                        'text-yellow-500'
-                      }`}>
-                        {file.status === 'completed' ? 'Processado' :
-                         file.status === 'error' ? 'Falhou' :
-                         'Pendente'}
-                      </span>
-                    </div>
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Excluir arquivo</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja excluir este arquivo? Esta ação não pode ser desfeita.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDeleteFile(file.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Excluir
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              ))}
-            </div>
+            {filteredFiles && filteredFiles.length > 0 && (
+              <FileList
+                files={filteredFiles}
+                onDelete={handleDeleteFile}
+                selectedFiles={selectedFiles}
+                onToggleSelect={handleToggleSelect}
+              />
+            )}
           </CardContent>
         </Card>
 
         {/* Área Principal */}
         <div className="col-span-9 space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Visualização de Dados</CardTitle>
-                  <CardDescription>
-                    {selectedFile ? (
-                      `Visualizando ${selectedFile.original_filename}`
-                    ) : (
-                      'Selecione um arquivo para visualizar os dados'
-                    )}
-                  </CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  {selectedFile && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setSelectedFile(null)}
-                      className="h-8 w-8"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                  <div className="flex border rounded-md p-1">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant={viewMode === 'list' ? "secondary" : "ghost"}
-                            size="icon"
-                            onClick={() => setViewMode('list')}
-                            className="h-8 w-8 rounded-none"
-                          >
-                            <List className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Visualização em lista</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant={viewMode === 'table' ? "secondary" : "ghost"}
-                            size="icon"
-                            onClick={() => setViewMode('table')}
-                            className="h-8 w-8 rounded-none"
-                          >
-                            <LayoutGrid className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Visualização em tabela</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+          {uploadedFile ? (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Contextualização dos Dados</CardTitle>
+                    <CardDescription>
+                      Descreva o conteúdo dos dados para receber sugestões de nomes mais descritivos
+                    </CardDescription>
                   </div>
-                  <Button variant="outline" className="gap-2">
-                    <Filter className="h-4 w-4" />
-                    Filtrar
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setUploadedFile(null)}
+                  >
+                    <X className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline">Exportar</Button>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {selectedFile ? (
-                <div className="animate-fade-in">
-                  {viewMode === 'list' ? (
-                    <div className="space-y-4">
-                      {selectedFile.columns_metadata.columns.map((column) => (
-                        <div
-                          key={column.name}
-                          className="p-4 rounded-lg border hover:bg-accent transition-colors"
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <h3 className="font-medium">{column.name}</h3>
-                            <span className="text-sm text-muted-foreground">
-                              {format(new Date(selectedFile.created_at || ''), 'dd/MM/yyyy')}
-                            </span>
+              </CardHeader>
+              <CardContent>
+                <ColumnMapper
+                  columns={uploadedFile.columns}
+                  previewData={uploadedFile.preview_data}
+                  onMappingComplete={handleMappingComplete}
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Visualização de Dados</CardTitle>
+                    <CardDescription>
+                      {selectedFile ? (
+                        `Visualizando ${selectedFile.original_filename}`
+                      ) : (
+                        'Selecione um arquivo para visualizar os dados'
+                      )}
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    {selectedFile && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedFile(null)}
+                        className="h-8 w-8"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <div className="flex border rounded-md p-1">
+                      <Button
+                        variant={viewMode === 'list' ? "secondary" : "ghost"}
+                        size="icon"
+                        onClick={() => setViewMode('list')}
+                        className="h-8 w-8 rounded-none"
+                      >
+                        <List className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant={viewMode === 'table' ? "secondary" : "ghost"}
+                        size="icon"
+                        onClick={() => setViewMode('table')}
+                        className="h-8 w-8 rounded-none"
+                      >
+                        <LayoutGrid className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Button variant="outline" className="gap-2">
+                      <Filter className="h-4 w-4" />
+                      Filtrar
+                    </Button>
+                    <Button variant="outline">Exportar</Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {selectedFile ? (
+                  <div className="animate-fade-in">
+                    {viewMode === 'list' ? (
+                      <div className="space-y-4">
+                        {selectedFile.columns_metadata.columns.map((column: any) => (
+                          <div
+                            key={column.name}
+                            className="p-4 rounded-lg border hover:bg-accent transition-colors"
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <h3 className="font-medium">{column.name}</h3>
+                              <span className="text-sm text-muted-foreground">
+                                {format(new Date(selectedFile.created_at || ''), 'dd/MM/yyyy')}
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-1">
+                              Tipo: {column.type}
+                            </p>
+                            <p className="text-sm">Exemplo: {column.sample}</p>
                           </div>
-                          <p className="text-sm text-muted-foreground mb-1">
-                            Tipo: {column.type}
-                          </p>
-                          <p className="text-sm">Exemplo: {column.sample}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-md border">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Coluna</TableHead>
-                            <TableHead>Tipo</TableHead>
-                            <TableHead>Exemplo</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {selectedFile.columns_metadata.columns.map((column) => (
-                            <TableRow key={column.name}>
-                              <TableCell className="font-medium">
-                                {column.name}
-                              </TableCell>
-                              <TableCell>{column.type}</TableCell>
-                              <TableCell>{column.sample}</TableCell>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-md border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Coluna</TableHead>
+                              <TableHead>Tipo</TableHead>
+                              <TableHead>Exemplo</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  Nenhum arquivo selecionado. Selecione um arquivo da lista para visualizar seus dados.
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                          </TableHeader>
+                          <TableBody>
+                            {selectedFile.columns_metadata.columns.map((column: any) => (
+                              <TableRow key={column.name}>
+                                <TableCell className="font-medium">
+                                  {column.name}
+                                </TableCell>
+                                <TableCell>{column.type}</TableCell>
+                                <TableCell>{column.sample}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Nenhum arquivo selecionado. Selecione um arquivo da lista para visualizar seus dados.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
