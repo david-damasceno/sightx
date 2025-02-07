@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,7 +24,7 @@ interface Column {
 interface ColumnMapperProps {
   columns: Column[]
   previewData: any[]
-  onMappingComplete: (tableName: string) => void
+  onMappingComplete: (tableName: string, previewData: any) => void
   onCancel: () => void
 }
 
@@ -50,7 +51,6 @@ export function ColumnMapper({ columns, previewData, onMappingComplete, onCancel
   }
 
   const handleSuggestionsApplied = (suggestions: { [key: string]: string }) => {
-    // Atualiza os mapeamentos com os nomes sugeridos
     const newMappings: Record<string, { description: string, type: string }> = {}
     Object.entries(suggestions).forEach(([originalName, suggestedName]) => {
       newMappings[suggestedName] = columnMappings[originalName] || { description: "", type: "text" }
@@ -80,7 +80,7 @@ export function ColumnMapper({ columns, previewData, onMappingComplete, onCancel
         description: "Os dados foram importados e contextualizados.",
       })
 
-      onMappingComplete(tableName)
+      onMappingComplete(tableName, previewData)
     } catch (error) {
       console.error('Error creating table:', error)
       toast({
