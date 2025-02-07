@@ -14,14 +14,17 @@ import {
 } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
-import { Check, X, ArrowRight, Wand2, Loader2 } from "lucide-react"
+import { Check, X, ArrowRight, Wand2, Loader2, AlertTriangle } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
+import { Tooltip } from "@/components/ui/tooltip"
 
 interface ColumnSuggestion {
   original_name: string
   suggested_name: string
   type: string
   description: string
+  needs_review?: boolean
+  validation_message?: string
 }
 
 interface ColumnSuggestionsProps {
@@ -129,7 +132,8 @@ export function ColumnSuggestions({
       <CardHeader>
         <CardTitle>Sugestões de Nomes para Colunas</CardTitle>
         <CardDescription>
-          Descreva o conteúdo dos dados para receber sugestões de nomes mais descritivos para as colunas
+          Descreva o conteúdo dos dados para receber sugestões de nomes mais descritivos para as colunas.
+          Os nomes serão validados de acordo com as regras do PostgreSQL.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -175,11 +179,20 @@ export function ColumnSuggestions({
               {suggestions.map((suggestion) => (
                 <div
                   key={suggestion.original_name}
-                  className="p-4 border rounded-lg space-y-2 hover:bg-accent/5 transition-colors"
+                  className={`p-4 border rounded-lg space-y-2 hover:bg-accent/5 transition-colors ${
+                    suggestion.needs_review ? 'border-yellow-500' : ''
+                  }`}
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="font-medium">{suggestion.original_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{suggestion.original_name}</p>
+                        {suggestion.needs_review && (
+                          <Tooltip content={suggestion.validation_message}>
+                            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                          </Tooltip>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         Tipo sugerido: {suggestion.type}
                       </p>
@@ -209,12 +222,18 @@ export function ColumnSuggestions({
                   <Input
                     value={customNames[suggestion.original_name] || suggestion.original_name}
                     onChange={(e) => handleCustomNameChange(suggestion.original_name, e.target.value)}
-                    className="mt-2"
+                    className={`mt-2 ${suggestion.needs_review ? 'border-yellow-500' : ''}`}
                   />
                   
                   <p className="text-sm text-muted-foreground">
                     {suggestion.description}
                   </p>
+                  
+                  {suggestion.needs_review && (
+                    <p className="text-sm text-yellow-600">
+                      {suggestion.validation_message}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

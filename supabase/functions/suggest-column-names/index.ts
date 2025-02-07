@@ -12,6 +12,32 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Lista de palavras reservadas do PostgreSQL mais comuns
+const POSTGRESQL_RESERVED_WORDS = new Set([
+  'select', 'from', 'where', 'table', 'index', 'primary', 'key', 'foreign',
+  'references', 'constraint', 'unique', 'check', 'default', 'order', 'by',
+  'group', 'having', 'limit', 'offset', 'union', 'case', 'when', 'then',
+  'else', 'end', 'create', 'alter', 'drop', 'update', 'delete', 'insert',
+  'into', 'values', 'user', 'password', 'grant', 'revoke', 'column', 'row'
+])
+
+// Função para validar nome de coluna PostgreSQL
+function validateColumnName(name: string): { isValid: boolean; reason?: string } {
+  if (name.length > 63) {
+    return { isValid: false, reason: 'Nome muito longo (máximo 63 caracteres)' }
+  }
+
+  if (!/^[a-z_][a-z0-9_]*$/.test(name)) {
+    return { isValid: false, reason: 'Nome deve conter apenas letras minúsculas, números e underscore, e começar com letra ou underscore' }
+  }
+
+  if (POSTGRESQL_RESERVED_WORDS.has(name.toLowerCase())) {
+    return { isValid: false, reason: 'Nome é uma palavra reservada do PostgreSQL' }
+  }
+
+  return { isValid: true }
+}
+
 serve(async (req) => {
   // Tratamento de CORS
   if (req.method === 'OPTIONS') {
@@ -47,7 +73,27 @@ serve(async (req) => {
     })
 
     const prompt = `
-      Como um especialista em análise de dados, sugira nomes apropriados para as colunas de uma tabela de dados.
+      Como um especialista em análise de dados, sugira nomes apropriados para as colunas de uma tabela PostgreSQL.
+      
+      REGRAS IMPORTANTES PARA NOMES DE COLUNAS:
+      1. Use apenas letras minúsculas e underscore (snake_case)
+      2. Comece com letra ou underscore (nunca com número)
+      3. Use apenas caracteres: a-z, 0-9 e _ (underscore)
+      4. Máximo de 63 caracteres
+      5. Evite palavras reservadas do PostgreSQL como: select, from, where, table, etc.
+      6. Seja conciso mas descritivo
+      
+      EXEMPLOS DE NOMES CORRETOS:
+      ✅ data_nascimento (não "data_de_nascimento")
+      ✅ valor_total
+      ✅ endereco_entrega
+      ✅ status_pedido
+      
+      EXEMPLOS DE NOMES INCORRETOS:
+      ❌ Data_Nascimento (não use maiúsculas)
+      ❌ valor-total (não use hífen)
+      ❌ endereço_entrega (não use caracteres especiais)
+      ❌ 1_coluna (não comece com número)
       
       Descrição dos dados: ${description}
       
@@ -56,11 +102,10 @@ serve(async (req) => {
         `${col}: ${sampleData?.slice(0, 3).map((row: any) => row[col]).join(', ')}`
       ).join('\n')}
       
-      Por favor, sugira nomes de colunas mais descritivos e seus tipos de dados apropriados.
       Retorne apenas um array JSON com o seguinte formato para cada coluna:
       {
         "original_name": "nome_original",
-        "suggested_name": "nome_sugerido",
+        "suggested_name": "nome_sugerido_em_snake_case",
         "type": "tipo_sugerido",
         "description": "breve descrição"
       }
@@ -80,7 +125,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'Você é um especialista em análise de dados que ajuda a sugerir nomes apropriados para colunas de tabelas.'
+            content: 'Você é um especialista em análise de dados e bancos de dados PostgreSQL que ajuda a sugerir nomes apropriados para colunas de tabelas seguindo as melhores práticas.'
           },
           {
             role: 'user',
@@ -108,7 +153,25 @@ serve(async (req) => {
     let suggestions
     try {
       suggestions = JSON.parse(data.choices[0].message.content)
-      console.log('Sugestões processadas:', suggestions)
+      
+      // Validar e ajustar cada sugestão
+      suggestions = suggestions.map((suggestion: any) => {
+        const validation = validateColumnName(suggestion.suggested_name)
+        if (!validation.isValid) {
+          console.warn(`Nome sugerido inválido: ${suggestion.suggested_name}. Razão: ${validation.reason}`)
+          // Sanitizar o nome sugerido
+          suggestion.suggested_name = suggestion.suggested_name
+            .toLowerCase()
+            .replace(/[^a-z0-9_]/g, '_')
+            .replace(/^[0-9]/, '_$&')
+            .substring(0, 63)
+          suggestion.needs_review = true
+          suggestion.validation_message = validation.reason
+        }
+        return suggestion
+      })
+
+      console.log('Sugestões processadas e validadas:', suggestions)
     } catch (error) {
       console.error('Erro ao processar sugestões:', error)
       console.log('Conteúdo bruto:', data.choices[0].message.content)
