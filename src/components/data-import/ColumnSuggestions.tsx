@@ -16,7 +16,12 @@ import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { Check, X, ArrowRight, Wand2, Loader2, AlertTriangle } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
-import { Tooltip } from "@/components/ui/tooltip"
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface ColumnSuggestion {
   original_name: string
@@ -188,9 +193,16 @@ export function ColumnSuggestions({
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{suggestion.original_name}</p>
                         {suggestion.needs_review && (
-                          <Tooltip content={suggestion.validation_message}>
-                            <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                          </Tooltip>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{suggestion.validation_message}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">
