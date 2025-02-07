@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,7 +14,8 @@ import {
 } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
-import { Check, X, ArrowRight, Wand2 } from "lucide-react"
+import { Check, X, ArrowRight, Wand2, Loader2 } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface ColumnSuggestion {
   original_name: string
@@ -42,12 +44,22 @@ export function ColumnSuggestions({
   const [suggestions, setSuggestions] = useState<ColumnSuggestion[]>([])
   const [customNames, setCustomNames] = useState<{ [key: string]: string }>({})
   const { toast } = useToast()
+  const { session } = useAuth()
 
   const handleGetSuggestions = async () => {
     if (!description) {
       toast({
         title: "Descrição necessária",
         description: "Por favor, forneça uma descrição dos dados para obter sugestões.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!session) {
+      toast({
+        title: "Autenticação necessária",
+        description: "Você precisa estar autenticado para usar esta funcionalidade.",
         variant: "destructive",
       })
       return
@@ -63,7 +75,14 @@ export function ColumnSuggestions({
         },
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('Erro ao obter sugestões:', error)
+        throw error
+      }
+
+      if (!data?.suggestions) {
+        throw new Error('Resposta inválida da API')
+      }
 
       setSuggestions(data.suggestions)
       
@@ -74,11 +93,11 @@ export function ColumnSuggestions({
       }, {})
       setCustomNames(initialCustomNames)
 
-    } catch (error) {
-      console.error('Error getting suggestions:', error)
+    } catch (error: any) {
+      console.error('Erro detalhado:', error)
       toast({
         title: "Erro ao obter sugestões",
-        description: "Não foi possível obter sugestões para as colunas. Tente novamente.",
+        description: error.message || "Não foi possível obter sugestões para as colunas. Tente novamente.",
         variant: "destructive",
       })
     } finally {
@@ -128,8 +147,17 @@ export function ColumnSuggestions({
             disabled={isLoading || !description}
             className="w-full gap-2"
           >
-            <Wand2 className="h-4 w-4" />
-            {isLoading ? "Gerando sugestões..." : "Obter Sugestões"}
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Gerando sugestões...
+              </>
+            ) : (
+              <>
+                <Wand2 className="h-4 w-4" />
+                Obter Sugestões
+              </>
+            )}
           </Button>
         </div>
 
@@ -162,6 +190,7 @@ export function ColumnSuggestions({
                         size="icon"
                         onClick={() => handleAcceptSuggestion(suggestion)}
                         className="hover:text-green-500"
+                        title="Aceitar sugestão"
                       >
                         <Check className="h-4 w-4" />
                       </Button>
@@ -170,6 +199,7 @@ export function ColumnSuggestions({
                         size="icon"
                         onClick={() => handleRejectSuggestion(suggestion.original_name)}
                         className="hover:text-red-500"
+                        title="Rejeitar sugestão"
                       >
                         <X className="h-4 w-4" />
                       </Button>
