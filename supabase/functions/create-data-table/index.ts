@@ -24,35 +24,51 @@ serve(async (req) => {
     const connection = await pool.connect()
 
     try {
-      // Create dynamic table
+      // Validar nome da tabela
+      const sanitizedTableName = tableName.toLowerCase().replace(/[^a-z0-9_]/g, '_')
+      
+      // Preparar definições das colunas com tipos adequados
       const columnDefinitions = Object.entries(columns)
         .map(([name, info]: [string, any]) => {
           const sanitizedName = name.toLowerCase().replace(/[^a-z0-9_]/g, '_')
-          return `${sanitizedName} ${info.type}`
+          let columnDef = `${sanitizedName} ${info.type}`
+          
+          // Adicionar comentário se houver descrição
+          if (info.description) {
+            columnDef += ` -- ${info.description}`
+          }
+          
+          return columnDef
         })
         .join(', ')
 
+      // Criar a tabela com as políticas de RLS
       const createTableSQL = `
-        CREATE TABLE IF NOT EXISTS ${tableName} (
+        CREATE TABLE IF NOT EXISTS ${sanitizedTableName} (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           organization_id UUID NOT NULL REFERENCES organizations(id),
           ${columnDefinitions},
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
         );
 
-        -- Add security policies
-        ALTER TABLE ${tableName} ENABLE ROW LEVEL SECURITY;
+        -- Configurar RLS
+        SELECT setup_table_rls('public', '${sanitizedTableName}');
 
-        CREATE POLICY "Users can view their organization data" ON ${tableName}
-          FOR SELECT USING (organization_id = auth.uid());
-
-        CREATE POLICY "Users can insert their organization data" ON ${tableName}
-          FOR INSERT WITH CHECK (organization_id = auth.uid());
+        -- Criar índices úteis
+        CREATE INDEX IF NOT EXISTS idx_${sanitizedTableName}_organization_id 
+          ON ${sanitizedTableName}(organization_id);
+        
+        -- Criar trigger para updated_at
+        CREATE TRIGGER update_${sanitizedTableName}_updated_at
+          BEFORE UPDATE ON ${sanitizedTableName}
+          FOR EACH ROW
+          EXECUTE FUNCTION update_updated_at_column();
       `
 
       await connection.queryObject(createTableSQL)
 
-      // Insert preview data
+      // Preparar e validar dados para inserção
       const columnNames = Object.keys(columns).map(name => 
         name.toLowerCase().replace(/[^a-z0-9_]/g, '_')
       )
@@ -64,18 +80,41 @@ serve(async (req) => {
       ).join(', ')
 
       const values = [organizationId]
+      
+      // Validar e converter valores conforme o tipo da coluna
       previewData.forEach(row => {
-        columnNames.forEach(col => values.push(row[col] ?? null))
+        columnNames.forEach(col => {
+          const value = row[col]
+          const columnType = columns[col].type
+          
+          // Converter valor conforme o tipo
+          let processedValue
+          if (value === null || value === undefined) {
+            processedValue = null
+          } else if (columnType.includes('timestamp')) {
+            processedValue = new Date(value).toISOString()
+          } else if (columnType === 'boolean') {
+            processedValue = ['true', 't', 'yes', 'sim', '1'].includes(String(value).toLowerCase())
+          } else if (columnType.includes('int')) {
+            processedValue = parseInt(value)
+          } else if (columnType.includes('numeric') || columnType.includes('decimal')) {
+            processedValue = parseFloat(value)
+          } else {
+            processedValue = String(value)
+          }
+          
+          values.push(processedValue)
+        })
       })
 
       const insertSQL = `
-        INSERT INTO ${tableName} (organization_id, ${columnNames.join(', ')})
+        INSERT INTO ${sanitizedTableName} (organization_id, ${columnNames.join(', ')})
         VALUES ${placeholders}
       `
 
       await connection.queryObject(insertSQL, values)
 
-      // Update import status
+      // Atualizar status da importação
       const supabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -85,7 +124,7 @@ serve(async (req) => {
         .from('data_imports')
         .update({ 
           status: 'completed',
-          table_name: tableName
+          table_name: sanitizedTableName
         })
         .eq('organization_id', organizationId)
         .eq('status', 'analyzing')
@@ -93,7 +132,10 @@ serve(async (req) => {
       if (updateError) throw updateError
 
       return new Response(
-        JSON.stringify({ message: 'Table created and data imported successfully' }),
+        JSON.stringify({ 
+          message: 'Table created and data imported successfully',
+          tableName: sanitizedTableName
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     } finally {

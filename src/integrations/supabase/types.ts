@@ -639,6 +639,20 @@ export type Database = {
         }
         Returns: Json
       }
+      infer_column_type: {
+        Args: {
+          sample_value: string
+          sample_data: Json
+        }
+        Returns: string
+      }
+      setup_table_rls: {
+        Args: {
+          schema_name: string
+          table_name: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       analysis_type:

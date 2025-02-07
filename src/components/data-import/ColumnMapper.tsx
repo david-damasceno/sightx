@@ -36,6 +36,35 @@ export function ColumnMapper({ columns, previewData, onMappingComplete, onCancel
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
 
+  const dataTypes = [
+    // Texto
+    { value: "character varying", label: "Texto Variável (VARCHAR)" },
+    { value: "text", label: "Texto Longo (TEXT)" },
+    { value: "char", label: "Texto Fixo (CHAR)" },
+    
+    // Números
+    { value: "smallint", label: "Número Inteiro Pequeno (-32768 a 32767)" },
+    { value: "integer", label: "Número Inteiro (-2147483648 a 2147483647)" },
+    { value: "bigint", label: "Número Inteiro Grande" },
+    { value: "decimal", label: "Decimal (Precisão Exata)" },
+    { value: "numeric", label: "Numérico (Precisão Exata)" },
+    { value: "real", label: "Número Real (Precisão Aproximada)" },
+    { value: "double precision", label: "Número Real Duplo (Precisão Aproximada)" },
+    
+    // Data/Hora
+    { value: "date", label: "Data" },
+    { value: "time", label: "Hora" },
+    { value: "timestamp", label: "Data e Hora" },
+    { value: "timestamp with time zone", label: "Data e Hora com Fuso" },
+    { value: "interval", label: "Intervalo de Tempo" },
+    
+    // Outros
+    { value: "boolean", label: "Booleano (Verdadeiro/Falso)" },
+    { value: "uuid", label: "UUID" },
+    { value: "jsonb", label: "JSON" },
+    { value: "ARRAY", label: "Array" }
+  ]
+
   const handleColumnDescriptionChange = (columnName: string, description: string) => {
     setColumnMappings(prev => ({
       ...prev,
@@ -53,10 +82,45 @@ export function ColumnMapper({ columns, previewData, onMappingComplete, onCancel
   const handleSuggestionsApplied = (suggestions: { [key: string]: string }) => {
     const newMappings: Record<string, { description: string, type: string }> = {}
     Object.entries(suggestions).forEach(([originalName, suggestedName]) => {
-      newMappings[suggestedName] = columnMappings[originalName] || { description: "", type: "text" }
+      // Inferir o tipo usando a função do banco
+      const sampleValue = String(columns.find(c => c.name === originalName)?.sample || '')
+      const inferredType = inferColumnType(sampleValue)
+      
+      newMappings[suggestedName] = { 
+        description: "", 
+        type: inferredType || "text"
+      }
     })
     setColumnMappings(newMappings)
     setShowSuggestions(false)
+  }
+
+  const inferColumnType = (sampleValue: string): string => {
+    // Inferência básica de tipos
+    if (!sampleValue) return "text"
+    
+    // Tenta converter para número
+    if (!isNaN(Number(sampleValue))) {
+      if (sampleValue.includes('.')) return "numeric"
+      const num = parseInt(sampleValue)
+      if (num >= -32768 && num <= 32767) return "smallint"
+      if (num >= -2147483648 && num <= 2147483647) return "integer"
+      return "bigint"
+    }
+    
+    // Tenta converter para data
+    const date = new Date(sampleValue)
+    if (!isNaN(date.getTime())) {
+      if (sampleValue.includes(':')) return "timestamp with time zone"
+      return "date"
+    }
+    
+    // Verifica se é booleano
+    const booleanValues = ['true', 'false', 't', 'f', 'yes', 'no', 'sim', 'não', '1', '0']
+    if (booleanValues.includes(sampleValue.toLowerCase())) return "boolean"
+    
+    // Se nada mais servir, usa text
+    return "text"
   }
 
   const handleCreateTable = async () => {
@@ -127,11 +191,11 @@ export function ColumnMapper({ columns, previewData, onMappingComplete, onCancel
           <div className="space-y-4">
             <h3 className="font-medium">Mapeamento de Colunas</h3>
             {columns.map((column) => (
-              <div key={column.name} className="grid grid-cols-3 gap-4 items-center">
+              <div key={column.name} className="grid grid-cols-3 gap-4 items-start p-4 rounded-lg border hover:bg-accent/5">
                 <div>
                   <Label>Coluna Original</Label>
                   <p className="text-sm text-muted-foreground">{column.name}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Exemplo: {String(column.sample)}
                   </p>
                 </div>
@@ -153,12 +217,9 @@ export function ColumnMapper({ columns, previewData, onMappingComplete, onCancel
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="text">Texto</SelectItem>
-                      <SelectItem value="integer">Número Inteiro</SelectItem>
-                      <SelectItem value="numeric">Número Decimal</SelectItem>
-                      <SelectItem value="boolean">Booleano</SelectItem>
-                      <SelectItem value="date">Data</SelectItem>
-                      <SelectItem value="timestamp">Data e Hora</SelectItem>
+                      {dataTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
