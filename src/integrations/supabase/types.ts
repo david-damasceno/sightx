@@ -56,6 +56,51 @@ export type Database = {
           },
         ]
       }
+      data_analysis_suggestions: {
+        Row: {
+          created_at: string | null
+          data_import_id: string
+          id: string
+          organization_id: string
+          selected_analyses: Json
+          suggested_analyses: Json
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_import_id: string
+          id?: string
+          organization_id: string
+          selected_analyses?: Json
+          suggested_analyses?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_import_id?: string
+          id?: string
+          organization_id?: string
+          selected_analyses?: Json
+          suggested_analyses?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_analysis_suggestions_data_import_id_fkey"
+            columns: ["data_import_id"]
+            isOneToOne: false
+            referencedRelation: "data_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_analysis_suggestions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_files: {
         Row: {
           content_type: string
@@ -596,6 +641,14 @@ export type Database = {
       }
     }
     Enums: {
+      analysis_type:
+        | "time_series"
+        | "correlation"
+        | "distribution"
+        | "clustering"
+        | "segmentation"
+        | "forecasting"
+        | "anomaly_detection"
       business_objective:
         | "increase_sales"
         | "improve_customer_satisfaction"

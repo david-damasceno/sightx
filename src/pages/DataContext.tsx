@@ -1,5 +1,6 @@
+
 import { useState } from "react"
-import { FileText, List, LayoutGrid, Search, Filter, X, Trash2 } from "lucide-react"
+import { FileText, List, LayoutGrid, Search, Filter, X, Trash2, FileUp, Eye, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -28,6 +29,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { FileUploader } from "@/components/data-import/FileUploader"
 import { ColumnMapper } from "@/components/data-import/ColumnMapper"
 import { FileList } from "@/components/chat/FileList"
@@ -43,6 +52,8 @@ export default function DataContext() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedFiles, setSelectedFiles] = useState<string[]>([])
   const [uploadedFile, setUploadedFile] = useState<any>(null)
+  const [suggestedAnalyses, setSuggestedAnalyses] = useState<any[]>([])
+  const [selectedAnalyses, setSelectedAnalyses] = useState<any[]>([])
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
 
@@ -140,7 +151,44 @@ export default function DataContext() {
     })
   }
 
-  const handleMappingComplete = async (tableName: string) => {
+  const handleAnalyzeData = async (tableName: string, previewData: any) => {
+    if (!currentOrganization?.id || !uploadedFile?.id) {
+      toast({
+        title: "Erro na análise",
+        description: "Informações necessárias não encontradas.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-data-insights', {
+        body: {
+          previewData,
+          importId: uploadedFile.id,
+          organizationId: currentOrganization.id,
+          description: `Dados importados da tabela ${tableName}`
+        }
+      })
+
+      if (error) throw error
+
+      setSuggestedAnalyses(data.suggestions)
+      toast({
+        title: "Análise concluída",
+        description: "Sugestões de análise foram geradas com sucesso.",
+      })
+    } catch (error) {
+      console.error('Erro ao analisar dados:', error)
+      toast({
+        title: "Erro na análise",
+        description: "Não foi possível gerar sugestões de análise.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleMappingComplete = async (tableName: string, previewData: any) => {
     if (!tableName) {
       toast({
         title: "Erro na importação",
@@ -154,12 +202,18 @@ export default function DataContext() {
       title: "Dados importados",
       description: `Os dados foram importados para a tabela ${tableName}.`,
     })
+
+    // Analisar os dados após a importação
+    await handleAnalyzeData(tableName, previewData)
+    
     setUploadedFile(null)
     await refetch()
   }
 
   const handleCancelContext = () => {
     setUploadedFile(null)
+    setSuggestedAnalyses([])
+    setSelectedAnalyses([])
   }
 
   const filteredFiles = dataImports?.filter(file =>
@@ -179,7 +233,7 @@ export default function DataContext() {
 
       <div className="grid grid-cols-12 gap-6">
         {/* Lista de Arquivos */}
-        <Card className="col-span-3 h-[calc(100vh-12rem)]">
+        <Card className="col-span-3 h-[calc(100vh-12rem)] bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-background">
           <CardHeader>
             <CardTitle className="text-lg">Arquivos</CardTitle>
             <CardDescription>Seus arquivos de dados</CardDescription>
@@ -190,7 +244,7 @@ export default function DataContext() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" className="shrink-0">
                 <Search className="h-4 w-4" />
               </Button>
             </div>
@@ -214,7 +268,7 @@ export default function DataContext() {
         {/* Área Principal */}
         <div className="col-span-9 space-y-6">
           {uploadedFile ? (
-            <Card>
+            <Card className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-background">
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <div>
@@ -261,10 +315,60 @@ export default function DataContext() {
                   onMappingComplete={handleMappingComplete}
                   onCancel={handleCancelContext}
                 />
+
+                {suggestedAnalyses.length > 0 && (
+                  <div className="mt-8 space-y-4">
+                    <h3 className="text-lg font-semibold">Sugestões de Análise</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Selecione as análises que você gostaria de realizar com estes dados:
+                    </p>
+                    <div className="grid grid-cols-2 gap-4">
+                      {suggestedAnalyses.map((analysis, index) => (
+                        <Card key={index} className="relative">
+                          <CardHeader>
+                            <CardTitle className="text-lg">{analysis.title}</CardTitle>
+                            <CardDescription>{analysis.description}</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">Métricas:</span>
+                                <span className="text-sm text-muted-foreground">
+                                  {analysis.metrics.join(', ')}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">Visualização:</span>
+                                <span className="text-sm text-muted-foreground">
+                                  {analysis.visualization}
+                                </span>
+                              </div>
+                            </div>
+                          </CardContent>
+                          <Button
+                            variant={selectedAnalyses.includes(index) ? "secondary" : "outline"}
+                            className="absolute top-2 right-2"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedAnalyses(prev => {
+                                if (prev.includes(index)) {
+                                  return prev.filter(i => i !== index)
+                                }
+                                return [...prev, index]
+                              })
+                            }}
+                          >
+                            {selectedAnalyses.includes(index) ? "Selecionado" : "Selecionar"}
+                          </Button>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : (
-            <Card>
+            <Card className="bg-gradient-to-br from-purple-50 to-white dark:from-purple-900/10 dark:to-background">
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <div>
