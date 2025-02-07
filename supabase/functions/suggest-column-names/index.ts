@@ -47,8 +47,12 @@ serve(async (req) => {
   try {
     // Validação das configurações do Azure
     if (!apiKey || !endpoint || !deployment) {
-      console.error('Configuração do Azure OpenAI ausente')
-      throw new Error('Configuração do Azure OpenAI ausente')
+      console.error('Configurações do Azure OpenAI:', {
+        hasApiKey: !!apiKey,
+        hasEndpoint: !!endpoint,
+        hasDeployment: !!deployment
+      })
+      throw new Error('Configurações do Azure OpenAI incompletas')
     }
 
     // Validação do JWT e autenticação
@@ -69,7 +73,9 @@ serve(async (req) => {
     console.log('Processando requisição:', {
       description,
       columns,
-      sampleDataCount: sampleData?.length
+      sampleDataCount: sampleData?.length,
+      deployment,
+      endpoint
     })
 
     const prompt = `
@@ -111,9 +117,17 @@ serve(async (req) => {
       }
     `
 
-    const url = `${endpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-07-01-preview`
+    // Remover qualquer barra final do endpoint
+    const baseEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint
     
-    console.log('Chamando Azure OpenAI:', url)
+    // Construir a URL correta para a API do Azure OpenAI
+    const url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2024-02-15-preview`
+    
+    console.log('Chamando Azure OpenAI:', {
+      url,
+      deployment,
+      promptLength: prompt.length
+    })
 
     const azureResponse = await fetch(url, {
       method: 'POST',
@@ -143,12 +157,23 @@ serve(async (req) => {
 
     if (!azureResponse.ok) {
       const errorText = await azureResponse.text()
-      console.error('Erro na resposta do Azure OpenAI:', errorText)
-      throw new Error(`Erro na API do Azure OpenAI: ${errorText}`)
+      console.error('Erro na resposta do Azure OpenAI:', {
+        status: azureResponse.status,
+        statusText: azureResponse.statusText,
+        error: errorText,
+        url,
+        deployment
+      })
+      throw new Error(`Erro na API do Azure OpenAI: [${azureResponse.status}] ${errorText}`)
     }
 
     const data = await azureResponse.json()
-    console.log('Resposta do Azure OpenAI:', data)
+    console.log('Resposta do Azure OpenAI:', {
+      status: azureResponse.status,
+      hasChoices: !!data.choices,
+      choicesLength: data.choices?.length,
+      firstChoice: data.choices?.[0]?.message?.content?.substring(0, 100) + '...'
+    })
 
     let suggestions
     try {
@@ -188,11 +213,15 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Erro na função suggest-column-names:', error)
+    console.error('Erro na função suggest-column-names:', {
+      error: error.message,
+      stack: error.stack,
+      type: error.constructor.name
+    })
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: error.stack
+        details: `Erro detalhado: ${error.stack || 'Stack não disponível'}`
       }),
       { 
         status: 500,
