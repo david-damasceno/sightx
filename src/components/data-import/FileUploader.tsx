@@ -63,11 +63,19 @@ export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: 
       formData.append('file', file)
       formData.append('organizationId', currentOrganization.id)
 
+      console.log('Enviando arquivo para análise:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type
+      })
+
       const { data, error } = await supabase.functions.invoke('analyze-file', {
         body: formData,
       })
 
       if (error) throw error
+
+      console.log('Resultado da análise:', data)
 
       setUploadProgress(100)
       toast({
@@ -76,11 +84,11 @@ export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: 
       })
 
       onUploadSuccess(data)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading file:', error)
       toast({
         title: "Erro ao analisar arquivo",
-        description: "Não foi possível processar o arquivo. Tente novamente.",
+        description: error.message || "Não foi possível processar o arquivo. Tente novamente.",
         variant: "destructive",
       })
     } finally {

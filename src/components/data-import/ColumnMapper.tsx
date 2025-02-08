@@ -30,7 +30,7 @@ interface ColumnMapperProps {
 
 export function ColumnMapper({ columns, previewData, onMappingComplete, onCancel }: ColumnMapperProps) {
   const [tableName, setTableName] = useState("")
-  const [columnMappings, setColumnMappings] = useState<Record<string, { description: string, type: string }>>({})
+  const [columnMappings, setColumnMappings] = useState<Record<string, { description: string, type: string, validation?: string[] }>>({})
   const [isProcessing, setIsProcessing] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(true)
   const { toast } = useToast()
@@ -128,16 +128,27 @@ export function ColumnMapper({ columns, previewData, onMappingComplete, onCancel
 
     setIsProcessing(true)
     try {
-      const { error } = await supabase.functions.invoke('create-data-table', {
+      console.log('Enviando dados para criar tabela:', {
+        tableName,
+        columns: columnMappings,
+        previewData
+      })
+
+      const { data, error } = await supabase.functions.invoke('create-data-table', {
         body: {
           tableName,
           columns: columnMappings,
           organizationId: currentOrganization.id,
-          previewData
+          previewData,
+          columnAnalysis: [], // Será preenchido pela função
+          suggestedIndexes: [], // Será preenchido pela função
+          dataValidation: {} // Será preenchido pela função
         }
       })
 
       if (error) throw error
+
+      console.log('Resposta da criação da tabela:', data)
 
       toast({
         title: "Tabela criada com sucesso",
@@ -145,11 +156,11 @@ export function ColumnMapper({ columns, previewData, onMappingComplete, onCancel
       })
 
       onMappingComplete(tableName, previewData)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating table:', error)
       toast({
         title: "Erro ao criar tabela",
-        description: "Não foi possível criar a tabela. Tente novamente.",
+        description: error.message || "Não foi possível criar a tabela. Tente novamente.",
         variant: "destructive",
       })
     } finally {
