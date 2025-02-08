@@ -156,9 +156,12 @@ export type Database = {
       }
       data_imports: {
         Row: {
+          column_analysis: Json | null
           columns_metadata: Json
           created_at: string | null
           created_by: string | null
+          data_quality: Json | null
+          data_validation: Json | null
           error_message: string | null
           id: string
           name: string
@@ -166,12 +169,16 @@ export type Database = {
           original_filename: string
           row_count: number | null
           status: Database["public"]["Enums"]["import_status"] | null
+          suggested_indexes: Json | null
           table_name: string
         }
         Insert: {
+          column_analysis?: Json | null
           columns_metadata?: Json
           created_at?: string | null
           created_by?: string | null
+          data_quality?: Json | null
+          data_validation?: Json | null
           error_message?: string | null
           id?: string
           name: string
@@ -179,12 +186,16 @@ export type Database = {
           original_filename: string
           row_count?: number | null
           status?: Database["public"]["Enums"]["import_status"] | null
+          suggested_indexes?: Json | null
           table_name: string
         }
         Update: {
+          column_analysis?: Json | null
           columns_metadata?: Json
           created_at?: string | null
           created_by?: string | null
+          data_quality?: Json | null
+          data_validation?: Json | null
           error_message?: string | null
           id?: string
           name?: string
@@ -192,6 +203,7 @@ export type Database = {
           original_filename?: string
           row_count?: number | null
           status?: Database["public"]["Enums"]["import_status"] | null
+          suggested_indexes?: Json | null
           table_name?: string
         }
         Relationships: [
