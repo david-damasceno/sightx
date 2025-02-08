@@ -233,6 +233,11 @@ serve(async (req) => {
     const tableName = generateTableName(file.name)
     console.log('Generated table name:', tableName)
 
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
     const { error: uploadError } = await supabase
       .from('data_imports')
       .insert({
