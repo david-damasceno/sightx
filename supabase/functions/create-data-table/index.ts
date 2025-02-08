@@ -11,6 +11,7 @@ const corsHeaders = {
 interface ColumnInfo {
   type: string
   description?: string
+  validation?: string[]
 }
 
 interface TableCreationParams {
@@ -18,18 +19,27 @@ interface TableCreationParams {
   columns: Record<string, ColumnInfo>
   organizationId: string
   previewData: Record<string, any>[]
+  columnAnalysis: any[]
+  suggestedIndexes: string[]
+  dataValidation: any
 }
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // Parse request
     const params = await req.json() as TableCreationParams
-    const { tableName, columns, organizationId, previewData } = params
+    const { 
+      tableName, 
+      columns, 
+      organizationId, 
+      previewData,
+      columnAnalysis,
+      suggestedIndexes,
+      dataValidation 
+    } = params
 
     if (!tableName || !columns || !organizationId || !previewData) {
       throw new Error('Missing required parameters')
@@ -46,22 +56,38 @@ serve(async (req) => {
     const connection = await pool.connect()
 
     try {
-      // Iniciar transação
       await connection.queryObject('BEGIN')
 
       try {
-        // Sanitizar nome da tabela
         const sanitizedTableName = tableName.toLowerCase().replace(/[^a-z0-9_]/g, '_')
         
-        // Preparar definições das colunas (sem comentários)
+        // Preparar definições das colunas com constraints
         const columnDefinitions = Object.entries(columns)
           .map(([name, info]: [string, ColumnInfo]) => {
             const sanitizedName = name.toLowerCase().replace(/[^a-z0-9_]/g, '_')
-            return `${sanitizedName} ${info.type}`
+            const constraints = []
+
+            // Adicionar constraints baseadas na análise
+            const colAnalysis = columnAnalysis.find((col: any) => col.name === name)
+            if (colAnalysis) {
+              if (colAnalysis.nullCount === 0) {
+                constraints.push('NOT NULL')
+              }
+
+              if (colAnalysis.patterns?.email) {
+                constraints.push('CHECK (email ~* \'^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$\')')
+              }
+
+              if (info.validation) {
+                constraints.push(...info.validation)
+              }
+            }
+
+            return `${sanitizedName} ${info.type} ${constraints.join(' ')}`
           })
           .join(', ')
 
-        // 1. Criar a tabela base
+        // 1. Criar a tabela base com constraints
         const createTableSQL = `
           CREATE TABLE IF NOT EXISTS ${sanitizedTableName} (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -91,13 +117,12 @@ serve(async (req) => {
         console.log('Setting up RLS...')
         await connection.queryObject(`SELECT setup_table_rls('public', '${sanitizedTableName}')`)
 
-        // 4. Criar índices úteis
-        console.log('Creating indices...')
-        const createIndexSQL = `
-          CREATE INDEX IF NOT EXISTS idx_${sanitizedTableName}_organization_id 
-          ON ${sanitizedTableName}(organization_id)
-        `
-        await connection.queryObject(createIndexSQL)
+        // 4. Criar índices sugeridos
+        console.log('Creating suggested indices...')
+        for (const indexSQL of suggestedIndexes) {
+          const finalIndexSQL = indexSQL.replace('table_name', sanitizedTableName)
+          await connection.queryObject(finalIndexSQL)
+        }
         
         // 5. Criar trigger para updated_at
         const createTriggerSQL = `
@@ -111,19 +136,16 @@ serve(async (req) => {
 
         // 6. Inserir dados de preview
         if (previewData.length > 0) {
-          // Preparar nomes das colunas sanitizados
           const columnNames = Object.keys(columns).map(name => 
             name.toLowerCase().replace(/[^a-z0-9_]/g, '_')
           )
 
-          // Criar placeholders para a query de inserção
           const placeholders = previewData.map((_, rowIndex) =>
             `($1, ${columnNames.map((_, colIndex) => 
               `$${2 + rowIndex * columnNames.length + colIndex}`
             ).join(', ')})`
           ).join(', ')
 
-          // Preparar valores com validação de tipo
           const values = [organizationId]
           
           for (const row of previewData) {
@@ -177,7 +199,6 @@ serve(async (req) => {
 
         if (updateError) throw updateError
 
-        // Commit da transação
         await connection.queryObject('COMMIT')
 
         return new Response(
@@ -188,7 +209,6 @@ serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       } catch (error) {
-        // Rollback em caso de erro
         console.error('Error during table creation:', error)
         await connection.queryObject('ROLLBACK')
         throw error
@@ -205,3 +225,4 @@ serve(async (req) => {
     )
   }
 })
+
