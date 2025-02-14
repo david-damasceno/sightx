@@ -1,18 +1,11 @@
-import { useState } from "react"
+
+import { useState, useMemo } from "react"
 import { Card } from "@/components/ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { BarChart, LineChart, PieChart } from "lucide-react"
-import { cn } from "@/lib/utils"
+import DataGrid from "react-data-grid"
+import { Pencil, Trash2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import 'react-data-grid/lib/styles.css'
 
 interface Column {
   name: string
@@ -26,23 +19,111 @@ interface DataPreviewProps {
   onNext: () => void
 }
 
-export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) {
-  const [activeTab, setActiveTab] = useState("table")
+interface GridColumn {
+  key: string
+  name: string
+  editor: any
+  headerRenderer?: (props: any) => JSX.Element
+}
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "text":
-        return "bg-blue-500/10 text-blue-500"
-      case "number":
-        return "bg-green-500/10 text-green-500"
-      case "date":
-        return "bg-purple-500/10 text-purple-500"
-      case "boolean":
-        return "bg-yellow-500/10 text-yellow-500"
-      default:
-        return "bg-gray-500/10 text-gray-500"
+export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) {
+  const [editingHeader, setEditingHeader] = useState<string | null>(null)
+  const [gridColumns, setGridColumns] = useState<GridColumn[]>(
+    columns.map(col => ({
+      key: col.name,
+      name: col.name,
+      editor: TextEditor
+    }))
+  )
+  const [rows, setRows] = useState(previewData)
+
+  // Renderizador personalizado para o cabeçalho
+  function HeaderRenderer({ column }: { column: GridColumn }) {
+    if (editingHeader === column.key) {
+      return (
+        <Input
+          className="h-8 px-2"
+          defaultValue={column.name}
+          autoFocus
+          onBlur={(e) => {
+            const newColumns = gridColumns.map(col => {
+              if (col.key === column.key) {
+                return { ...col, name: e.target.value }
+              }
+              return col
+            })
+            setGridColumns(newColumns)
+            setEditingHeader(null)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.currentTarget.blur()
+            }
+          }}
+        />
+      )
     }
+
+    return (
+      <div className="flex items-center justify-between px-2 w-full h-full">
+        <span>{column.name}</span>
+        <Pencil
+          className="h-4 w-4 cursor-pointer hover:text-primary"
+          onClick={() => setEditingHeader(column.key)}
+        />
+      </div>
+    )
   }
+
+  // Configuração das colunas com o renderizador personalizado
+  const finalColumns = useMemo(() => {
+    return gridColumns.map(col => ({
+      ...col,
+      headerRenderer: HeaderRenderer
+    }))
+  }, [gridColumns])
+
+  // Editor de texto para células
+  function TextEditor({ row, column, onRowChange }: any) {
+    return (
+      <Input
+        className="h-8 px-2"
+        value={row[column.key]}
+        onChange={(e) => onRowChange({ ...row, [column.key]: e.target.value })}
+      />
+    )
+  }
+
+  // Função para deletar uma linha
+  const deleteRow = (index: number) => {
+    const newRows = [...rows]
+    newRows.splice(index, 1)
+    setRows(newRows)
+  }
+
+  // Adiciona coluna de ações
+  const columnsWithActions = useMemo(() => {
+    return [
+      ...finalColumns,
+      {
+        key: 'actions',
+        name: 'Ações',
+        width: 80,
+        formatter: (_: any, { rowIdx }: { rowIdx: number }) => (
+          <div className="flex justify-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => deleteRow(rowIdx)}
+              className="h-8 w-8 text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )
+      }
+    ]
+  }, [finalColumns])
 
   return (
     <div className="space-y-6">
@@ -51,86 +132,15 @@ export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) 
         <Button onClick={onNext}>Continuar</Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="table" className="flex items-center gap-2">
-            <BarChart className="h-4 w-4" />
-            Tabela
-          </TabsTrigger>
-          <TabsTrigger value="distribution" className="flex items-center gap-2">
-            <PieChart className="h-4 w-4" />
-            Distribuição
-          </TabsTrigger>
-          <TabsTrigger value="trends" className="flex items-center gap-2">
-            <LineChart className="h-4 w-4" />
-            Tendências
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="table" className="mt-4">
-          <Card>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {columns.map((col) => (
-                      <TableHead key={col.name} className="font-medium">
-                        <div className="flex flex-col gap-1">
-                          {col.name}
-                          <Badge 
-                            variant="secondary"
-                            className={cn("w-fit", getTypeColor(col.type))}
-                          >
-                            {col.type}
-                          </Badge>
-                        </div>
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {previewData.map((row, i) => (
-                    <TableRow key={i}>
-                      {columns.map((col) => (
-                        <TableCell key={col.name}>
-                          {row[col.name]}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="distribution" className="mt-4">
-          <Card className="p-6">
-            <div className="grid grid-cols-2 gap-4">
-              {columns.map((col) => (
-                <div key={col.name} className="p-4 border rounded-lg">
-                  <h3 className="font-medium mb-2">{col.name}</h3>
-                  {/* Aqui entrariam os gráficos de distribuição */}
-                  <p className="text-sm text-muted-foreground">
-                    Visualização de distribuição em desenvolvimento
-                  </p>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="trends" className="mt-4">
-          <Card className="p-6">
-            <div className="space-y-4">
-              {/* Aqui entrariam os gráficos de tendências */}
-              <p className="text-sm text-muted-foreground">
-                Visualização de tendências em desenvolvimento
-              </p>
-            </div>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <Card className="overflow-hidden">
+        <DataGrid
+          columns={columnsWithActions}
+          rows={rows}
+          onRowsChange={setRows}
+          className="h-[500px]"
+          headerRowHeight={45}
+        />
+      </Card>
     </div>
   )
 }
