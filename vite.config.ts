@@ -46,12 +46,5 @@ export default defineConfig({
   },
   server: {
     port: 8080,
-  },
-  css: {
-    preprocessorOptions: {
-      css: {
-        additionalData: `@import "react-data-grid/lib/styles.css";`
-      }
-    }
   }
 })
