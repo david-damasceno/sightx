@@ -4,10 +4,12 @@ import { ProcessSteps } from "@/components/data/ProcessSteps"
 import { FileUploader } from "@/components/data/FileUploader"
 import { DataPreview } from "@/components/data/DataPreview"
 import { ColumnMapper } from "@/components/data/ColumnMapper"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { ColumnMetadata, ProcessingResult } from "@/types/data-imports"
+import { adaptColumnMetadata } from "@/utils/columnAdapter"
 
 interface Column {
   name: string
@@ -15,28 +17,15 @@ interface Column {
   sample: any
 }
 
-interface ColumnsMetadata {
-  columns: Column[]
-}
-
 interface FileData {
   id: string
   columns: Column[]
   previewData: any[]
-  processingResult?: {
-    status: 'pending' | 'processing' | 'completed' | 'error'
-    error_message?: string
-    table_name?: string
-  }
+  processingResult?: ProcessingResult
 }
 
-function isColumnsMetadata(obj: any): obj is ColumnsMetadata {
-  return obj && Array.isArray(obj.columns) && obj.columns.every((col: any) =>
-    typeof col === 'object' &&
-    typeof col.name === 'string' &&
-    typeof col.type === 'string' &&
-    'sample' in col
-  )
+function isProcessingResult(data: any): data is ProcessingResult {
+  return data && typeof data.status === 'string' && ['pending', 'processing', 'completed', 'error'].includes(data.status)
 }
 
 export default function DataContext() {
@@ -51,49 +40,36 @@ export default function DataContext() {
       console.log('Buscando dados do arquivo:', fileId)
       setLoading(true)
       
-      // Buscar metadados do arquivo
-      const { data: fileMetadata, error: fileError } = await supabase
-        .from('data_files_metadata')
-        .select('id, columns_metadata, preview_data')
-        .eq('id', fileId)
-        .single()
+      // Buscar colunas do arquivo
+      const { data: columnsData, error: columnsError } = await supabase
+        .from('data_file_columns')
+        .select('*')
+        .eq('file_id', fileId)
+        .order('original_name')
 
-      if (fileError) throw fileError
+      if (columnsError) throw columnsError
 
       // Buscar resultado do processamento
       const { data: processingResult, error: processingError } = await supabase
         .from('data_processing_results')
-        .select('status, error_message, table_name')
+        .select('*')
         .eq('file_id', fileId)
-        .single()
+        .maybeSingle()
 
       if (processingError && processingError.code !== 'PGRST116') {
         throw processingError
       }
 
-      console.log('Dados recebidos do banco:', { fileMetadata, processingResult })
-
-      // Validar e extrair os dados das colunas
-      let columns: Column[] = []
-      if (fileMetadata.columns_metadata && isColumnsMetadata(fileMetadata.columns_metadata)) {
-        columns = fileMetadata.columns_metadata.columns
-        console.log('Colunas extraídas:', columns)
-      } else {
-        console.warn('Formato inválido de columns_metadata:', fileMetadata.columns_metadata)
-      }
-
-      // Garantir que preview_data é um array
-      const previewData = Array.isArray(fileMetadata.preview_data) ? fileMetadata.preview_data : []
-      console.log('Dados de preview:', previewData)
+      console.log('Dados recebidos do banco:', { columnsData, processingResult })
 
       setFileData({
-        id: fileMetadata.id,
-        columns,
-        previewData,
-        processingResult: processingResult || undefined
+        id: fileId,
+        columns: columnsData.map(adaptColumnMetadata),
+        previewData: [],
+        processingResult: processingResult && isProcessingResult(processingResult) ? processingResult : undefined
       })
 
-      if (columns.length === 0) {
+      if (columnsData.length === 0) {
         toast({
           title: "Aviso",
           description: "Nenhuma coluna foi encontrada no arquivo. Verifique se o formato está correto.",
@@ -141,7 +117,7 @@ export default function DataContext() {
         .insert({
           file_id: fileData.id,
           organization_id: currentOrganization.id,
-          status: 'processing',
+          status: 'processing' as const,
           processing_started_at: new Date().toISOString(),
           table_name: `data_${fileData.id.replace(/-/g, '_')}`
         })
@@ -153,8 +129,8 @@ export default function DataContext() {
       setFileData(prev => prev ? {
         ...prev,
         processingResult: {
-          status: 'processing',
-          table_name: processingResult.table_name
+          ...processingResult,
+          status: 'processing'
         }
       } : null)
 
