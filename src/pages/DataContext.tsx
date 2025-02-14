@@ -1,36 +1,59 @@
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ProcessSteps } from "@/components/data/ProcessSteps"
 import { FileUploader } from "@/components/data/FileUploader"
 import { DataPreview } from "@/components/data/DataPreview"
 import { ColumnMapper } from "@/components/data/ColumnMapper"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
+import { supabase } from "@/integrations/supabase/client"
+
+interface FileData {
+  id: string
+  columns: Array<{
+    name: string
+    type: string
+    sample: any
+  }>
+  previewData: any[]
+}
 
 export default function DataContext() {
   const [currentStep, setCurrentStep] = useState(1)
-  const [fileData, setFileData] = useState<{
-    id: string
-    columns: any[]
-    previewData: any[]
-  } | null>(null)
+  const [fileData, setFileData] = useState<FileData | null>(null)
+  const [loading, setLoading] = useState(false)
   const { toast } = useToast()
 
+  const fetchFileData = async (fileId: string) => {
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('data_files_metadata')
+        .select('id, columns_metadata, preview_data')
+        .eq('id', fileId)
+        .single()
+
+      if (error) throw error
+
+      setFileData({
+        id: data.id,
+        columns: data.columns_metadata?.columns || [],
+        previewData: data.preview_data || []
+      })
+    } catch (error: any) {
+      console.error('Erro ao buscar dados do arquivo:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os dados do arquivo.",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleUploadComplete = (fileId: string) => {
-    // Aqui você buscaria os dados do arquivo do backend
-    // Por enquanto vamos usar dados mockados
-    setFileData({
-      id: fileId,
-      columns: [
-        { name: "nome", type: "text", sample: "João Silva" },
-        { name: "idade", type: "number", sample: 25 },
-        { name: "data_nascimento", type: "date", sample: "1998-01-01" }
-      ],
-      previewData: [
-        { nome: "João Silva", idade: 25, data_nascimento: "1998-01-01" },
-        { nome: "Maria Santos", idade: 30, data_nascimento: "1993-05-15" }
-      ]
-    })
+    fetchFileData(fileId)
     setCurrentStep(2)
   }
 
@@ -49,7 +72,6 @@ export default function DataContext() {
       title: "Processo concluído",
       description: "Seus dados foram importados com sucesso!",
     })
-    // Aqui você poderia redirecionar para a visualização dos dados
   }
 
   return (

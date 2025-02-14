@@ -11,9 +11,11 @@ export type Database = {
     Tables: {
       column_mappings: {
         Row: {
+          confidence_score: number | null
           created_at: string | null
           data_type: string
           description: string | null
+          detected_type: string | null
           file_id: string
           id: string
           mapped_name: string
@@ -21,9 +23,11 @@ export type Database = {
           validation_rules: Json | null
         }
         Insert: {
+          confidence_score?: number | null
           created_at?: string | null
           data_type: string
           description?: string | null
+          detected_type?: string | null
           file_id: string
           id?: string
           mapped_name: string
@@ -31,9 +35,11 @@ export type Database = {
           validation_rules?: Json | null
         }
         Update: {
+          confidence_score?: number | null
           created_at?: string | null
           data_type?: string
           description?: string | null
+          detected_type?: string | null
           file_id?: string
           id?: string
           mapped_name?: string
@@ -197,10 +203,13 @@ export type Database = {
       }
       data_files_metadata: {
         Row: {
+          analysis_summary: string | null
           columns_metadata: Json | null
           created_at: string | null
           created_by: string | null
+          data_context: Json | null
           description: string | null
+          detected_patterns: Json | null
           file_name: string
           file_size: number
           file_type: string
@@ -213,10 +222,13 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          analysis_summary?: string | null
           columns_metadata?: Json | null
           created_at?: string | null
           created_by?: string | null
+          data_context?: Json | null
           description?: string | null
+          detected_patterns?: Json | null
           file_name: string
           file_size: number
           file_type: string
@@ -229,10 +241,13 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          analysis_summary?: string | null
           columns_metadata?: Json | null
           created_at?: string | null
           created_by?: string | null
+          data_context?: Json | null
           description?: string | null
+          detected_patterns?: Json | null
           file_name?: string
           file_size?: number
           file_type?: string

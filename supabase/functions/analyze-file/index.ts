@@ -1,4 +1,3 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
@@ -33,6 +32,8 @@ interface ColumnAnalysis {
     avg?: number
     median?: number
   }
+  confidence_score?: number
+  detected_type?: string
 }
 
 function analyzeColumn(data: any[], sample: any): ColumnAnalysis {
@@ -208,77 +209,65 @@ serve(async (req) => {
       return analyzeColumn(columnData, dataRows[0][index])
     })
 
-    // Métricas de qualidade dos dados
-    const dataQuality = {
-      completeness: {
-        total_rows: dataRows.length,
-        total_cells: dataRows.length * headers.length,
-        empty_cells: columnAnalysis.reduce((sum, col) => sum + col.nullCount, 0)
-      },
-      uniqueness: {
-        columns: headers.map((header, index) => ({
-          name: header,
-          unique_ratio: columnAnalysis[index].uniqueCount / dataRows.length
-        }))
-      }
+    // Detectar padrões e contexto dos dados
+    const detectedPatterns: { [key: string]: any } = {}
+    const dataContext: { [key: string]: any } = {
+      total_rows: dataRows.length,
+      total_columns: headers.length,
+      file_type: file.type,
+      sheet_name: workbook.SheetNames[0],
+      created_at: new Date().toISOString(),
+      analysis_version: "1.0"
     }
 
-    // Sugestões de índices
-    const suggestedIndexes = suggestIndexes(columnAnalysis)
-
-    // Validação dos dados
-    const dataValidation = validateData(dataRows, columnAnalysis)
-
-    // Gerar nome único para a tabela
-    const tableName = generateTableName(file.name)
-    console.log('Generated table name:', tableName)
+    // Gerar resumo da análise
+    const analysisSummary = `Arquivo contendo ${dataRows.length} linhas e ${headers.length} colunas. 
+    ${columnAnalysis.filter(col => col.type === 'numeric').length} colunas numéricas e 
+    ${columnAnalysis.filter(col => col.type === 'text').length} colunas de texto identificadas.`
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { error: uploadError } = await supabase
-      .from('data_imports')
-      .insert({
-        organization_id: organizationId,
-        name: file.name,
-        table_name: tableName,
-        original_filename: file.name,
-        columns_metadata: { 
-          columns: headers.map((header, index) => ({
-            name: header,
-            type: columnAnalysis[index].type,
-            sample: dataRows[0][index]
-          }))
-        },
-        column_analysis: columnAnalysis,
-        data_quality: dataQuality,
-        suggested_indexes: suggestedIndexes,
-        data_validation: dataValidation,
-        status: 'pending',
-        row_count: dataRows.length
+    // Salvar análise no banco
+    await supabase
+      .from('data_files_metadata')
+      .update({
+        data_context: dataContext,
+        detected_patterns: detectedPatterns,
+        analysis_summary: analysisSummary
       })
+      .eq('organization_id', organizationId)
+      .eq('file_name', file.name)
 
-    if (uploadError) {
-      console.error('Error saving to data_imports:', uploadError)
-      throw uploadError
-    }
+    // Salvar mapeamento de colunas
+    const columnMappings = headers.map((header, index) => ({
+      file_id: file.name,
+      original_name: header,
+      mapped_name: header,
+      data_type: columnAnalysis[index].type,
+      detected_type: columnAnalysis[index].type,
+      confidence_score: 0.9, // TODO: Implementar cálculo real de confiança
+      validation_rules: {}
+    }))
+
+    await supabase
+      .from('column_mappings')
+      .upsert(columnMappings, { onConflict: 'file_id,original_name' })
 
     return new Response(
       JSON.stringify({
         columns: headers.map((header, index) => ({
           name: header,
           type: columnAnalysis[index].type,
-          sample: dataRows[0][index]
+          sample: dataRows[0][index],
+          analysis: columnAnalysis[index]
         })),
         previewData,
-        totalRows: dataRows.length,
-        tableName,
-        columnAnalysis,
-        dataQuality,
-        suggestedIndexes,
-        dataValidation
+        dataContext,
+        detectedPatterns,
+        analysisSummary
       }),
       { 
         headers: { 
@@ -304,4 +293,3 @@ serve(async (req) => {
     )
   }
 })
-
