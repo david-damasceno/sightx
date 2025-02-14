@@ -1,11 +1,17 @@
 
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import DataGrid from "react-data-grid"
-import { Pencil, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import './data-grid.css'
+import { Pencil, Trash2 } from "lucide-react"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 interface Column {
   name: string
@@ -19,112 +25,29 @@ interface DataPreviewProps {
   onNext: () => void
 }
 
-interface GridColumn {
-  key: string
-  name: string
-  editor: any
-  headerRenderer?: (props: any) => JSX.Element
-}
-
 export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) {
   const [editingHeader, setEditingHeader] = useState<string | null>(null)
-  const [gridColumns, setGridColumns] = useState<GridColumn[]>(
-    columns.map(col => ({
-      key: col.name,
-      name: col.name,
-      editor: TextEditor,
-      width: 150
-    }))
-  )
-  const [rows, setRows] = useState(previewData.map((row, index) => ({
-    ...row,
-    id: index
-  })))
+  const [tableColumns, setTableColumns] = useState(columns)
+  const [data, setData] = useState(previewData)
 
-  function HeaderRenderer({ column }: { column: GridColumn }) {
-    if (editingHeader === column.key) {
-      return (
-        <Input
-          className="h-8 px-2"
-          defaultValue={column.name}
-          autoFocus
-          onBlur={(e) => {
-            const newColumns = gridColumns.map(col => {
-              if (col.key === column.key) {
-                return { ...col, name: e.target.value }
-              }
-              return col
-            })
-            setGridColumns(newColumns)
-            setEditingHeader(null)
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.currentTarget.blur()
-            }
-          }}
-        />
+  const handleHeaderEdit = (columnName: string, newName: string) => {
+    setTableColumns(prev => 
+      prev.map(col => col.name === columnName ? { ...col, name: newName } : col)
+    )
+    setEditingHeader(null)
+  }
+
+  const handleDeleteRow = (index: number) => {
+    setData(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleCellEdit = (rowIndex: number, columnName: string, value: string) => {
+    setData(prev => 
+      prev.map((row, i) => 
+        i === rowIndex ? { ...row, [columnName]: value } : row
       )
-    }
-
-    return (
-      <div className="flex items-center justify-between px-2 w-full h-full">
-        <span>{column.name}</span>
-        <Pencil
-          className="h-4 w-4 cursor-pointer hover:text-primary"
-          onClick={() => setEditingHeader(column.key)}
-        />
-      </div>
     )
   }
-
-  const finalColumns = useMemo(() => {
-    return gridColumns.map(col => ({
-      ...col,
-      headerRenderer: HeaderRenderer,
-      resizable: true,
-      sortable: true
-    }))
-  }, [gridColumns])
-
-  function TextEditor({ row, column, onRowChange }: any) {
-    return (
-      <Input
-        className="h-8 px-2"
-        value={row[column.key]}
-        onChange={(e) => onRowChange({ ...row, [column.key]: e.target.value })}
-      />
-    )
-  }
-
-  const deleteRow = (index: number) => {
-    const newRows = [...rows]
-    newRows.splice(index, 1)
-    setRows(newRows)
-  }
-
-  const columnsWithActions = useMemo(() => {
-    return [
-      ...finalColumns,
-      {
-        key: 'actions',
-        name: 'Ações',
-        width: 80,
-        formatter: (_: any, { rowIdx }: { rowIdx: number }) => (
-          <div className="flex justify-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => deleteRow(rowIdx)}
-              className="h-8 w-8 text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        )
-      }
-    ]
-  }, [finalColumns])
 
   return (
     <div className="space-y-6">
@@ -134,21 +57,67 @@ export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) 
       </div>
 
       <Card className="overflow-hidden">
-        <DataGrid
-          columns={columnsWithActions}
-          rows={rows}
-          onRowsChange={setRows}
-          className="h-[500px]"
-          headerRowHeight={45}
-          rowHeight={35}
-          enableVirtualization={true}
-          style={{
-            "--border": "hsl(var(--border))",
-            "--background": "hsl(var(--background))",
-            "--row-hover-bg-color": "hsl(var(--muted))",
-            "--header-background-color": "hsl(var(--muted))",
-          } as React.CSSProperties}
-        />
+        <div className="max-h-[500px] overflow-auto">
+          <Table>
+            <TableHeader className="sticky top-0 bg-muted">
+              <TableRow>
+                {tableColumns.map((column) => (
+                  <TableHead key={column.name} className="min-w-[150px]">
+                    {editingHeader === column.name ? (
+                      <Input
+                        className="h-8 px-2"
+                        defaultValue={column.name}
+                        autoFocus
+                        onBlur={(e) => handleHeaderEdit(column.name, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.currentTarget.blur()
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <span>{column.name}</span>
+                        <Pencil
+                          className="h-4 w-4 cursor-pointer hover:text-primary"
+                          onClick={() => setEditingHeader(column.name)}
+                        />
+                      </div>
+                    )}
+                  </TableHead>
+                ))}
+                <TableHead className="w-[80px]">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((row, rowIndex) => (
+                <TableRow key={rowIndex}>
+                  {tableColumns.map((column) => (
+                    <TableCell key={`${rowIndex}-${column.name}`}>
+                      <Input
+                        className="h-8 px-2"
+                        value={row[column.name] || ''}
+                        onChange={(e) => handleCellEdit(rowIndex, column.name, e.target.value)}
+                      />
+                    </TableCell>
+                  ))}
+                  <TableCell>
+                    <div className="flex justify-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteRow(rowIndex)}
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </Card>
     </div>
   )
