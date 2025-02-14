@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import {
@@ -13,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BarChart, LineChart, PieChart } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface Column {
   name: string

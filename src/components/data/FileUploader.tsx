@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -6,6 +5,7 @@ import { Upload, File, X } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { cn } from "@/lib/utils"
 
 interface FileUploaderProps {
   onUploadComplete: (fileId: string) => void
