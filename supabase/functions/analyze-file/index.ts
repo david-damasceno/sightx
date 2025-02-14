@@ -1,3 +1,4 @@
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
@@ -162,6 +163,7 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Iniciando processamento do arquivo...')
     const formData = await req.formData()
     const file = formData.get('file') as File
     const organizationId = formData.get('organizationId')
@@ -170,7 +172,7 @@ serve(async (req) => {
       throw new Error('File and organizationId are required')
     }
 
-    console.log('Processing file:', file.name, 'type:', file.type)
+    console.log('Processando arquivo:', file.name, 'type:', file.type)
 
     const arrayBuffer = await file.arrayBuffer()
     const data = new Uint8Array(arrayBuffer)
@@ -179,7 +181,7 @@ serve(async (req) => {
     try {
       workbook = XLSX.read(data, { type: 'array' })
     } catch (error) {
-      console.error('Error reading file:', error)
+      console.error('Erro ao ler arquivo:', error)
       throw new Error('Invalid file format. Please upload a valid Excel or CSV file.')
     }
 
@@ -200,18 +202,43 @@ serve(async (req) => {
       throw new Error('Invalid file format: No headers found')
     }
 
-    const dataRows = jsonData.slice(1)
-    const previewData = dataRows.slice(0, 5)
+    console.log('Headers encontrados:', headers)
 
-    // Análise detalhada de cada coluna
-    const columnAnalysis = headers.map((_, index) => {
-      const columnData = dataRows.map(row => row[index])
-      return analyzeColumn(columnData, dataRows[0][index])
+    const dataRows = jsonData.slice(1)
+    const previewData = dataRows.slice(0, 5).map(row => {
+      const rowData: Record<string, any> = {}
+      headers.forEach((header, index) => {
+        rowData[header] = row[index]
+      })
+      return rowData
     })
 
-    // Detectar padrões e contexto dos dados
-    const detectedPatterns: { [key: string]: any } = {}
-    const dataContext: { [key: string]: any } = {
+    console.log('Dados de preview gerados:', previewData)
+
+    // Análise detalhada de cada coluna
+    const columnAnalysis = headers.map((header, index) => {
+      const columnData = dataRows.map(row => row[index])
+      const analysis = analyzeColumn(columnData, dataRows[0][index])
+      return {
+        name: header,
+        type: analysis.type,
+        sample: dataRows[0][index],
+        analysis
+      }
+    })
+
+    console.log('Análise de colunas concluída:', columnAnalysis)
+
+    // Configurar parâmetros para salvar no banco
+    const columnsMetadata = {
+      columns: columnAnalysis.map(col => ({
+        name: col.name,
+        type: col.type,
+        sample: col.sample
+      }))
+    }
+
+    const dataContext = {
       total_rows: dataRows.length,
       total_columns: headers.length,
       file_type: file.type,
@@ -220,54 +247,47 @@ serve(async (req) => {
       analysis_version: "1.0"
     }
 
-    // Gerar resumo da análise
-    const analysisSummary = `Arquivo contendo ${dataRows.length} linhas e ${headers.length} colunas. 
-    ${columnAnalysis.filter(col => col.type === 'numeric').length} colunas numéricas e 
-    ${columnAnalysis.filter(col => col.type === 'text').length} colunas de texto identificadas.`
-
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Salvar análise no banco
-    await supabase
+    console.log('Salvando metadados no banco...')
+
+    // Criar ou atualizar registro de arquivo
+    const { data: fileMetadata, error: metadataError } = await supabase
       .from('data_files_metadata')
-      .update({
+      .insert({
+        organization_id: organizationId,
+        file_name: file.name,
+        original_filename: file.name,
+        file_type: file.type,
+        file_size: file.size,
+        status: 'ready',
+        columns_metadata: columnsMetadata,
+        preview_data: previewData,
         data_context: dataContext,
-        detected_patterns: detectedPatterns,
-        analysis_summary: analysisSummary
+        detected_patterns: {},
+        analysis_summary: `Arquivo processado com sucesso. ${headers.length} colunas e ${dataRows.length} linhas encontradas.`
       })
-      .eq('organization_id', organizationId)
-      .eq('file_name', file.name)
+      .select()
+      .single()
 
-    // Salvar mapeamento de colunas
-    const columnMappings = headers.map((header, index) => ({
-      file_id: file.name,
-      original_name: header,
-      mapped_name: header,
-      data_type: columnAnalysis[index].type,
-      detected_type: columnAnalysis[index].type,
-      confidence_score: 0.9, // TODO: Implementar cálculo real de confiança
-      validation_rules: {}
-    }))
+    if (metadataError) {
+      console.error('Erro ao salvar metadados:', metadataError)
+      throw metadataError
+    }
 
-    await supabase
-      .from('column_mappings')
-      .upsert(columnMappings, { onConflict: 'file_id,original_name' })
+    console.log('Metadados salvos com sucesso:', fileMetadata)
 
     return new Response(
       JSON.stringify({
-        columns: headers.map((header, index) => ({
-          name: header,
-          type: columnAnalysis[index].type,
-          sample: dataRows[0][index],
-          analysis: columnAnalysis[index]
-        })),
+        success: true,
+        file_id: fileMetadata.id,
+        columns: columnsMetadata.columns,
         previewData,
         dataContext,
-        detectedPatterns,
-        analysisSummary
+        analysis_summary: `Arquivo processado com sucesso. ${headers.length} colunas e ${dataRows.length} linhas encontradas.`
       }),
       { 
         headers: { 
@@ -277,7 +297,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Error processing file:', error)
+    console.error('Erro processando arquivo:', error)
     return new Response(
       JSON.stringify({ 
         error: error.message,

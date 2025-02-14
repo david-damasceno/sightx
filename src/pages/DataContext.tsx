@@ -41,29 +41,48 @@ export default function DataContext() {
 
   const fetchFileData = async (fileId: string) => {
     try {
+      console.log('Buscando dados do arquivo:', fileId)
       setLoading(true)
+      
       const { data, error } = await supabase
         .from('data_files_metadata')
         .select('id, columns_metadata, preview_data')
         .eq('id', fileId)
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('Erro ao buscar dados:', error)
+        throw error
+      }
+
+      console.log('Dados recebidos do banco:', data)
 
       // Validar e extrair os dados das colunas com verificação de tipo
       let columns: Column[] = []
       if (data.columns_metadata && isColumnsMetadata(data.columns_metadata)) {
         columns = data.columns_metadata.columns
+        console.log('Colunas extraídas:', columns)
+      } else {
+        console.warn('Formato inválido de columns_metadata:', data.columns_metadata)
       }
 
       // Garantir que preview_data é um array
       const previewData = Array.isArray(data.preview_data) ? data.preview_data : []
+      console.log('Dados de preview:', previewData)
 
       setFileData({
         id: data.id,
         columns,
         previewData
       })
+
+      if (columns.length === 0) {
+        toast({
+          title: "Aviso",
+          description: "Nenhuma coluna foi encontrada no arquivo. Verifique se o formato está correto.",
+          variant: "warning"
+        })
+      }
     } catch (error: any) {
       console.error('Erro ao buscar dados do arquivo:', error)
       toast({
@@ -77,6 +96,7 @@ export default function DataContext() {
   }
 
   const handleUploadComplete = (fileId: string) => {
+    console.log('Upload completo, ID:', fileId)
     fetchFileData(fileId)
     setCurrentStep(2)
   }
