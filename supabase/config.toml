@@ -1,3 +1,4 @@
+
 project_id = "zzmezxjwhtiwhnhqvnck"
 
 [api]
@@ -25,14 +26,11 @@ enabled = true
 [realtime]
 enabled = true
 
-[[functions]]
 [functions.analyze-file]
 verify_jwt = true
 
-[[functions]]
 [functions.create-data-table]
 verify_jwt = true
 
-[[functions]]
 [functions.suggest-column-names]
 verify_jwt = true
