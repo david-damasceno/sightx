@@ -1,7 +1,8 @@
 
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
-import * as XLSX from "https://esm.sh/xlsx@0.18.5"
+import "https://deno.land/x/xhr@0.1.0/mod.ts"
+import { Configuration, OpenAIApi } from "https://esm.sh/openai@4.16.1"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,105 +11,101 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const { fileId } = await req.json()
 
-    if (!fileId) {
-      throw new Error('FileId is required')
-    }
-
-    const supabase = createClient(
+    // Inicializar cliente Supabase
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     )
 
     // Buscar dados do arquivo
-    const { data: importData, error: importError } = await supabase
+    const { data: importData, error: importError } = await supabaseClient
       .from('data_imports')
       .select('*')
       .eq('id', fileId)
       .single()
 
     if (importError) throw importError
-    if (!importData) throw new Error('Import not found')
 
-    // Baixar arquivo do storage
-    const { data: fileData, error: downloadError } = await supabase
-      .storage
-      .from('data_files')
-      .download(importData.storage_path)
+    // Ler amostra de dados do arquivo
+    const { data: sampleData, error: sampleError } = await supabaseClient.functions
+      .invoke('read-file-data', {
+        body: { fileId, page: 1, pageSize: 10 }
+      })
 
-    if (downloadError) throw downloadError
+    if (sampleError) throw sampleError
 
-    // Ler o arquivo
-    const arrayBuffer = await fileData.arrayBuffer()
-    const data = new Uint8Array(arrayBuffer)
-    
-    let workbook
-    try {
-      workbook = XLSX.read(data, { type: 'array' })
-    } catch (error) {
-      throw new Error('Invalid file format')
-    }
+    // Configurar Azure OpenAI
+    const configuration = new Configuration({
+      apiKey: Deno.env.get('AZURE_OPENAI_API_KEY'),
+      azure: {
+        apiKey: Deno.env.get('AZURE_OPENAI_API_KEY'),
+        endpoint: Deno.env.get('AZURE_OPENAI_ENDPOINT'),
+        deploymentName: Deno.env.get('AZURE_OPENAI_DEPLOYMENT'),
+      },
+    })
+    const openai = new OpenAIApi(configuration)
 
-    const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
-    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 })
-
-    if (!Array.isArray(jsonData) || jsonData.length < 2) {
-      throw new Error('File must contain at least a header row and one data row')
-    }
-
-    const headers = jsonData[0] as string[]
-    const dataRows = jsonData.slice(1)
-
-    // Criar registros para cada coluna
-    const columnPromises = headers.map(async (header, index) => {
-      const columnData = dataRows.map(row => row[index])
-      const sample = columnData[0]
+    // Criar prompt para o Azure OpenAI
+    const prompt = `
+      Contexto dos dados: ${importData.context}
       
-      // Inferir tipo de dado
-      let type = 'text'
-      if (typeof sample === 'number') {
-        type = Number.isInteger(sample) ? 'integer' : 'numeric'
-      } else if (typeof sample === 'boolean') {
-        type = 'boolean'
-      } else if (sample instanceof Date) {
-        type = 'timestamp'
+      Amostra dos dados:
+      ${JSON.stringify(sampleData.data, null, 2)}
+      
+      Com base no contexto e na amostra dos dados:
+      1. Analise o significado de cada coluna
+      2. Sugira nomes adequados para as colunas seguindo o padrão PostgreSQL (snake_case, sem caracteres especiais)
+      3. Retorne um objeto JSON com o mapeamento de nomes originais para nomes sugeridos
+      
+      Formato da resposta:
+      {
+        "nome_original_1": "nome_sugerido_1",
+        "nome_original_2": "nome_sugerido_2"
       }
+    `
 
-      const { error: insertError } = await supabase
-        .from('data_file_columns')
-        .insert({
-          file_id: fileId,
-          organization_id: importData.organization_id,
-          original_name: header,
-          data_type: type,
-          sample_data: String(sample),
-          status: 'active'
-        })
-
-      if (insertError) throw insertError
+    // Enviar para Azure OpenAI
+    const completion = await openai.createChatCompletion({
+      model: 'gpt-4',
+      messages: [
+        { role: 'system', content: 'Você é um especialista em análise de dados e nomenclatura de banco de dados.' },
+        { role: 'user', content: prompt }
+      ]
     })
 
-    await Promise.all(columnPromises)
+    const suggestedNames = JSON.parse(completion.data.choices[0].message?.content || '{}')
+
+    // Salvar sugestões no banco
+    const columns = Object.entries(suggestedNames).map(([original, suggested]) => ({
+      file_id: fileId,
+      organization_id: importData.organization_id,
+      original_name: original,
+      mapped_name: suggested,
+      status: 'pending'
+    }))
+
+    const { error: columnsError } = await supabaseClient
+      .from('data_file_columns')
+      .insert(columns)
+
+    if (columnsError) throw columnsError
 
     // Atualizar status do import
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseClient
       .from('data_imports')
-      .update({ status: 'analyzed' })
+      .update({ status: 'editing' })
       .eq('id', fileId)
 
     if (updateError) throw updateError
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        columns: headers.length,
-        rows: dataRows.length
-      }),
+      JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
@@ -116,8 +113,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
   }

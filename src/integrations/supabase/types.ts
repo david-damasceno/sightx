@@ -210,6 +210,8 @@ export type Database = {
         Row: {
           column_analysis: Json | null
           columns_metadata: Json | null
+          context: string | null
+          context_vector: unknown | null
           created_at: string | null
           created_by: string | null
           data_quality: Json | null
@@ -229,6 +231,8 @@ export type Database = {
         Insert: {
           column_analysis?: Json | null
           columns_metadata?: Json | null
+          context?: string | null
+          context_vector?: unknown | null
           created_at?: string | null
           created_by?: string | null
           data_quality?: Json | null
@@ -248,6 +252,8 @@ export type Database = {
         Update: {
           column_analysis?: Json | null
           columns_metadata?: Json | null
+          context?: string | null
+          context_vector?: unknown | null
           created_at?: string | null
           created_by?: string | null
           data_quality?: Json | null

@@ -1,260 +1,152 @@
 
-import { useState, useCallback } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Upload, File, X } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import { supabase } from "@/integrations/supabase/client"
-import { useAuth } from "@/contexts/AuthContext"
+import { useCallback, useState } from "react"
+import { useDropzone } from "react-dropzone"
 import { cn } from "@/lib/utils"
-import { Progress } from "@/components/ui/progress"
-import { ImportStatus } from "@/types/data-imports"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { UploadCloud, Loader2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/contexts/AuthContext"
+import { supabase } from "@/integrations/supabase/client"
 
 interface FileUploaderProps {
   onUploadComplete: (fileId: string) => void
 }
 
 export function FileUploader({ onUploadComplete }: FileUploaderProps) {
-  const [isDragging, setIsDragging] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
+  const [context, setContext] = useState("")
   const { toast } = useToast()
-  const { currentOrganization } = useAuth()
+  const { currentOrganization, user } = useAuth()
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }, [])
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }, [])
-
-  const validateFile = useCallback((file: File): string | null => {
-    const allowedTypes = [
-      'text/csv',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    ]
-
-    if (!allowedTypes.includes(file.type)) {
-      return "Formato de arquivo não suportado. Por favor, use CSV ou Excel."
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (!currentOrganization || !user) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado ou organização não selecionada",
+        variant: "destructive"
+      })
+      return
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      return "Arquivo muito grande. O tamanho máximo é 10MB."
-    }
+    if (acceptedFiles.length === 0) return
 
-    return null
-  }, [])
-
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    
-    const file = e.dataTransfer.files[0]
-    if (file) {
-      const error = validateFile(file)
-      if (error) {
-        toast({
-          title: "Erro",
-          description: error,
-          variant: "destructive"
-        })
-        return
-      }
-      setSelectedFile(file)
-    }
-  }, [validateFile, toast])
-
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const error = validateFile(file)
-      if (error) {
-        toast({
-          title: "Erro",
-          description: error,
-          variant: "destructive"
-        })
-        return
-      }
-      setSelectedFile(file)
-    }
-  }, [validateFile, toast])
-
-  const simulateProgress = useCallback(() => {
-    let progress = 0
-    const interval = setInterval(() => {
-      progress += Math.random() * 10
-      if (progress > 95) {
-        clearInterval(interval)
-        progress = 95
-      }
-      setUploadProgress(Math.min(progress, 95))
-    }, 200)
-    return interval
-  }, [])
-
-  const handleUpload = useCallback(async () => {
-    if (!selectedFile || !currentOrganization) return
+    const file = acceptedFiles[0]
+    setUploading(true)
 
     try {
-      setUploading(true)
-      setUploadProgress(0)
-
       // Criar registro do import
       const { data: importData, error: importError } = await supabase
         .from('data_imports')
         .insert({
           organization_id: currentOrganization.id,
-          name: selectedFile.name,
-          original_filename: selectedFile.name,
-          table_name: `data_${crypto.randomUUID().replace(/-/g, '_')}`,
-          file_type: selectedFile.type,
-          status: 'uploading' as ImportStatus,
-          row_count: 0,
+          created_by: user.id,
+          name: file.name,
+          original_filename: file.name,
+          file_type: file.type,
+          status: 'pending',
+          context: context,
+          columns_metadata: {},
+          column_analysis: {},
           data_quality: {},
           data_validation: {},
-          columns_metadata: {},
-          column_analysis: {}
+          table_name: file.name.replace(/\.[^/.]+$/, "").toLowerCase().replace(/\s+/g, "_")
         })
         .select()
         .single()
 
       if (importError) throw importError
 
-      // Iniciar simulação de progresso
-      const progressInterval = simulateProgress()
-
       // Upload do arquivo
-      const filePath = `${currentOrganization.id}/${importData.id}/${selectedFile.name}`
+      const filePath = `${currentOrganization.id}/${importData.id}/${file.name}`
       const { error: uploadError } = await supabase.storage
         .from('data_files')
-        .upload(filePath, selectedFile)
+        .upload(filePath, file)
 
       if (uploadError) throw uploadError
 
-      // Atualizar registro com caminho do arquivo
+      // Atualizar storage_path e status
       const { error: updateError } = await supabase
         .from('data_imports')
         .update({
           storage_path: filePath,
-          status: 'uploaded' as ImportStatus
+          status: 'uploaded'
         })
         .eq('id', importData.id)
 
       if (updateError) throw updateError
 
-      // Limpar intervalo e completar progresso
-      clearInterval(progressInterval)
-      setUploadProgress(100)
-
-      // Notificar sucesso
       toast({
         title: "Sucesso",
-        description: "Arquivo enviado com sucesso!",
+        description: "Arquivo enviado com sucesso",
       })
 
-      // Chamar callback
       onUploadComplete(importData.id)
     } catch (error: any) {
       console.error('Erro no upload:', error)
       toast({
         title: "Erro no upload",
-        description: error.message,
+        description: error.message || "Não foi possível fazer o upload do arquivo",
         variant: "destructive"
       })
     } finally {
       setUploading(false)
-      setSelectedFile(null)
-      setUploadProgress(0)
     }
-  }, [selectedFile, currentOrganization, simulateProgress, toast, onUploadComplete])
+  }, [currentOrganization, user, context, toast, onUploadComplete])
 
-  const handleCancel = useCallback(() => {
-    setSelectedFile(null)
-    setUploadProgress(0)
-  }, [])
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    maxFiles: 1,
+    accept: {
+      'text/csv': ['.csv'],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+    }
+  })
 
   return (
-    <Card className="relative p-8">
-      <input
-        type="file"
-        className="hidden"
-        accept=".csv,.xls,.xlsx"
-        onChange={handleFileSelect}
-        id="file-input"
-      />
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label className="text-sm font-medium">
+          Contexto dos Dados
+        </label>
+        <Textarea
+          placeholder="Descreva o que esses dados representam. Ex: 'Esta planilha contém o registro das vendas de produtos na loja física.'"
+          value={context}
+          onChange={(e) => setContext(e.target.value)}
+          className="h-24"
+        />
+      </div>
 
       <div
+        {...getRootProps()}
         className={cn(
-          "border-2 border-dashed rounded-lg p-8 transition-colors",
-          isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/20",
-          selectedFile ? "bg-muted/50" : "hover:bg-muted/50"
+          "border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors",
+          isDragActive && "border-primary/50 bg-primary/5",
+          uploading && "opacity-50 cursor-not-allowed"
         )}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
       >
-        <div className="flex flex-col items-center justify-center space-y-4 text-center">
-          {selectedFile ? (
-            <>
-              <div className="flex items-center space-x-4">
-                <File className="h-8 w-8 text-primary" />
-                <div className="text-left">
-                  <p className="font-medium">{selectedFile.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
-              </div>
-
-              {uploading ? (
-                <div className="w-full space-y-2">
-                  <Progress value={uploadProgress} className="w-full" />
-                  <p className="text-sm text-muted-foreground">
-                    Enviando... {uploadProgress.toFixed(0)}%
-                  </p>
-                </div>
-              ) : (
-                <div className="flex space-x-2">
-                  <Button onClick={handleUpload}>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Enviar arquivo
-                  </Button>
-                  <Button variant="outline" onClick={handleCancel}>
-                    <X className="h-4 w-4 mr-2" />
-                    Cancelar
-                  </Button>
-                </div>
-              )}
-            </>
+        <input {...getInputProps()} />
+        <div className="flex flex-col items-center gap-2">
+          <UploadCloud className="h-8 w-8 text-muted-foreground" />
+          {uploading ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Enviando arquivo...</span>
+            </div>
           ) : (
             <>
-              <div className="rounded-full bg-primary/10 p-4">
-                <Upload className="h-8 w-8 text-primary" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold">Arraste seu arquivo aqui</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  ou clique para selecionar
-                </p>
-              </div>
-              <label htmlFor="file-input">
-                <Button variant="outline" className="mt-2">
-                  Selecionar arquivo
-                </Button>
-              </label>
-              <p className="text-xs text-muted-foreground mt-2">
-                CSV ou Excel até 10MB
+              <p className="text-sm text-muted-foreground">
+                Arraste e solte seu arquivo aqui, ou clique para selecionar
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Formatos suportados: CSV, XLS, XLSX
               </p>
             </>
           )}
         </div>
       </div>
-    </Card>
+    </div>
   )
 }
