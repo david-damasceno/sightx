@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -37,7 +36,6 @@ export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) 
   )
   const [rows, setRows] = useState(previewData)
 
-  // Renderizador personalizado para o cabeçalho
   function HeaderRenderer({ column }: { column: GridColumn }) {
     if (editingHeader === column.key) {
       return (
@@ -75,7 +73,6 @@ export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) 
     )
   }
 
-  // Configuração das colunas com o renderizador personalizado
   const finalColumns = useMemo(() => {
     return gridColumns.map(col => ({
       ...col,
@@ -83,7 +80,6 @@ export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) 
     }))
   }, [gridColumns])
 
-  // Editor de texto para células
   function TextEditor({ row, column, onRowChange }: any) {
     return (
       <Input
@@ -94,14 +90,12 @@ export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) 
     )
   }
 
-  // Função para deletar uma linha
   const deleteRow = (index: number) => {
     const newRows = [...rows]
     newRows.splice(index, 1)
     setRows(newRows)
   }
 
-  // Adiciona coluna de ações
   const columnsWithActions = useMemo(() => {
     return [
       ...finalColumns,

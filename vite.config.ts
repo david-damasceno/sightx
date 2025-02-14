@@ -36,14 +36,22 @@ export default defineConfig({
             '@radix-ui/react-toast',
           ],
           'charts': ['recharts'],
+          'grid': ['react-data-grid'],
         },
       },
     },
   },
   optimizeDeps: {
-    include: ['react', 'react-dom'],
+    include: ['react', 'react-dom', 'react-data-grid'],
   },
   server: {
     port: 8080,
   },
+  css: {
+    preprocessorOptions: {
+      css: {
+        additionalData: `@import "react-data-grid/lib/styles.css";`
+      }
+    }
+  }
 })
