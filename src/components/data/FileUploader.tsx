@@ -2,12 +2,13 @@
 import { useState, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Upload, File, X, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Upload, File, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { cn } from "@/lib/utils"
 import { Progress } from "@/components/ui/progress"
+import { ImportStatus } from "@/types/data-imports"
 
 interface FileUploaderProps {
   onUploadComplete: (fileId: string) => void
@@ -109,10 +110,16 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
         .from('data_imports')
         .insert({
           organization_id: currentOrganization.id,
-          original_name: selectedFile.name,
-          size_bytes: selectedFile.size,
-          mime_type: selectedFile.type,
-          status: 'uploading'
+          name: selectedFile.name,
+          original_filename: selectedFile.name,
+          table_name: `data_${crypto.randomUUID().replace(/-/g, '_')}`,
+          file_type: selectedFile.type,
+          status: 'uploading' as ImportStatus,
+          row_count: 0,
+          data_quality: {},
+          data_validation: {},
+          columns_metadata: {},
+          column_analysis: {}
         })
         .select()
         .single()
@@ -135,7 +142,7 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
         .from('data_imports')
         .update({
           storage_path: filePath,
-          status: 'uploaded'
+          status: 'uploaded' as ImportStatus
         })
         .eq('id', importData.id)
 
