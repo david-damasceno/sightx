@@ -80,30 +80,54 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     try {
       setUploading(true)
 
-      // Criar FormData com o arquivo e organizationId
-      const formData = new FormData()
-      formData.append('file', selectedFile)
-      formData.append('organizationId', currentOrganization.id)
+      // Criar registro de metadados do arquivo
+      const { data: fileMetadata, error: metadataError } = await supabase
+        .from('data_files_metadata')
+        .insert({
+          organization_id: currentOrganization.id,
+          file_name: selectedFile.name,
+          original_filename: selectedFile.name,
+          file_type: selectedFile.type,
+          file_size: selectedFile.size,
+          status: 'pending',
+          processing_status: 'pending',
+          processing_progress: 0
+        })
+        .select()
+        .single()
 
-      // Chamar a edge function para analisar o arquivo
-      const { data, error } = await supabase.functions.invoke('analyze-file', {
-        body: formData,
-      })
+      if (metadataError) throw metadataError
 
-      if (error) throw error
+      // Upload do arquivo para o storage
+      const filePath = `${currentOrganization.id}/${fileMetadata.id}/${selectedFile.name}`
+      const { error: storageError } = await supabase.storage
+        .from('data_files')
+        .upload(filePath, selectedFile)
 
-      console.log('Resultado da análise:', data)
+      if (storageError) throw storageError
 
-      if (!data?.file_id) {
-        throw new Error('ID do arquivo não retornado pela análise')
-      }
+      // Atualizar o registro com o caminho do storage
+      const { error: updateError } = await supabase
+        .from('data_files_metadata')
+        .update({ storage_path: filePath })
+        .eq('id', fileMetadata.id)
+
+      if (updateError) throw updateError
+
+      // Chamar a função de análise do arquivo
+      const { data: analysisResult, error: analysisError } = await supabase.functions
+        .invoke('analyze-file', {
+          body: { fileId: fileMetadata.id }
+        })
+
+      if (analysisError) throw analysisError
 
       toast({
         title: "Upload concluído",
         description: "Seu arquivo foi enviado com sucesso.",
       })
 
-      onUploadComplete(data.file_id)
+      onUploadComplete(fileMetadata.id)
     } catch (error: any) {
       console.error('Erro no upload:', error)
       toast({
