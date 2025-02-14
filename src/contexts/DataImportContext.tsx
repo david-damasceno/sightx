@@ -77,7 +77,7 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
           status: 'uploaded' as ImportStatus
         })
         .eq('id', importData.id)
-        .eq('organization_id', currentOrganization.id) // Garantir que estamos atualizando o registro correto
+        .eq('organization_id', currentOrganization.id)
         .select()
         .single()
 
@@ -101,6 +101,41 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
       setLoading(false)
     }
   }, [currentOrganization, user, toast])
+
+  const pollAnalysisStatus = useCallback(async (fileId: string): Promise<void> => {
+    const maxAttempts = 30
+    let attempts = 0
+
+    while (attempts < maxAttempts) {
+      const { data: importData, error } = await supabase
+        .from('data_imports')
+        .select('*')
+        .eq('id', fileId)
+        .eq('organization_id', currentOrganization?.id)
+        .single()
+
+      if (error) {
+        console.error('Erro ao verificar status:', error)
+        throw error
+      }
+
+      console.log('Status atual:', importData.status)
+
+      if (importData.status === 'editing') {
+        setCurrentImport(importData)
+        return
+      }
+
+      if (importData.status === 'error') {
+        throw new Error(importData.error_message || 'Erro na análise do arquivo')
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      attempts++
+    }
+
+    throw new Error('Timeout ao aguardar análise do arquivo')
+  }, [currentOrganization])
 
   const analyzeFile = useCallback(async (fileId: string) => {
     if (!currentOrganization) {
@@ -137,21 +172,10 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
         throw error
       }
 
-      // Buscar dados atualizados
-      const { data: importData, error: fetchError } = await supabase
-        .from('data_imports')
-        .select('*')
-        .eq('id', fileId)
-        .eq('organization_id', currentOrganization.id)
-        .single()
+      // Aguardar conclusão da análise
+      await pollAnalysisStatus(fileId)
 
-      if (fetchError) {
-        console.error('Erro ao buscar dados atualizados:', fetchError)
-        throw fetchError
-      }
-
-      console.log('Análise concluída:', importData)
-      setCurrentImport(importData)
+      console.log('Análise concluída com sucesso')
     } catch (error: any) {
       console.error('Erro na análise:', error)
       toast({
@@ -169,10 +193,12 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
         })
         .eq('id', fileId)
         .eq('organization_id', currentOrganization.id)
+
+      throw error
     } finally {
       setLoading(false)
     }
-  }, [currentOrganization, toast])
+  }, [currentOrganization, toast, pollAnalysisStatus])
 
   return (
     <DataImportContext.Provider

@@ -8,9 +8,10 @@ import {
   SheetContent,
 } from "@/components/ui/sheet"
 import { DataAnalysisTools } from "./DataAnalysisTools"
-import { Maximize, Minimize } from "lucide-react"
+import { Maximize, Minimize, Loader2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { useToast } from "@/hooks/use-toast"
 import "./data-grid.css"
 
 interface DataPreviewProps {
@@ -27,8 +28,28 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
   const [duplicates, setDuplicates] = useState<Record<string, number>>({})
   const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [isReady, setIsReady] = useState(false)
   const { currentOrganization } = useAuth()
+  const { toast } = useToast()
   const pageSize = 100
+
+  const checkFileStatus = async () => {
+    if (!currentOrganization || !fileId) return false
+
+    const { data: importData, error } = await supabase
+      .from('data_imports')
+      .select('status')
+      .eq('id', fileId)
+      .eq('organization_id', currentOrganization.id)
+      .single()
+
+    if (error) {
+      console.error('Erro ao verificar status:', error)
+      return false
+    }
+
+    return importData.status === 'editing'
+  }
 
   const findDuplicates = (columnName: string) => {
     setSelectedColumn(columnName)
@@ -41,8 +62,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
   }
 
   const loadData = async (page: number) => {
-    if (!currentOrganization) {
-      console.error('Nenhuma organização selecionada')
+    if (!currentOrganization || !isReady) {
       return
     }
 
@@ -61,7 +81,17 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
 
       if (error) {
         console.error('Erro ao carregar dados:', error)
-        throw error
+        toast({
+          title: "Erro ao carregar dados",
+          description: "Não foi possível carregar os dados do arquivo.",
+          variant: "destructive"
+        })
+        return
+      }
+
+      if (!fileData?.data) {
+        console.error('Dados não encontrados')
+        return
       }
 
       setData(prevData => {
@@ -74,14 +104,37 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
       setCurrentPage(page)
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Ocorreu um erro ao tentar carregar os dados.",
+        variant: "destructive"
+      })
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
+    let intervalId: number
+
+    const waitForAnalysis = async () => {
+      const ready = await checkFileStatus()
+      if (ready) {
+        setIsReady(true)
+        clearInterval(intervalId)
+        await loadData(1)
+      }
+    }
+
     if (fileId && currentOrganization) {
-      loadData(1)
+      intervalId = setInterval(waitForAnalysis, 1000) as unknown as number
+      waitForAnalysis()
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
     }
   }, [fileId, currentOrganization])
 
@@ -92,6 +145,17 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
     resizable: true,
     sortable: true
   }))
+
+  if (!isReady) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[400px] space-y-4">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">
+          Preparando visualização dos dados...
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
