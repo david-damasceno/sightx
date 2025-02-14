@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useCallback } from "react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
+import { Json } from "@/integrations/supabase/types"
 
 interface Column {
   name: string
@@ -24,13 +25,17 @@ interface DataImport {
   storage_path: string | null
   file_type: string
   row_count: number
-  status: 'uploading' | 'uploaded' | 'analyzing' | 'editing' | 'processing' | 'completed' | 'error'
+  status: 'pending' | 'uploading' | 'uploaded' | 'analyzing' | 'editing' | 'processing' | 'completed' | 'error'
   error_message: string | null
   columns_metadata: {
     columns: Column[]
   }
   column_analysis: Column[]
   column_suggestions: string | null
+  organization_id: string
+  created_by: string
+  created_at: string
+  table_name?: string
 }
 
 interface DataImportContextType {
@@ -65,7 +70,11 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
           name: file.name,
           original_filename: file.name,
           file_type: file.type,
-          status: 'uploading'
+          status: 'uploading',
+          columns_metadata: {},
+          column_analysis: [],
+          data_quality: {},
+          data_validation: {}
         })
         .select()
         .single()
@@ -93,7 +102,7 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
 
       if (updateError) throw updateError
 
-      setCurrentImport(updatedImport)
+      setCurrentImport(updatedImport as DataImport)
       return importData.id
     } catch (error: any) {
       console.error('Erro no upload:', error)
@@ -126,7 +135,7 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
 
       if (fetchError) throw fetchError
 
-      setCurrentImport(importData)
+      setCurrentImport(importData as DataImport)
     } catch (error: any) {
       console.error('Erro na análise:', error)
       toast({

@@ -7,13 +7,29 @@ import { cn } from "@/lib/utils"
 import { DataImportProvider, useDataImport } from "@/contexts/DataImportContext"
 
 function DataImportContent() {
-  const { currentImport } = useDataImport()
+  const { currentImport, analyzeFile } = useDataImport()
 
   const currentStep = currentImport ? (
     currentImport.status === 'uploading' || currentImport.status === 'uploaded' ? 1 :
     currentImport.status === 'analyzing' || currentImport.status === 'editing' ? 2 :
     3
   ) : 1
+
+  const handleUploadComplete = async (fileId: string) => {
+    await analyzeFile(fileId)
+  }
+
+  const handlePreviewNext = () => {
+    if (currentImport) {
+      // Atualizar status para editing
+    }
+  }
+
+  const handleMappingComplete = () => {
+    if (currentImport) {
+      // Atualizar status para completed
+    }
+  }
 
   return (
     <div className="container max-w-7xl mx-auto py-8 space-y-8">
@@ -30,7 +46,7 @@ function DataImportContent() {
         "transition-all duration-300",
         currentStep === 1 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
       )}>
-        <FileUploader />
+        <FileUploader onUploadComplete={handleUploadComplete} />
       </div>
 
       {currentImport && (
@@ -39,14 +55,27 @@ function DataImportContent() {
             "transition-all duration-300",
             currentStep === 2 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
           )}>
-            <DataPreview />
+            <DataPreview 
+              fileId={currentImport.id}
+              columns={(currentImport.columns_metadata?.columns || []).map(col => ({
+                name: col.name,
+                type: col.type,
+                sample: col.sample
+              }))}
+              previewData={[]}
+              onNext={handlePreviewNext}
+            />
           </div>
 
           <div className={cn(
             "transition-all duration-300",
             currentStep === 3 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
           )}>
-            <ColumnMapper />
+            <ColumnMapper
+              fileId={currentImport.id}
+              columns={(currentImport.columns_metadata?.columns || [])}
+              onMappingComplete={handleMappingComplete}
+            />
           </div>
         </>
       )}
