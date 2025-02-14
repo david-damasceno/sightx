@@ -140,38 +140,28 @@ serve(async (req) => {
       throw updateError
     }
 
-    // Importar dados para tabela temporária usando o cliente admin
-    console.log('Iniciando importação dos dados...')
+    // Inserir dados das colunas na tabela data_file_columns
+    console.log('Inserindo dados das colunas...')
+    
+    const columnsData = headers.map(header => ({
+      file_id: fileMetadata.id,
+      organization_id: organizationId,
+      original_name: header,
+      data_type: 'text', // Tipo padrão, pode ser ajustado conforme necessário
+      suggested_name: header,
+      is_nullable: true
+    }))
 
-    const importPromises = dataRows.map(async (row, index) => {
-      const rowData: Record<string, any> = {}
-      headers.forEach((header, colIndex) => {
-        rowData[header] = row[colIndex]
-      })
+    const { error: columnsError } = await supabaseAdmin
+      .from('data_file_columns')
+      .insert(columnsData)
 
-      try {
-        const { error: importError } = await supabaseAdmin
-          .from('temp_imported_data')
-          .insert({
-            organization_id: organizationId,
-            import_id: fileMetadata.id,
-            row_data: rowData,
-            row_number: index + 1,
-            status: 'pending'
-          })
+    if (columnsError) {
+      console.error('Erro ao inserir dados das colunas:', columnsError)
+      throw columnsError
+    }
 
-        if (importError) {
-          console.error(`Erro ao importar linha ${index + 1}:`, importError)
-          throw importError
-        }
-      } catch (e) {
-        console.error(`Erro ao processar linha ${index + 1}:`, e)
-        throw e
-      }
-    })
-
-    await Promise.all(importPromises)
-    console.log('Importação concluída com sucesso')
+    console.log('Processo concluído com sucesso')
 
     return new Response(
       JSON.stringify({
