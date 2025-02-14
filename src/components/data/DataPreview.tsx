@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { Loader2, ChevronLeft, ChevronRight, Search, Maximize, Minimize, AlertCircle } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { DataAnalysisTools } from "./DataAnalysisTools"
+import { cn } from "@/lib/utils"
 
 interface Column {
   name: string
@@ -155,7 +155,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
       toast({
         title: "Análise de Duplicatas",
         description: `Foram encontrados valores duplicados na coluna ${columnName}`,
-        variant: "warning"
+        variant: "destructive"
       })
     } else {
       toast({
