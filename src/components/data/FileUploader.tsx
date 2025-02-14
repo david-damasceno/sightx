@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -96,29 +97,24 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
 
       if (dbError) throw dbError
 
-      // Iniciar análise do arquivo
+      // Iniciar análise do arquivo usando o cliente do Supabase
       const formData = new FormData()
       formData.append('file', selectedFile)
       formData.append('organizationId', currentOrganization.id)
 
-      const response = await fetch('/api/analyze-file', {
-        method: 'POST',
-        body: formData
+      const { data, error } = await supabase.functions.invoke('analyze-file', {
+        body: formData,
       })
 
-      if (!response.ok) {
-        throw new Error('Erro ao analisar arquivo')
-      }
-
-      const analysisResult = await response.json()
+      if (error) throw error
 
       // Atualizar metadados com resultado da análise
       const { error: updateError } = await supabase
         .from('data_files_metadata')
         .update({
           status: 'ready',
-          columns_metadata: analysisResult.columns,
-          preview_data: analysisResult.previewData
+          columns_metadata: data.columns,
+          preview_data: data.previewData
         })
         .eq('id', fileMetadata.id)
 
@@ -130,11 +126,11 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
       })
 
       onUploadComplete(fileMetadata.id)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro no upload:', error)
       toast({
         title: "Erro no upload",
-        description: "Não foi possível enviar o arquivo. Tente novamente.",
+        description: error.message || "Não foi possível enviar o arquivo. Tente novamente.",
         variant: "destructive"
       })
     } finally {
