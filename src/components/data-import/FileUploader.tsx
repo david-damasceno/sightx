@@ -108,6 +108,13 @@ export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: 
 
       if (updateError) throw updateError
 
+      // Iniciar o processamento do arquivo
+      const { error: analyzeError } = await supabase.functions.invoke('analyze-file', {
+        body: { fileId: importData.id }
+      })
+
+      if (analyzeError) throw analyzeError
+
       console.log('Arquivo processado com sucesso')
       
       setUploadProgress(100)
@@ -181,3 +188,4 @@ export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: 
     </div>
   )
 }
+
