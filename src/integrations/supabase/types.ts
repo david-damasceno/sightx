@@ -470,6 +470,56 @@ export type Database = {
           },
         ]
       }
+      data_processing_results: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          error_message: string | null
+          file_id: string
+          id: string
+          organization_id: string
+          processing_completed_at: string | null
+          processing_started_at: string | null
+          row_count: number | null
+          status: Database["public"]["Enums"]["processing_status"] | null
+          table_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          file_id: string
+          id?: string
+          organization_id: string
+          processing_completed_at?: string | null
+          processing_started_at?: string | null
+          row_count?: number | null
+          status?: Database["public"]["Enums"]["processing_status"] | null
+          table_name: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          file_id?: string
+          id?: string
+          organization_id?: string
+          processing_completed_at?: string | null
+          processing_started_at?: string | null
+          row_count?: number | null
+          status?: Database["public"]["Enums"]["processing_status"] | null
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_processing_results_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "data_files_metadata"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demographic_data: {
         Row: {
           age_distribution: Json | null
@@ -997,6 +1047,7 @@ export type Database = {
         | "google_analytics"
         | "salesforce"
         | "slack"
+      processing_status: "pending" | "processing" | "completed" | "error"
       sales_channel:
         | "physical_store"
         | "e-commerce"
