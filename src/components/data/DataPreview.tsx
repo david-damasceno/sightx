@@ -29,13 +29,14 @@ interface DataPreviewProps {
   onNext: () => void
 }
 
-interface RowData {
-  row_data: Record<string, any>
-  [key: string]: any
+interface FileData {
+  id: string
+  row_number: number
+  data: Record<string, any>
 }
 
 export function DataPreview({ columns, previewData, fileId, onNext }: DataPreviewProps) {
-  const [data, setData] = useState<any[]>([])
+  const [data, setData] = useState<FileData[]>([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [totalRows, setTotalRows] = useState(0)
@@ -48,9 +49,9 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
 
       // Buscar total de linhas
       const { count } = await supabase
-        .from('temp_imported_data')
+        .from('data_file_columns')
         .select('*', { count: 'exact', head: true })
-        .eq('import_id', fileId)
+        .eq('file_id', fileId)
 
       if (count !== null) {
         setTotalRows(count)
@@ -58,15 +59,19 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
 
       // Buscar dados paginados
       const { data: rows, error } = await supabase
-        .from('temp_imported_data')
+        .from('data_file_columns')
         .select('*')
-        .eq('import_id', fileId)
+        .eq('file_id', fileId)
         .order('row_number', { ascending: true })
         .range((page - 1) * rowsPerPage, page * rowsPerPage - 1)
 
       if (error) throw error
 
-      setData(rows.map(row => (row as RowData).row_data))
+      setData(rows.map((row, index) => ({
+        id: row.id,
+        row_number: (page - 1) * rowsPerPage + index + 1,
+        data: row
+      })))
     } catch (error: any) {
       console.error('Erro ao buscar dados:', error)
       toast({
@@ -83,29 +88,16 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
     fetchData()
   }, [page, fileId])
 
-  const handleSave = async (rowIndex: number, columnName: string, value: string) => {
+  const handleSave = async (rowId: string, columnName: string, value: string) => {
     try {
-      const rowNumber = (page - 1) * rowsPerPage + rowIndex + 1
-      
-      const { data: currentRow } = await supabase
-        .from('temp_imported_data')
-        .select('row_data')
-        .eq('import_id', fileId)
-        .eq('row_number', rowNumber)
-        .single()
-
-      if (!currentRow) return
-
-      const updatedRowData = {
-        ...(currentRow as RowData).row_data,
-        [columnName]: value
-      }
-
       const { error } = await supabase
-        .from('temp_imported_data')
-        .update({ row_data: updatedRowData })
-        .eq('import_id', fileId)
-        .eq('row_number', rowNumber)
+        .from('data_file_changes')
+        .insert({
+          file_id: fileId,
+          row_number: data.find(row => row.id === rowId)?.row_number || 0,
+          column_name: columnName,
+          new_value: value
+        })
 
       if (error) throw error
 
@@ -116,8 +108,10 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
 
       // Atualizar dados locais
       setData(prev => 
-        prev.map((row, idx) => 
-          idx === rowIndex ? { ...row, [columnName]: value } : row
+        prev.map(row => 
+          row.id === rowId 
+            ? { ...row, data: { ...row.data, [columnName]: value } }
+            : row
         )
       )
     } catch (error: any) {
@@ -171,25 +165,23 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.map((row, rowIndex) => (
-                    <TableRow key={rowIndex}>
+                  {data.map((row) => (
+                    <TableRow key={row.id}>
                       <TableCell className="text-center text-muted-foreground">
-                        {(page - 1) * rowsPerPage + rowIndex + 1}
+                        {row.row_number}
                       </TableCell>
                       {columns.map((column) => (
-                        <TableCell key={`${rowIndex}-${column.name}`} className="p-0">
+                        <TableCell key={`${row.id}-${column.name}`} className="p-0">
                           <Input
                             className="h-8 px-2 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                            value={row[column.name] ?? ''}
+                            value={row.data[column.name] ?? ''}
                             onChange={(e) => {
                               const newData = [...data]
-                              newData[rowIndex] = {
-                                ...newData[rowIndex],
-                                [column.name]: e.target.value
-                              }
+                              const rowIndex = newData.findIndex(r => r.id === row.id)
+                              newData[rowIndex].data[column.name] = e.target.value
                               setData(newData)
                             }}
-                            onBlur={(e) => handleSave(rowIndex, column.name, e.target.value)}
+                            onBlur={(e) => handleSave(row.id, column.name, e.target.value)}
                           />
                         </TableCell>
                       ))}
