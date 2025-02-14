@@ -58,11 +58,20 @@ serve(async (req) => {
     const arrayBuffer = await fileBuffer.arrayBuffer()
 
     // Ler o arquivo usando xlsx
-    const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' })
+    const workbook = XLSX.read(new Uint8Array(arrayBuffer), { 
+      type: 'array',
+      cellDates: true,
+      cellNF: false,
+      cellText: false 
+    })
     const worksheet = workbook.Sheets[workbook.SheetNames[0]]
     
     // Converter para JSON
-    const jsonData = XLSX.utils.sheet_to_json(worksheet)
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+      raw: false,
+      dateNF: 'yyyy-mm-dd',
+      defval: null
+    })
     console.log('Arquivo convertido para JSON:', { totalRows: jsonData.length })
 
     // Calcular paginação
