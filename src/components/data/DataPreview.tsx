@@ -29,6 +29,11 @@ interface DataPreviewProps {
   onNext: () => void
 }
 
+interface RowData {
+  row_data: Record<string, any>
+  [key: string]: any
+}
+
 export function DataPreview({ columns, previewData, fileId, onNext }: DataPreviewProps) {
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -61,7 +66,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
 
       if (error) throw error
 
-      setData(rows.map(row => row.row_data))
+      setData(rows.map(row => (row as RowData).row_data))
     } catch (error: any) {
       console.error('Erro ao buscar dados:', error)
       toast({
@@ -92,7 +97,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
       if (!currentRow) return
 
       const updatedRowData = {
-        ...currentRow.row_data,
+        ...(currentRow as RowData).row_data,
         [columnName]: value
       }
 
