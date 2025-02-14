@@ -3,7 +3,7 @@ import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Upload, File, X } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { cn } from "@/lib/utils"
@@ -80,26 +80,28 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     try {
       setUploading(true)
 
-      // Criar registro de metadados do arquivo
-      const { data: fileMetadata, error: metadataError } = await supabase
-        .from('data_files_metadata')
+      // Criar registro de import
+      const { data: importData, error: importError } = await supabase
+        .from('data_imports')
         .insert({
           organization_id: currentOrganization.id,
-          file_name: selectedFile.name,
+          name: selectedFile.name,
           original_filename: selectedFile.name,
           file_type: selectedFile.type,
-          file_size: selectedFile.size,
           status: 'pending',
-          processing_status: 'pending',
-          processing_progress: 0
+          table_name: selectedFile.name.replace(/\.[^/.]+$/, "").toLowerCase().replace(/\s+/g, "_"),
+          columns_metadata: {},
+          column_analysis: [],
+          data_quality: {},
+          data_validation: {}
         })
         .select()
         .single()
 
-      if (metadataError) throw metadataError
+      if (importError) throw importError
 
       // Upload do arquivo para o storage
-      const filePath = `${currentOrganization.id}/${fileMetadata.id}/${selectedFile.name}`
+      const filePath = `${currentOrganization.id}/${importData.id}/${selectedFile.name}`
       const { error: storageError } = await supabase.storage
         .from('data_files')
         .upload(filePath, selectedFile)
@@ -108,26 +110,18 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
 
       // Atualizar o registro com o caminho do storage
       const { error: updateError } = await supabase
-        .from('data_files_metadata')
-        .update({ storage_path: filePath })
-        .eq('id', fileMetadata.id)
+        .from('data_imports')
+        .update({ storage_path: filePath, status: 'uploaded' })
+        .eq('id', importData.id)
 
       if (updateError) throw updateError
-
-      // Chamar a função de análise do arquivo
-      const { data: analysisResult, error: analysisError } = await supabase.functions
-        .invoke('analyze-file', {
-          body: { fileId: fileMetadata.id }
-        })
-
-      if (analysisError) throw analysisError
 
       toast({
         title: "Upload concluído",
         description: "Seu arquivo foi enviado com sucesso.",
       })
 
-      onUploadComplete(fileMetadata.id)
+      onUploadComplete(importData.id)
     } catch (error: any) {
       console.error('Erro no upload:', error)
       toast({

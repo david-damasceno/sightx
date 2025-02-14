@@ -8,6 +8,7 @@ import { DataImportProvider, useDataImport } from "@/contexts/DataImportContext"
 import { useState, useEffect } from "react"
 import { supabase } from "@/integrations/supabase/client"
 import { ColumnMetadata } from "@/types/data-imports"
+import { adaptColumnMetadata } from "@/utils/columnAdapter"
 
 function DataImportContent() {
   const { currentImport, analyzeFile } = useDataImport()
@@ -84,7 +85,7 @@ function DataImportContent() {
           )}>
             <DataPreview 
               fileId={currentImport.id}
-              columns={columns}
+              columns={columns.map(adaptColumnMetadata)}
               previewData={[]}
               onNext={handlePreviewNext}
             />
@@ -96,7 +97,7 @@ function DataImportContent() {
           )}>
             <ColumnMapper
               fileId={currentImport.id}
-              columns={columns}
+              columns={columns.map(adaptColumnMetadata)}
               onMappingComplete={handleMappingComplete}
             />
           </div>
