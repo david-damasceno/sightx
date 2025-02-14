@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { DataGrid } from "react-data-grid"
+import DataGrid from "react-data-grid"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Sheet,
