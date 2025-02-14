@@ -28,28 +28,9 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
   const [duplicates, setDuplicates] = useState<Record<string, number>>({})
   const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading] = useState(false)
-  const [isReady, setIsReady] = useState(false)
   const { currentOrganization } = useAuth()
   const { toast } = useToast()
   const pageSize = 100
-
-  const checkFileStatus = async () => {
-    if (!currentOrganization || !fileId) return false
-
-    const { data: importData, error } = await supabase
-      .from('data_imports')
-      .select('status')
-      .eq('id', fileId)
-      .eq('organization_id', currentOrganization.id)
-      .single()
-
-    if (error) {
-      console.error('Erro ao verificar status:', error)
-      return false
-    }
-
-    return importData.status === 'editing'
-  }
 
   const findDuplicates = (columnName: string) => {
     setSelectedColumn(columnName)
@@ -62,7 +43,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
   }
 
   const loadData = async (page: number) => {
-    if (!currentOrganization || !isReady) {
+    if (!currentOrganization || !fileId) {
       return
     }
 
@@ -115,26 +96,8 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
   }
 
   useEffect(() => {
-    let intervalId: number
-
-    const waitForAnalysis = async () => {
-      const ready = await checkFileStatus()
-      if (ready) {
-        setIsReady(true)
-        clearInterval(intervalId)
-        await loadData(1)
-      }
-    }
-
     if (fileId && currentOrganization) {
-      intervalId = setInterval(waitForAnalysis, 1000) as unknown as number
-      waitForAnalysis()
-    }
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId)
-      }
+      loadData(1)
     }
   }, [fileId, currentOrganization])
 
@@ -146,12 +109,12 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
     sortable: true
   }))
 
-  if (!isReady) {
+  if (loading && data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[400px] space-y-4">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
         <p className="text-sm text-muted-foreground">
-          Preparando visualização dos dados...
+          Carregando dados...
         </p>
       </div>
     )
