@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { ProcessSteps } from "@/components/data/ProcessSteps"
 import { FileUploader } from "@/components/data/FileUploader"
@@ -8,7 +7,7 @@ import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
-import { ColumnMetadata, ProcessingResult } from "@/types/data-imports"
+import { ColumnMetadata, ProcessingResult, ImportStatus } from "@/types/data-imports"
 import { adaptColumnMetadata } from "@/utils/columnAdapter"
 
 interface Column {
@@ -35,7 +34,7 @@ export default function DataContext() {
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
 
-  const checkFileStatus = async (fileId: string) => {
+  const checkFileStatus = async (fileId: string): Promise<ImportStatus | null> => {
     try {
       console.log('Verificando status do arquivo:', fileId)
       const { data: importData, error: importError } = await supabase
@@ -44,50 +43,54 @@ export default function DataContext() {
         .eq('id', fileId)
         .single()
 
-      if (importError) throw importError
-
-      if (importData.status === 'error') {
-        toast({
-          title: "Erro no processamento",
-          description: importData.error_message || "Houve um erro ao processar o arquivo",
-          variant: "destructive"
-        })
-        return false
+      if (importError) {
+        console.error('Erro ao verificar status:', importError)
+        return null
       }
 
-      if (importData.status === 'editing') {
-        console.log('Arquivo processado com sucesso')
-        return true
-      }
-
-      return false
+      console.log('Status atual do arquivo:', importData.status)
+      return importData.status
     } catch (error) {
       console.error('Erro ao verificar status:', error)
-      return false
+      return null
     }
   }
 
   const fetchFileData = async (fileId: string) => {
     try {
-      console.log('Buscando dados do arquivo:', fileId)
+      console.log('Iniciando busca de dados do arquivo:', fileId)
       setLoading(true)
       
-      // Aguardar até que o arquivo seja processado (máximo 30 segundos)
-      let processed = false
+      // Aguardar até que o arquivo esteja pronto
+      let fileStatus: ImportStatus | null = null
       let attempts = 0
       const maxAttempts = 30
 
-      while (!processed && attempts < maxAttempts) {
-        processed = await checkFileStatus(fileId)
-        if (!processed) {
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          attempts++
+      while (attempts < maxAttempts) {
+        fileStatus = await checkFileStatus(fileId)
+        console.log(`Tentativa ${attempts + 1}: status = ${fileStatus}`)
+
+        if (!fileStatus) {
+          throw new Error('Erro ao verificar status do arquivo')
         }
+
+        if (fileStatus === 'error') {
+          throw new Error('Erro no processamento do arquivo')
+        }
+
+        if (fileStatus === 'editing') {
+          break
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        attempts++
       }
 
-      if (!processed) {
-        throw new Error('Timeout ao processar arquivo')
+      if (fileStatus !== 'editing') {
+        throw new Error('Timeout ao aguardar processamento do arquivo')
       }
+
+      console.log('Arquivo pronto, buscando colunas...')
 
       // Buscar colunas do arquivo
       const { data: columnsData, error: columnsError } = await supabase
@@ -96,7 +99,15 @@ export default function DataContext() {
         .eq('file_id', fileId)
         .order('original_name')
 
-      if (columnsError) throw columnsError
+      if (columnsError) {
+        console.error('Erro ao buscar colunas:', columnsError)
+        throw columnsError
+      }
+
+      if (!columnsData || columnsData.length === 0) {
+        console.warn('Nenhuma coluna encontrada para o arquivo')
+        throw new Error('Nenhuma coluna encontrada para o arquivo')
+      }
 
       console.log('Dados das colunas recebidos:', columnsData)
 
@@ -110,7 +121,7 @@ export default function DataContext() {
       console.error('Erro ao buscar dados do arquivo:', error)
       toast({
         title: "Erro",
-        description: "Não foi possível carregar os dados do arquivo.",
+        description: error.message || "Não foi possível carregar os dados do arquivo.",
         variant: "destructive"
       })
     } finally {
@@ -191,6 +202,12 @@ export default function DataContext() {
         currentStep={currentStep}
         onStepClick={handleStepChange}
       />
+
+      {loading && (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      )}
 
       <div className={cn(
         "transition-all duration-300",
