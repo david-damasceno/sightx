@@ -15,6 +15,7 @@ serve(async (req) => {
 
   try {
     const { fileId, page = 1, pageSize = 50 } = await req.json()
+    console.log('Processando arquivo:', { fileId, page, pageSize })
 
     if (!fileId) {
       throw new Error('File ID is required')
@@ -33,8 +34,11 @@ serve(async (req) => {
       .single()
 
     if (fileError || !fileData) {
-      throw new Error('File not found')
+      console.error('Erro ao buscar arquivo:', fileError)
+      throw new Error('Arquivo não encontrado')
     }
+
+    console.log('Dados do arquivo encontrados:', fileData)
 
     // Baixar o arquivo do storage
     const { data: fileBuffer, error: downloadError } = await supabase
@@ -43,8 +47,11 @@ serve(async (req) => {
       .download(fileData.storage_path)
 
     if (downloadError) {
+      console.error('Erro ao baixar arquivo:', downloadError)
       throw downloadError
     }
+
+    console.log('Arquivo baixado com sucesso')
 
     // Converter para array buffer
     const arrayBuffer = await fileBuffer.arrayBuffer()
@@ -55,6 +62,7 @@ serve(async (req) => {
     
     // Converter para JSON
     const jsonData = XLSX.utils.sheet_to_json(worksheet)
+    console.log('Arquivo convertido para JSON:', { totalRows: jsonData.length })
 
     // Calcular paginação
     const startIndex = (page - 1) * pageSize
@@ -64,6 +72,12 @@ serve(async (req) => {
 
     // Retornar dados paginados
     const paginatedData = jsonData.slice(startIndex, endIndex)
+    console.log('Dados paginados:', { 
+      page, 
+      pageSize, 
+      totalPages, 
+      returnedRows: paginatedData.length 
+    })
 
     return new Response(
       JSON.stringify({
@@ -82,7 +96,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Erro ao processar arquivo:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
