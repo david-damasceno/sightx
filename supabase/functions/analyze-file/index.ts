@@ -229,32 +229,12 @@ serve(async (req) => {
 
     console.log('Análise de colunas concluída:', columnAnalysis)
 
-    // Configurar parâmetros para salvar no banco
-    const columnsMetadata = {
-      columns: columnAnalysis.map(col => ({
-        name: col.name,
-        type: col.type,
-        sample: col.sample
-      }))
-    }
-
-    const dataContext = {
-      total_rows: dataRows.length,
-      total_columns: headers.length,
-      file_type: file.type,
-      sheet_name: workbook.SheetNames[0],
-      created_at: new Date().toISOString(),
-      analysis_version: "1.0"
-    }
-
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    console.log('Salvando metadados no banco...')
-
-    // Criar ou atualizar registro de arquivo
+    // Criar registro de metadados do arquivo
     const { data: fileMetadata, error: metadataError } = await supabase
       .from('data_files_metadata')
       .insert({
@@ -263,12 +243,23 @@ serve(async (req) => {
         original_filename: file.name,
         file_type: file.type,
         file_size: file.size,
-        status: 'ready',
-        columns_metadata: columnsMetadata,
+        status: 'processing',
+        columns_metadata: {
+          columns: columnAnalysis.map(col => ({
+            name: col.name,
+            type: col.type,
+            sample: col.sample
+          }))
+        },
         preview_data: previewData,
-        data_context: dataContext,
-        detected_patterns: {},
-        analysis_summary: `Arquivo processado com sucesso. ${headers.length} colunas e ${dataRows.length} linhas encontradas.`
+        data_context: {
+          total_rows: dataRows.length,
+          total_columns: headers.length,
+          file_type: file.type,
+          sheet_name: workbook.SheetNames[0],
+          created_at: new Date().toISOString(),
+          analysis_version: "1.0"
+        }
       })
       .select()
       .single()
@@ -278,16 +269,54 @@ serve(async (req) => {
       throw metadataError
     }
 
-    console.log('Metadados salvos com sucesso:', fileMetadata)
+    console.log('Metadados salvos com sucesso, iniciando importação dos dados...')
+
+    // Importar dados para a tabela temporária
+    const importPromises = dataRows.map(async (row, index) => {
+      const rowData: Record<string, any> = {}
+      headers.forEach((header, colIndex) => {
+        rowData[header] = row[colIndex]
+      })
+
+      const { error: importError } = await supabase
+        .from('temp_imported_data')
+        .insert({
+          organization_id: organizationId,
+          import_id: fileMetadata.id,
+          row_data: rowData,
+          row_number: index + 1,
+          status: 'pending'
+        })
+
+      if (importError) {
+        console.error(`Erro ao importar linha ${index + 1}:`, importError)
+        throw importError
+      }
+    })
+
+    // Usar Promise.all para processar todas as linhas
+    await Promise.all(importPromises)
+
+    // Atualizar status do arquivo para 'ready'
+    const { error: updateError } = await supabase
+      .from('data_files_metadata')
+      .update({ status: 'ready' })
+      .eq('id', fileMetadata.id)
+
+    if (updateError) {
+      console.error('Erro ao atualizar status:', updateError)
+      throw updateError
+    }
+
+    console.log('Importação concluída com sucesso!')
 
     return new Response(
       JSON.stringify({
         success: true,
         file_id: fileMetadata.id,
-        columns: columnsMetadata.columns,
-        previewData,
-        dataContext,
-        analysis_summary: `Arquivo processado com sucesso. ${headers.length} colunas e ${dataRows.length} linhas encontradas.`
+        total_rows: dataRows.length,
+        total_columns: headers.length,
+        preview_data: previewData
       }),
       { 
         headers: { 

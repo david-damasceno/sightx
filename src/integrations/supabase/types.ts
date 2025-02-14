@@ -777,6 +777,54 @@ export type Database = {
           },
         ]
       }
+      temp_imported_data: {
+        Row: {
+          created_at: string | null
+          id: string
+          import_id: string
+          organization_id: string
+          row_data: Json
+          row_number: number
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          import_id: string
+          organization_id: string
+          row_data: Json
+          row_number: number
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          import_id?: string
+          organization_id?: string
+          row_data?: Json
+          row_number?: number
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temp_imported_data_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "data_files_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "temp_imported_data_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       organization_members_with_profiles: {

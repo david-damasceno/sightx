@@ -3,7 +3,6 @@ import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Pencil, Trash2 } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -14,6 +13,8 @@ import {
 } from "@/components/ui/table"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/components/ui/use-toast"
+import { supabase } from "@/integrations/supabase/client"
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 
 interface Column {
   name: string
@@ -24,75 +25,107 @@ interface Column {
 interface DataPreviewProps {
   columns: Column[]
   previewData: any[]
+  fileId: string
   onNext: () => void
 }
 
-export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) {
-  const [editingHeader, setEditingHeader] = useState<string | null>(null)
-  const [tableColumns, setTableColumns] = useState<Column[]>([])
+export function DataPreview({ columns, previewData, fileId, onNext }: DataPreviewProps) {
   const [data, setData] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const [totalRows, setTotalRows] = useState(0)
+  const rowsPerPage = 50
   const { toast } = useToast()
 
-  useEffect(() => {
-    console.log("Received columns:", columns)
-    console.log("Received previewData:", previewData)
+  const fetchData = async () => {
+    try {
+      setLoading(true)
 
-    if (Array.isArray(columns) && columns.length > 0) {
-      setTableColumns(columns)
-    } else {
-      console.warn("Columns is not an array or is empty:", columns)
-    }
+      // Buscar total de linhas
+      const { count } = await supabase
+        .from('temp_imported_data')
+        .select('*', { count: 'exact', head: true })
+        .eq('import_id', fileId)
 
-    if (Array.isArray(previewData) && previewData.length > 0) {
-      setData(previewData)
-    } else {
-      console.warn("PreviewData is not an array or is empty:", previewData)
-    }
-  }, [columns, previewData])
+      if (count !== null) {
+        setTotalRows(count)
+      }
 
-  useEffect(() => {
-    console.log("Current tableColumns:", tableColumns)
-    console.log("Current data:", data)
-  }, [tableColumns, data])
+      // Buscar dados paginados
+      const { data: rows, error } = await supabase
+        .from('temp_imported_data')
+        .select('*')
+        .eq('import_id', fileId)
+        .order('row_number', { ascending: true })
+        .range((page - 1) * rowsPerPage, page * rowsPerPage - 1)
 
-  const handleHeaderEdit = (columnName: string, newName: string) => {
-    if (!newName.trim()) {
+      if (error) throw error
+
+      setData(rows.map(row => row.row_data))
+    } catch (error: any) {
+      console.error('Erro ao buscar dados:', error)
       toast({
         title: "Erro",
-        description: "O nome da coluna não pode estar vazio",
+        description: "Não foi possível carregar os dados.",
         variant: "destructive"
       })
-      return
+    } finally {
+      setLoading(false)
     }
-
-    setTableColumns(prev => 
-      prev.map(col => col.name === columnName ? { ...col, name: newName } : col)
-    )
-    setEditingHeader(null)
   }
 
-  const handleDeleteRow = (index: number) => {
-    setData(prev => prev.filter((_, i) => i !== index))
-  }
+  useEffect(() => {
+    fetchData()
+  }, [page, fileId])
 
-  const handleCellEdit = (rowIndex: number, columnName: string, value: string) => {
-    setData(prev => 
-      prev.map((row, i) => 
-        i === rowIndex ? { ...row, [columnName]: value } : row
+  const handleSave = async (rowIndex: number, columnName: string, value: string) => {
+    try {
+      const rowNumber = (page - 1) * rowsPerPage + rowIndex + 1
+      
+      const { data: currentRow } = await supabase
+        .from('temp_imported_data')
+        .select('row_data')
+        .eq('import_id', fileId)
+        .eq('row_number', rowNumber)
+        .single()
+
+      if (!currentRow) return
+
+      const updatedRowData = {
+        ...currentRow.row_data,
+        [columnName]: value
+      }
+
+      const { error } = await supabase
+        .from('temp_imported_data')
+        .update({ row_data: updatedRowData })
+        .eq('import_id', fileId)
+        .eq('row_number', rowNumber)
+
+      if (error) throw error
+
+      toast({
+        title: "Sucesso",
+        description: "Dados atualizados com sucesso.",
+      })
+
+      // Atualizar dados locais
+      setData(prev => 
+        prev.map((row, idx) => 
+          idx === rowIndex ? { ...row, [columnName]: value } : row
+        )
       )
-    )
+    } catch (error: any) {
+      console.error('Erro ao salvar:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar as alterações.",
+        variant: "destructive"
+      })
+    }
   }
 
-  if (!Array.isArray(tableColumns) || tableColumns.length === 0) {
-    return (
-      <div className="p-8 text-center">
-        <h2 className="text-lg font-medium">Nenhuma coluna encontrada</h2>
-        <p className="text-sm text-muted-foreground mt-2">
-          Não foi possível carregar as colunas do arquivo
-        </p>
-      </div>
-    )
-  }
+  const totalPages = Math.ceil(totalRows / rowsPerPage)
 
   return (
     <div className="space-y-6">
@@ -104,103 +137,91 @@ export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) 
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              setData(previewData)
-              toast({
-                title: "Dados restaurados",
-                description: "Os dados foram restaurados para o estado original"
-              })
-            }}
-          >
-            Restaurar Original
-          </Button>
           <Button onClick={onNext}>Continuar</Button>
         </div>
       </div>
 
       <Card>
         <ScrollArea className="h-[600px] rounded-md border">
-          <div className="p-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50px] text-center">#</TableHead>
-                  {tableColumns.map((column) => (
-                    <TableHead key={column.name} className="min-w-[200px]">
-                      {editingHeader === column.name ? (
-                        <Input
-                          className="h-8 px-2"
-                          defaultValue={column.name}
-                          autoFocus
-                          onBlur={(e) => handleHeaderEdit(column.name, e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.currentTarget.blur()
-                            }
-                          }}
-                        />
-                      ) : (
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <div className="p-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[50px] text-center">#</TableHead>
+                    {columns.map((column) => (
+                      <TableHead key={column.name} className="min-w-[200px]">
                         <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <span className="font-medium">{column.name}</span>
-                            <span className="ml-2 text-xs text-muted-foreground">
-                              ({column.type})
-                            </span>
-                          </div>
-                          <Pencil
-                            className="h-4 w-4 cursor-pointer hover:text-primary"
-                            onClick={() => setEditingHeader(column.name)}
-                          />
+                          <span className="font-medium">{column.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({column.type})
+                          </span>
                         </div>
-                      )}
-                    </TableHead>
-                  ))}
-                  <TableHead className="w-[80px] text-center">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.length > 0 ? (
-                  data.map((row, rowIndex) => (
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.map((row, rowIndex) => (
                     <TableRow key={rowIndex}>
                       <TableCell className="text-center text-muted-foreground">
-                        {rowIndex + 1}
+                        {(page - 1) * rowsPerPage + rowIndex + 1}
                       </TableCell>
-                      {tableColumns.map((column) => (
+                      {columns.map((column) => (
                         <TableCell key={`${rowIndex}-${column.name}`} className="p-0">
                           <Input
                             className="h-8 px-2 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                             value={row[column.name] ?? ''}
-                            onChange={(e) => handleCellEdit(rowIndex, column.name, e.target.value)}
+                            onChange={(e) => {
+                              const newData = [...data]
+                              newData[rowIndex] = {
+                                ...newData[rowIndex],
+                                [column.name]: e.target.value
+                              }
+                              setData(newData)
+                            }}
+                            onBlur={(e) => handleSave(rowIndex, column.name, e.target.value)}
                           />
                         </TableCell>
                       ))}
-                      <TableCell>
-                        <div className="flex justify-center">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteRow(rowIndex)}
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={tableColumns.length + 2} className="text-center py-4">
-                      Nenhum dado encontrado
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </ScrollArea>
+
+        <div className="flex items-center justify-between px-4 py-4 border-t">
+          <div className="text-sm text-muted-foreground">
+            {totalRows} linhas no total
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="text-sm">
+              Página {page} de {totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </Card>
     </div>
   )

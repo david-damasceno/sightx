@@ -80,7 +80,7 @@ export default function DataContext() {
         toast({
           title: "Aviso",
           description: "Nenhuma coluna foi encontrada no arquivo. Verifique se o formato está correto.",
-          variant: "destructive"  // Mudamos de "warning" para "destructive"
+          variant: "destructive"
         })
       }
     } catch (error: any) {
@@ -148,6 +148,7 @@ export default function DataContext() {
             <DataPreview
               columns={fileData.columns}
               previewData={fileData.previewData}
+              fileId={fileData.id}
               onNext={handlePreviewComplete}
             />
           </div>
