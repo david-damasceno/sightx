@@ -1,0 +1,51 @@
+
+.rdg {
+  block-size: 100%;
+  border: 1px solid var(--border);
+  box-sizing: border-box;
+  overflow: auto;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.rdg *,
+.rdg ::after,
+.rdg ::before {
+  box-sizing: inherit;
+}
+
+.rdg-row {
+  background-color: var(--background);
+  border-block-end: 1px solid var(--border);
+}
+
+.rdg-row:hover {
+  background-color: var(--row-hover-bg-color);
+}
+
+.rdg-cell {
+  background-color: inherit;
+  border-inline-end: 1px solid var(--border);
+  padding-block: 0;
+  padding-inline: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rdg-cell:focus {
+  outline: none;
+}
+
+.rdg-header-row {
+  background-color: var(--header-background-color);
+  font-weight: bold;
+}
+
+.rdg-header-row .rdg-cell {
+  border-block-end: 1px solid var(--border);
+}
+
+.rdg-cell-editing {
+  padding: 0;
+}

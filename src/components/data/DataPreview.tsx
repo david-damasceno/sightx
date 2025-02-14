@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import DataGrid from "react-data-grid"
 import { Pencil, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import 'react-data-grid/lib/styles.css'
+import './data-grid.css'
 
 interface Column {
   name: string
@@ -134,6 +134,12 @@ export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) 
           onRowsChange={setRows}
           className="h-[500px]"
           headerRowHeight={45}
+          style={{
+            "--border": "hsl(var(--border))",
+            "--background": "hsl(var(--background))",
+            "--row-hover-bg-color": "hsl(var(--muted))",
+            "--header-background-color": "hsl(var(--muted))",
+          } as React.CSSProperties}
         />
       </Card>
     </div>
