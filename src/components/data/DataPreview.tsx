@@ -29,17 +29,12 @@ interface DataPreviewProps {
   onNext: () => void
 }
 
-interface FileData {
-  id: string
-  row_number: number
-  data: Record<string, any>
-}
-
 export function DataPreview({ columns, previewData, fileId, onNext }: DataPreviewProps) {
-  const [data, setData] = useState<FileData[]>([])
+  const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [totalRows, setTotalRows] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
   const rowsPerPage = 50
   const { toast } = useToast()
 
@@ -47,36 +42,21 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
     try {
       setLoading(true)
 
-      // Buscar total de linhas
-      const { count } = await supabase
-        .from('data_file_columns')
-        .select('*', { count: 'exact', head: true })
-        .eq('file_id', fileId)
-
-      if (count !== null) {
-        setTotalRows(count)
-      }
-
-      // Buscar dados paginados
-      const { data: rows, error } = await supabase
-        .from('data_file_columns')
-        .select('*')
-        .eq('file_id', fileId)
-        .order('original_name', { ascending: true })
-        .range((page - 1) * rowsPerPage, page * rowsPerPage - 1)
+      const { data: fileData, error } = await supabase.functions.invoke('read-file-data', {
+        body: { fileId, page, pageSize: rowsPerPage }
+      })
 
       if (error) throw error
 
-      setData(rows.map((row, index) => ({
-        id: row.id,
-        row_number: (page - 1) * rowsPerPage + index + 1,
-        data: row
-      })))
+      setData(fileData.data)
+      setTotalRows(fileData.totalRows)
+      setTotalPages(fileData.totalPages)
+
     } catch (error: any) {
       console.error('Erro ao buscar dados:', error)
       toast({
         title: "Erro",
-        description: "Não foi possível carregar os dados.",
+        description: "Não foi possível carregar os dados do arquivo.",
         variant: "destructive"
       })
     } finally {
@@ -88,12 +68,25 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
     fetchData()
   }, [page, fileId])
 
-  const handleSave = async (rowId: string, columnName: string, value: string) => {
+  const handleSave = async (rowIndex: number, columnName: string, value: string) => {
     try {
+      // Atualizar dados locais
+      const newData = [...data]
+      newData[rowIndex] = {
+        ...newData[rowIndex],
+        [columnName]: value
+      }
+      setData(newData)
+
       const { error } = await supabase
-        .from('data_file_columns')
-        .update({ [columnName]: value })
-        .eq('id', rowId)
+        .from('data_file_changes')
+        .insert({
+          file_id: fileId,
+          row_id: rowIndex.toString(),
+          column_name: columnName,
+          old_value: data[rowIndex][columnName],
+          new_value: value
+        })
 
       if (error) throw error
 
@@ -101,15 +94,6 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
         title: "Sucesso",
         description: "Dados atualizados com sucesso.",
       })
-
-      // Atualizar dados locais
-      setData(prev => 
-        prev.map(row => 
-          row.id === rowId 
-            ? { ...row, data: { ...row.data, [columnName]: value } }
-            : row
-        )
-      )
     } catch (error: any) {
       console.error('Erro ao salvar:', error)
       toast({
@@ -119,8 +103,6 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
       })
     }
   }
-
-  const totalPages = Math.ceil(totalRows / rowsPerPage)
 
   return (
     <div className="space-y-6">
@@ -161,23 +143,22 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.map((row) => (
-                    <TableRow key={row.id}>
+                  {data.map((row, rowIndex) => (
+                    <TableRow key={rowIndex}>
                       <TableCell className="text-center text-muted-foreground">
-                        {row.row_number}
+                        {(page - 1) * rowsPerPage + rowIndex + 1}
                       </TableCell>
                       {columns.map((column) => (
-                        <TableCell key={`${row.id}-${column.name}`} className="p-0">
+                        <TableCell key={`${rowIndex}-${column.name}`} className="p-0">
                           <Input
                             className="h-8 px-2 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                            value={row.data[column.name] ?? ''}
+                            value={row[column.name] ?? ''}
                             onChange={(e) => {
                               const newData = [...data]
-                              const rowIndex = newData.findIndex(r => r.id === row.id)
-                              newData[rowIndex].data[column.name] = e.target.value
+                              newData[rowIndex][column.name] = e.target.value
                               setData(newData)
                             }}
-                            onBlur={(e) => handleSave(row.id, column.name, e.target.value)}
+                            onBlur={(e) => handleSave(rowIndex, column.name, e.target.value)}
                           />
                         </TableCell>
                       ))}
@@ -219,4 +200,3 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
     </div>
   )
 }
-

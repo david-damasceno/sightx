@@ -1,36 +1,3 @@
 
-project_id = "zzmezxjwhtiwhnhqvnck"
-
-[api]
-enabled = true
-port = 54321
-schemas = ["public", "storage"]
-
-[db]
-port = 54322
-
-[studio]
-enabled = true
-port = 54323
-
-[inbucket]
-enabled = true
-port = 54324
-
-[storage]
-enabled = true
-
-[auth]
-enabled = true
-
-[realtime]
-enabled = true
-
-[functions.analyze-file]
-verify_jwt = true
-
-[functions.create-data-table]
-verify_jwt = true
-
-[functions.suggest-column-names]
+[functions.read-file-data]
 verify_jwt = true
