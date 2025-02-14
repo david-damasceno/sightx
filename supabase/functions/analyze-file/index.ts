@@ -31,13 +31,20 @@ serve(async (req) => {
       organizationId
     })
 
-    const supabase = createClient(
+    // Criar cliente Supabase com service role key
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     )
 
     // Criar entrada no banco de dados
-    const { data: fileMetadata, error: dbError } = await supabase
+    const { data: fileMetadata, error: dbError } = await supabaseAdmin
       .from('data_files_metadata')
       .insert({
         organization_id: organizationId,
@@ -118,8 +125,8 @@ serve(async (req) => {
       }
     })
 
-    // Atualizar metadados
-    const { error: updateError } = await supabase
+    // Atualizar metadados usando o cliente admin
+    const { error: updateError } = await supabaseAdmin
       .from('data_files_metadata')
       .update({
         columns_metadata: { columns: columnAnalysis },
@@ -133,7 +140,7 @@ serve(async (req) => {
       throw updateError
     }
 
-    // Importar dados para tabela temporária
+    // Importar dados para tabela temporária usando o cliente admin
     console.log('Iniciando importação dos dados...')
 
     const importPromises = dataRows.map(async (row, index) => {
@@ -143,7 +150,7 @@ serve(async (req) => {
       })
 
       try {
-        const { error: importError } = await supabase
+        const { error: importError } = await supabaseAdmin
           .from('temp_imported_data')
           .insert({
             organization_id: organizationId,
