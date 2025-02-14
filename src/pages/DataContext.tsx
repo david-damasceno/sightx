@@ -80,7 +80,7 @@ export default function DataContext() {
         toast({
           title: "Aviso",
           description: "Nenhuma coluna foi encontrada no arquivo. Verifique se o formato está correto.",
-          variant: "warning"
+          variant: "destructive"  // Mudamos de "warning" para "destructive"
         })
       }
     } catch (error: any) {
