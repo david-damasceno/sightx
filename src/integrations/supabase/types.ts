@@ -9,53 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      column_mappings: {
-        Row: {
-          confidence_score: number | null
-          created_at: string | null
-          data_type: string
-          description: string | null
-          detected_type: string | null
-          file_id: string
-          id: string
-          mapped_name: string
-          original_name: string
-          validation_rules: Json | null
-        }
-        Insert: {
-          confidence_score?: number | null
-          created_at?: string | null
-          data_type: string
-          description?: string | null
-          detected_type?: string | null
-          file_id: string
-          id?: string
-          mapped_name: string
-          original_name: string
-          validation_rules?: Json | null
-        }
-        Update: {
-          confidence_score?: number | null
-          created_at?: string | null
-          data_type?: string
-          description?: string | null
-          detected_type?: string | null
-          file_id?: string
-          id?: string
-          mapped_name?: string
-          original_name?: string
-          validation_rules?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "column_mappings_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "data_files_metadata"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       customer_concentration: {
         Row: {
           city: string
@@ -103,419 +56,77 @@ export type Database = {
           },
         ]
       }
-      data_analysis_suggestions: {
-        Row: {
-          created_at: string | null
-          data_import_id: string
-          id: string
-          organization_id: string
-          selected_analyses: Json
-          suggested_analyses: Json
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          data_import_id: string
-          id?: string
-          organization_id: string
-          selected_analyses?: Json
-          suggested_analyses?: Json
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          data_import_id?: string
-          id?: string
-          organization_id?: string
-          selected_analyses?: Json
-          suggested_analyses?: Json
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "data_analysis_suggestions_data_import_id_fkey"
-            columns: ["data_import_id"]
-            isOneToOne: false
-            referencedRelation: "data_imports"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "data_analysis_suggestions_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      data_file_changes: {
-        Row: {
-          column_name: string
-          created_at: string | null
-          created_by: string | null
-          file_id: string | null
-          id: string
-          new_value: Json | null
-          organization_id: string | null
-          original_value: Json | null
-          row_number: number
-        }
-        Insert: {
-          column_name: string
-          created_at?: string | null
-          created_by?: string | null
-          file_id?: string | null
-          id?: string
-          new_value?: Json | null
-          organization_id?: string | null
-          original_value?: Json | null
-          row_number: number
-        }
-        Update: {
-          column_name?: string
-          created_at?: string | null
-          created_by?: string | null
-          file_id?: string | null
-          id?: string
-          new_value?: Json | null
-          organization_id?: string | null
-          original_value?: Json | null
-          row_number?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "data_file_changes_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "data_files_metadata"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "data_file_changes_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      data_file_columns: {
-        Row: {
-          created_at: string | null
-          data_type: string
-          description: string | null
-          file_id: string | null
-          final_name: string | null
-          id: string
-          is_nullable: boolean | null
-          organization_id: string | null
-          original_name: string
-          suggested_name: string | null
-          validation_rules: Json | null
-        }
-        Insert: {
-          created_at?: string | null
-          data_type: string
-          description?: string | null
-          file_id?: string | null
-          final_name?: string | null
-          id?: string
-          is_nullable?: boolean | null
-          organization_id?: string | null
-          original_name: string
-          suggested_name?: string | null
-          validation_rules?: Json | null
-        }
-        Update: {
-          created_at?: string | null
-          data_type?: string
-          description?: string | null
-          file_id?: string | null
-          final_name?: string | null
-          id?: string
-          is_nullable?: boolean | null
-          organization_id?: string | null
-          original_name?: string
-          suggested_name?: string | null
-          validation_rules?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "data_file_columns_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "data_files_metadata"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "data_file_columns_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      data_files: {
-        Row: {
-          content_type: string
-          created_at: string | null
-          created_by: string | null
-          file_name: string
-          file_path: string
-          file_size: number
-          file_type: Database["public"]["Enums"]["file_type"]
-          id: string
-          last_analyzed_at: string | null
-          organization_id: string
-          preview_data: Json | null
-          status: string | null
-        }
-        Insert: {
-          content_type: string
-          created_at?: string | null
-          created_by?: string | null
-          file_name: string
-          file_path: string
-          file_size: number
-          file_type: Database["public"]["Enums"]["file_type"]
-          id?: string
-          last_analyzed_at?: string | null
-          organization_id: string
-          preview_data?: Json | null
-          status?: string | null
-        }
-        Update: {
-          content_type?: string
-          created_at?: string | null
-          created_by?: string | null
-          file_name?: string
-          file_path?: string
-          file_size?: number
-          file_type?: Database["public"]["Enums"]["file_type"]
-          id?: string
-          last_analyzed_at?: string | null
-          organization_id?: string
-          preview_data?: Json | null
-          status?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "data_files_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      data_files_metadata: {
-        Row: {
-          analysis_summary: string | null
-          column_suggestions: Json | null
-          columns_metadata: Json | null
-          created_at: string | null
-          created_by: string | null
-          data_context: Json | null
-          description: string | null
-          detected_patterns: Json | null
-          edited_storage_path: string | null
-          editing_status: string | null
-          file_name: string
-          file_size: number
-          file_type: string
-          final_table_name: string | null
-          id: string
-          organization_id: string
-          original_filename: string
-          preview_data: Json | null
-          processing_error: string | null
-          processing_progress: number | null
-          processing_status: string | null
-          status: string
-          storage_path: string | null
-          tags: string[] | null
-          updated_at: string | null
-        }
-        Insert: {
-          analysis_summary?: string | null
-          column_suggestions?: Json | null
-          columns_metadata?: Json | null
-          created_at?: string | null
-          created_by?: string | null
-          data_context?: Json | null
-          description?: string | null
-          detected_patterns?: Json | null
-          edited_storage_path?: string | null
-          editing_status?: string | null
-          file_name: string
-          file_size: number
-          file_type: string
-          final_table_name?: string | null
-          id?: string
-          organization_id: string
-          original_filename: string
-          preview_data?: Json | null
-          processing_error?: string | null
-          processing_progress?: number | null
-          processing_status?: string | null
-          status?: string
-          storage_path?: string | null
-          tags?: string[] | null
-          updated_at?: string | null
-        }
-        Update: {
-          analysis_summary?: string | null
-          column_suggestions?: Json | null
-          columns_metadata?: Json | null
-          created_at?: string | null
-          created_by?: string | null
-          data_context?: Json | null
-          description?: string | null
-          detected_patterns?: Json | null
-          edited_storage_path?: string | null
-          editing_status?: string | null
-          file_name?: string
-          file_size?: number
-          file_type?: string
-          final_table_name?: string | null
-          id?: string
-          organization_id?: string
-          original_filename?: string
-          preview_data?: Json | null
-          processing_error?: string | null
-          processing_progress?: number | null
-          processing_status?: string | null
-          status?: string
-          storage_path?: string | null
-          tags?: string[] | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "data_files_metadata_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "data_files_metadata_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       data_imports: {
         Row: {
           column_analysis: Json | null
-          columns_metadata: Json
+          columns_metadata: Json | null
           created_at: string | null
           created_by: string | null
           data_quality: Json | null
           data_validation: Json | null
           error_message: string | null
+          file_type: string | null
           id: string
           name: string
           organization_id: string
           original_filename: string
           row_count: number | null
           status: Database["public"]["Enums"]["import_status"] | null
+          storage_path: string | null
           suggested_indexes: Json | null
           table_name: string
         }
         Insert: {
           column_analysis?: Json | null
-          columns_metadata?: Json
+          columns_metadata?: Json | null
           created_at?: string | null
           created_by?: string | null
           data_quality?: Json | null
           data_validation?: Json | null
           error_message?: string | null
+          file_type?: string | null
           id?: string
           name: string
           organization_id: string
           original_filename: string
           row_count?: number | null
           status?: Database["public"]["Enums"]["import_status"] | null
+          storage_path?: string | null
           suggested_indexes?: Json | null
           table_name: string
         }
         Update: {
           column_analysis?: Json | null
-          columns_metadata?: Json
+          columns_metadata?: Json | null
           created_at?: string | null
           created_by?: string | null
           data_quality?: Json | null
           data_validation?: Json | null
           error_message?: string | null
+          file_type?: string | null
           id?: string
           name?: string
           organization_id?: string
           original_filename?: string
           row_count?: number | null
           status?: Database["public"]["Enums"]["import_status"] | null
+          storage_path?: string | null
           suggested_indexes?: Json | null
           table_name?: string
         }
         Relationships: [
           {
+            foreignKeyName: "data_imports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "data_imports_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      data_processing_results: {
-        Row: {
-          created_at: string | null
-          created_by: string | null
-          error_message: string | null
-          file_id: string
-          id: string
-          organization_id: string
-          processing_completed_at: string | null
-          processing_started_at: string | null
-          row_count: number | null
-          status: Database["public"]["Enums"]["processing_status"] | null
-          table_name: string
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          error_message?: string | null
-          file_id: string
-          id?: string
-          organization_id: string
-          processing_completed_at?: string | null
-          processing_started_at?: string | null
-          row_count?: number | null
-          status?: Database["public"]["Enums"]["processing_status"] | null
-          table_name: string
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          error_message?: string | null
-          file_id?: string
-          id?: string
-          organization_id?: string
-          processing_completed_at?: string | null
-          processing_started_at?: string | null
-          row_count?: number | null
-          status?: Database["public"]["Enums"]["processing_status"] | null
-          table_name?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "data_processing_results_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "data_files_metadata"
             referencedColumns: ["id"]
           },
         ]
@@ -915,50 +526,6 @@ export type Database = {
         }
         Relationships: []
       }
-      suggested_analyses: {
-        Row: {
-          analysis_type: string
-          created_at: string | null
-          description: string | null
-          file_id: string
-          id: string
-          metrics: Json | null
-          status: string
-          title: string
-          visualization_type: string | null
-        }
-        Insert: {
-          analysis_type: string
-          created_at?: string | null
-          description?: string | null
-          file_id: string
-          id?: string
-          metrics?: Json | null
-          status?: string
-          title: string
-          visualization_type?: string | null
-        }
-        Update: {
-          analysis_type?: string
-          created_at?: string | null
-          description?: string | null
-          file_id?: string
-          id?: string
-          metrics?: Json | null
-          status?: string
-          title?: string
-          visualization_type?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "suggested_analyses_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
-            referencedRelation: "data_files_metadata"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       organization_members_with_profiles: {
@@ -1040,7 +607,15 @@ export type Database = {
         | "finance"
         | "other"
       file_type: "excel" | "csv" | "access" | "json"
-      import_status: "pending" | "processing" | "completed" | "error"
+      import_status:
+        | "pending"
+        | "uploading"
+        | "uploaded"
+        | "analyzing"
+        | "editing"
+        | "processing"
+        | "completed"
+        | "error"
       integration_status: "pending" | "active" | "error" | "disconnected"
       integration_type:
         | "google_business"

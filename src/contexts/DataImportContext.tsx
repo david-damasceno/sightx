@@ -4,41 +4,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
 import { Json } from "@/integrations/supabase/types"
-
-interface Column {
-  name: string
-  type: string
-  sample: any
-  nullCount: number
-  uniqueCount: number
-  patterns: {
-    email: boolean
-    url: boolean
-    phone: boolean
-  }
-}
-
-interface DataImport {
-  id: string
-  name: string
-  original_filename: string
-  storage_path: string | null
-  file_type: string
-  row_count: number | null
-  status: 'pending' | 'processing' | 'completed' | 'error'
-  error_message: string | null
-  columns_metadata: {
-    columns: Column[]
-  }
-  column_analysis: Column[]
-  column_suggestions: string | null
-  organization_id: string
-  created_by: string
-  created_at: string
-  table_name: string
-  data_quality: Json
-  data_validation: Json
-}
+import { DataImport, ImportStatus } from "@/types/data-imports"
 
 interface DataImportContextType {
   currentImport: DataImport | null
@@ -72,7 +38,7 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
           name: file.name,
           original_filename: file.name,
           file_type: file.type,
-          status: 'pending' as const,
+          status: 'pending' as ImportStatus,
           columns_metadata: {},
           column_analysis: [],
           data_quality: {},
@@ -97,7 +63,7 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
         .from('data_imports')
         .update({
           storage_path: filePath,
-          status: 'processing' as const
+          status: 'processing' as ImportStatus
         })
         .eq('id', importData.id)
         .select()
@@ -105,7 +71,7 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
 
       if (updateError) throw updateError
 
-      setCurrentImport(updatedImport as unknown as DataImport)
+      setCurrentImport(updatedImport)
       return importData.id
     } catch (error: any) {
       console.error('Erro no upload:', error)
@@ -138,7 +104,7 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
 
       if (fetchError) throw fetchError
 
-      setCurrentImport(importData as unknown as DataImport)
+      setCurrentImport(importData)
     } catch (error: any) {
       console.error('Erro na análise:', error)
       toast({

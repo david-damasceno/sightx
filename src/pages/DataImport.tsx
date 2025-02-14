@@ -10,8 +10,8 @@ function DataImportContent() {
   const { currentImport, analyzeFile } = useDataImport()
 
   const currentStep = currentImport ? (
-    currentImport.status === 'pending' ? 1 :
-    currentImport.status === 'processing' ? 2 :
+    currentImport.status === 'pending' || currentImport.status === 'uploading' || currentImport.status === 'uploaded' ? 1 :
+    currentImport.status === 'analyzing' || currentImport.status === 'editing' || currentImport.status === 'processing' ? 2 :
     currentImport.status === 'completed' ? 3 :
     1
   ) : 1
@@ -22,7 +22,7 @@ function DataImportContent() {
 
   const handlePreviewNext = () => {
     if (currentImport) {
-      // Atualizar status para completed
+      // Atualizar status para processing
     }
   }
 
