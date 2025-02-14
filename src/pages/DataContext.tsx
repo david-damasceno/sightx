@@ -24,6 +24,15 @@ interface FileData {
   previewData: any[]
 }
 
+function isColumnsMetadata(obj: any): obj is ColumnsMetadata {
+  return obj && Array.isArray(obj.columns) && obj.columns.every((col: any) =>
+    typeof col === 'object' &&
+    typeof col.name === 'string' &&
+    typeof col.type === 'string' &&
+    'sample' in col
+  )
+}
+
 export default function DataContext() {
   const [currentStep, setCurrentStep] = useState(1)
   const [fileData, setFileData] = useState<FileData | null>(null)
@@ -41,9 +50,11 @@ export default function DataContext() {
 
       if (error) throw error
 
-      // Garantir que columns_metadata é um objeto com a estrutura correta
-      const columnsMetadata = data.columns_metadata as ColumnsMetadata
-      const columns = columnsMetadata?.columns || []
+      // Validar e extrair os dados das colunas com verificação de tipo
+      let columns: Column[] = []
+      if (data.columns_metadata && isColumnsMetadata(data.columns_metadata)) {
+        columns = data.columns_metadata.columns
+      }
 
       // Garantir que preview_data é um array
       const previewData = Array.isArray(data.preview_data) ? data.preview_data : []
