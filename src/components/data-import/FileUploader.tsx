@@ -66,6 +66,14 @@ export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: 
     const progressInterval = simulateProgress()
 
     try {
+      console.log('Iniciando upload do arquivo:', {
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        organizationId: currentOrganization.id,
+        userId: user.id
+      })
+
       // Primeiro, criar o registro na tabela data_imports
       const { data: importData, error: importError } = await supabase
         .from('data_imports')
@@ -85,17 +93,27 @@ export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: 
         .select()
         .single()
 
-      if (importError) throw importError
+      if (importError) {
+        console.error('Erro ao criar registro de importação:', importError)
+        throw importError
+      }
 
       console.log('Registro de importação criado:', importData)
 
       // Upload do arquivo para o storage
       const filePath = `${currentOrganization.id}/${importData.id}/${file.name}`
+      console.log('Iniciando upload para storage, caminho:', filePath)
+
       const { error: uploadError } = await supabase.storage
         .from('data_files')
         .upload(filePath, file)
 
-      if (uploadError) throw uploadError
+      if (uploadError) {
+        console.error('Erro no upload do arquivo:', uploadError)
+        throw uploadError
+      }
+
+      console.log('Upload para storage concluído')
 
       // Atualizar o registro com o caminho do arquivo
       const { error: updateError } = await supabase
@@ -106,14 +124,22 @@ export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: 
         })
         .eq('id', importData.id)
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Erro ao atualizar registro:', updateError)
+        throw updateError
+      }
+
+      console.log('Registro atualizado com sucesso')
 
       // Iniciar o processamento do arquivo
       const { error: analyzeError } = await supabase.functions.invoke('analyze-file', {
         body: { fileId: importData.id }
       })
 
-      if (analyzeError) throw analyzeError
+      if (analyzeError) {
+        console.error('Erro ao analisar arquivo:', analyzeError)
+        throw analyzeError
+      }
 
       console.log('Arquivo processado com sucesso')
       
@@ -188,4 +214,3 @@ export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: 
     </div>
   )
 }
-
