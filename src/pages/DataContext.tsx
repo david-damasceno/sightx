@@ -40,28 +40,36 @@ export default function DataContext() {
       console.log('Iniciando busca de dados do arquivo:', fileId)
       setLoading(true)
       
-      // Buscar colunas do arquivo
-      const { data: columnsData, error: columnsError } = await supabase
-        .from('data_file_columns')
-        .select('*')
-        .eq('file_id', fileId)
-        .order('original_name')
+      // Buscar primeira página dos dados para inferir as colunas
+      const { data: firstPageData, error } = await supabase.functions.invoke('read-file-data', {
+        body: { 
+          fileId, 
+          page: 1, 
+          pageSize: 50,
+          organizationId: currentOrganization?.id
+        }
+      })
 
-      if (columnsError) {
-        console.error('Erro ao buscar colunas:', columnsError)
-        throw columnsError
+      if (error) {
+        throw error
       }
 
-      if (!columnsData || columnsData.length === 0) {
-        console.warn('Nenhuma coluna encontrada para o arquivo')
-        throw new Error('Nenhuma coluna encontrada para o arquivo')
+      if (!firstPageData?.data || firstPageData.data.length === 0) {
+        throw new Error('Nenhum dado encontrado no arquivo')
       }
 
-      console.log('Dados das colunas recebidos:', columnsData)
+      // Criar colunas baseado nos dados recebidos
+      const inferredColumns = Object.keys(firstPageData.data[0]).map(key => ({
+        name: key,
+        type: 'text',
+        sample: firstPageData.data[0][key]
+      }))
+
+      console.log('Colunas inferidas dos dados:', inferredColumns)
 
       setFileData({
         id: fileId,
-        columns: columnsData.map(adaptColumnMetadata),
+        columns: inferredColumns,
         previewData: []
       })
 
