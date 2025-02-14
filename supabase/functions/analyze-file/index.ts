@@ -1,7 +1,7 @@
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
+import * as XLSX from "https://esm.sh/xlsx@0.18.5"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,74 +14,47 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Iniciando processamento do arquivo...')
-    const formData = await req.formData()
-    const file = formData.get('file') as File
-    const organizationId = formData.get('organizationId')
+    const { fileId } = await req.json()
 
-    if (!file || !organizationId) {
-      console.error('Parâmetros faltando:', { file: !!file, organizationId })
-      throw new Error('File and organizationId are required')
+    if (!fileId) {
+      throw new Error('FileId is required')
     }
 
-    console.log('Dados recebidos:', {
-      fileName: file.name,
-      fileType: file.type,
-      fileSize: file.size,
-      organizationId
-    })
-
-    // Criar cliente Supabase com service role key
-    const supabaseAdmin = createClient(
+    const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Criar entrada no banco de dados
-    const { data: fileMetadata, error: dbError } = await supabaseAdmin
-      .from('data_files_metadata')
-      .insert({
-        organization_id: organizationId,
-        file_name: file.name,
-        original_filename: file.name,
-        file_type: file.type,
-        file_size: file.size,
-        status: 'processing'
-      })
-      .select()
+    // Buscar dados do arquivo
+    const { data: importData, error: importError } = await supabase
+      .from('data_imports')
+      .select('*')
+      .eq('id', fileId)
       .single()
 
-    if (dbError) {
-      console.error('Erro ao criar registro:', dbError)
-      throw dbError
-    }
+    if (importError) throw importError
+    if (!importData) throw new Error('Import not found')
 
-    console.log('Registro criado:', fileMetadata)
+    // Baixar arquivo do storage
+    const { data: fileData, error: downloadError } = await supabase
+      .storage
+      .from('data_files')
+      .download(importData.storage_path)
 
-    // Processar arquivo
-    const arrayBuffer = await file.arrayBuffer()
+    if (downloadError) throw downloadError
+
+    // Ler o arquivo
+    const arrayBuffer = await fileData.arrayBuffer()
     const data = new Uint8Array(arrayBuffer)
     
     let workbook
     try {
       workbook = XLSX.read(data, { type: 'array' })
     } catch (error) {
-      console.error('Erro ao ler arquivo:', error)
-      throw new Error('Invalid file format. Please upload a valid Excel or CSV file.')
+      throw new Error('Invalid file format')
     }
 
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
-    
-    if (!firstSheet) {
-      throw new Error('No sheet found in the workbook')
-    }
-
     const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 })
 
     if (!Array.isArray(jsonData) || jsonData.length < 2) {
@@ -89,27 +62,14 @@ serve(async (req) => {
     }
 
     const headers = jsonData[0] as string[]
-    if (!Array.isArray(headers) || headers.length === 0) {
-      throw new Error('Invalid file format: No headers found')
-    }
-
-    console.log('Headers encontrados:', headers)
-
     const dataRows = jsonData.slice(1)
-    const previewData = dataRows.slice(0, 5).map(row => {
-      const rowData: Record<string, any> = {}
-      headers.forEach((header, index) => {
-        rowData[header] = row[index]
-      })
-      return rowData
-    })
 
-    // Análise de colunas
+    // Análise das colunas
     const columnAnalysis = headers.map((header, index) => {
       const columnData = dataRows.map(row => row[index])
-      const sample = dataRows[0][index]
+      const sample = columnData[0]
+      
       let type = 'text'
-
       if (typeof sample === 'number') {
         type = Number.isInteger(sample) ? 'integer' : 'numeric'
       } else if (typeof sample === 'boolean') {
@@ -118,78 +78,107 @@ serve(async (req) => {
         type = 'timestamp'
       }
 
+      // Detectar padrões
+      const patterns = {
+        email: columnData.some(value => 
+          typeof value === 'string' && 
+          value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
+        ),
+        url: columnData.some(value =>
+          typeof value === 'string' &&
+          value.match(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)
+        ),
+        phone: columnData.some(value =>
+          typeof value === 'string' &&
+          value.match(/^[\d\s()-+]+$/)
+        )
+      }
+
       return {
         name: header,
         type,
-        sample
+        sample,
+        nullCount: columnData.filter(v => v === null || v === undefined).length,
+        uniqueCount: new Set(columnData).size,
+        patterns
       }
     })
 
-    // Atualizar metadados usando o cliente admin
-    const { error: updateError } = await supabaseAdmin
-      .from('data_files_metadata')
+    // Atualizar metadados
+    const { error: updateError } = await supabase
+      .from('data_imports')
       .update({
+        status: 'analyzing',
+        row_count: dataRows.length,
         columns_metadata: { columns: columnAnalysis },
-        preview_data: previewData,
-        status: 'ready'
+        column_analysis: columnAnalysis
       })
-      .eq('id', fileMetadata.id)
+      .eq('id', fileId)
 
-    if (updateError) {
-      console.error('Erro ao atualizar metadados:', updateError)
-      throw updateError
+    if (updateError) throw updateError
+
+    // Chamar Azure OpenAI para sugerir nomes
+    const openaiEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')
+    const openaiKey = Deno.env.get('AZURE_OPENAI_API_KEY')
+    const openaiDeployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT')
+
+    if (openaiEndpoint && openaiKey && openaiDeployment) {
+      try {
+        const response = await fetch(
+          `${openaiEndpoint}/openai/deployments/${openaiDeployment}/chat/completions?api-version=2023-05-15`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'api-key': openaiKey
+            },
+            body: JSON.stringify({
+              messages: [
+                {
+                  role: 'system',
+                  content: 'Você é um especialista em análise de dados. Sugira nomes padronizados para colunas de dados.'
+                },
+                {
+                  role: 'user',
+                  content: `Analise estas colunas e sugira nomes padronizados em snake_case:
+                    ${JSON.stringify(columnAnalysis, null, 2)}`
+                }
+              ],
+              temperature: 0.3,
+              max_tokens: 800
+            })
+          }
+        )
+
+        const suggestions = await response.json()
+        
+        if (suggestions.choices && suggestions.choices[0]) {
+          await supabase
+            .from('data_imports')
+            .update({
+              column_suggestions: suggestions.choices[0].message.content
+            })
+            .eq('id', fileId)
+        }
+      } catch (error) {
+        console.error('Erro ao obter sugestões:', error)
+      }
     }
-
-    // Inserir dados das colunas na tabela data_file_columns
-    console.log('Inserindo dados das colunas...')
-    
-    const columnsData = headers.map(header => ({
-      file_id: fileMetadata.id,
-      organization_id: organizationId,
-      original_name: header,
-      data_type: 'text', // Tipo padrão, pode ser ajustado conforme necessário
-      suggested_name: header,
-      is_nullable: true
-    }))
-
-    const { error: columnsError } = await supabaseAdmin
-      .from('data_file_columns')
-      .insert(columnsData)
-
-    if (columnsError) {
-      console.error('Erro ao inserir dados das colunas:', columnsError)
-      throw columnsError
-    }
-
-    console.log('Processo concluído com sucesso')
 
     return new Response(
       JSON.stringify({
         success: true,
-        file_id: fileMetadata.id,
-        total_rows: dataRows.length,
-        preview_data: previewData,
-        columns: columnAnalysis
+        columns: columnAnalysis,
+        rowCount: dataRows.length
       }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Erro no processamento:', error)
+    console.error('Error:', error)
     return new Response(
-      JSON.stringify({
-        error: error.message,
-        details: error.stack
-      }),
+      JSON.stringify({ error: error.message }),
       { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500
       }
     )
