@@ -19,13 +19,20 @@ serve(async (req) => {
     const { fileId } = await req.json()
     console.log('Processando arquivo:', fileId)
 
-    const supabase = createClient(
+    // Criar cliente Supabase com o service role key
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     )
 
     // Buscar informações do arquivo
-    const { data: fileData, error: fileError } = await supabase
+    const { data: fileData, error: fileError } = await supabaseAdmin
       .from('data_imports')
       .select('*')
       .eq('id', fileId)
@@ -39,7 +46,7 @@ serve(async (req) => {
     console.log('Dados do arquivo encontrados:', fileData)
 
     // Atualizar status para analyzing
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('data_imports')
       .update({ status: 'analyzing' })
       .eq('id', fileId)
@@ -49,15 +56,15 @@ serve(async (req) => {
       throw updateError
     }
 
-    // Baixar o arquivo do storage
-    const { data: fileBuffer, error: downloadError } = await supabase
+    // Baixar o arquivo do storage usando o cliente admin
+    const { data: fileBuffer, error: downloadError } = await supabaseAdmin
       .storage
       .from('data_files')
       .download(fileData.storage_path)
 
     if (downloadError) {
       console.error('Erro ao baixar arquivo:', downloadError)
-      await handleError(supabase, fileId, 'Erro ao baixar arquivo: ' + downloadError.message)
+      await handleError(supabaseAdmin, fileId, 'Erro ao baixar arquivo: ' + downloadError.message)
       throw downloadError
     }
 
@@ -69,7 +76,7 @@ serve(async (req) => {
       arrayBuffer = await fileBuffer.arrayBuffer()
     } catch (error) {
       console.error('Erro ao converter arquivo:', error)
-      await handleError(supabase, fileId, 'Erro ao converter arquivo')
+      await handleError(supabaseAdmin, fileId, 'Erro ao converter arquivo')
       throw error
     }
 
@@ -84,7 +91,7 @@ serve(async (req) => {
       })
     } catch (error) {
       console.error('Erro ao ler arquivo Excel:', error)
-      await handleError(supabase, fileId, 'Erro ao ler arquivo Excel')
+      await handleError(supabaseAdmin, fileId, 'Erro ao ler arquivo Excel')
       throw error
     }
 
@@ -100,7 +107,7 @@ serve(async (req) => {
     console.log('Arquivo convertido para JSON:', { totalRows: jsonData.length })
 
     if (jsonData.length === 0) {
-      await handleError(supabase, fileId, 'Arquivo está vazio')
+      await handleError(supabaseAdmin, fileId, 'Arquivo está vazio')
       throw new Error('Arquivo está vazio')
     }
 
@@ -119,13 +126,13 @@ serve(async (req) => {
         sample_data: JSON.stringify(sampleData.map(row => row[column])),
       }))
 
-      const { error: batchError } = await supabase
+      const { error: batchError } = await supabaseAdmin
         .from('data_file_columns')
         .insert(columnsData)
 
       if (batchError) {
         console.error('Erro ao criar lote de colunas:', batchError)
-        await handleError(supabase, fileId, 'Erro ao processar colunas: ' + batchError.message)
+        await handleError(supabaseAdmin, fileId, 'Erro ao processar colunas: ' + batchError.message)
         throw batchError
       }
 
@@ -133,7 +140,7 @@ serve(async (req) => {
     }
 
     // Atualizar status para editing
-    const { error: finalUpdateError } = await supabase
+    const { error: finalUpdateError } = await supabaseAdmin
       .from('data_imports')
       .update({
         status: 'editing',
@@ -178,4 +185,3 @@ async function handleError(supabase: any, fileId: string, errorMessage: string) 
     })
     .eq('id', fileId)
 }
-
