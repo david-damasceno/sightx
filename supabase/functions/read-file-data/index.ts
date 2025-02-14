@@ -29,7 +29,7 @@ serve(async (req) => {
     // Buscar informações do arquivo
     const { data: fileData, error: fileError } = await supabase
       .from('data_imports')
-      .select('storage_path, file_type, status')
+      .select('storage_path, file_type')
       .eq('id', fileId)
       .eq('organization_id', organizationId)
       .single()
@@ -39,15 +39,7 @@ serve(async (req) => {
       throw new Error('Arquivo não encontrado')
     }
 
-    if (!fileData.storage_path) {
-      throw new Error('Caminho do arquivo não encontrado')
-    }
-
-    console.log('Dados do arquivo encontrados:', {
-      storagePath: fileData.storage_path,
-      fileType: fileData.file_type,
-      status: fileData.status
-    })
+    console.log('Dados do arquivo encontrados:', fileData)
 
     // Baixar o arquivo do storage
     const { data: fileBuffer, error: downloadError } = await supabase

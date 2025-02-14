@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { ProcessSteps } from "@/components/data/ProcessSteps"
 import { FileUploader } from "@/components/data/FileUploader"
@@ -34,64 +35,11 @@ export default function DataContext() {
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
 
-  const checkFileStatus = async (fileId: string): Promise<ImportStatus | null> => {
-    try {
-      console.log('Verificando status do arquivo:', fileId)
-      const { data: importData, error: importError } = await supabase
-        .from('data_imports')
-        .select('*')
-        .eq('id', fileId)
-        .single()
-
-      if (importError) {
-        console.error('Erro ao verificar status:', importError)
-        return null
-      }
-
-      console.log('Status atual do arquivo:', importData.status)
-      return importData.status
-    } catch (error) {
-      console.error('Erro ao verificar status:', error)
-      return null
-    }
-  }
-
   const fetchFileData = async (fileId: string) => {
     try {
       console.log('Iniciando busca de dados do arquivo:', fileId)
       setLoading(true)
       
-      // Aguardar até que o arquivo esteja pronto
-      let fileStatus: ImportStatus | null = null
-      let attempts = 0
-      const maxAttempts = 30
-
-      while (attempts < maxAttempts) {
-        fileStatus = await checkFileStatus(fileId)
-        console.log(`Tentativa ${attempts + 1}: status = ${fileStatus}`)
-
-        if (!fileStatus) {
-          throw new Error('Erro ao verificar status do arquivo')
-        }
-
-        if (fileStatus === 'error') {
-          throw new Error('Erro no processamento do arquivo')
-        }
-
-        if (fileStatus === 'editing') {
-          break
-        }
-
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        attempts++
-      }
-
-      if (fileStatus !== 'editing') {
-        throw new Error('Timeout ao aguardar processamento do arquivo')
-      }
-
-      console.log('Arquivo pronto, buscando colunas...')
-
       // Buscar colunas do arquivo
       const { data: columnsData, error: columnsError } = await supabase
         .from('data_file_columns')
@@ -117,6 +65,8 @@ export default function DataContext() {
         previewData: []
       })
 
+      setCurrentStep(2)
+
     } catch (error: any) {
       console.error('Erro ao buscar dados do arquivo:', error)
       toast({
@@ -132,7 +82,6 @@ export default function DataContext() {
   const handleUploadComplete = (fileId: string) => {
     console.log('Upload completo, ID:', fileId)
     fetchFileData(fileId)
-    setCurrentStep(2)
   }
 
   const handleStepChange = (step: number) => {
