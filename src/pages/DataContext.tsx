@@ -8,13 +8,19 @@ import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/integrations/supabase/client"
 
+interface Column {
+  name: string
+  type: string
+  sample: any
+}
+
+interface ColumnsMetadata {
+  columns: Column[]
+}
+
 interface FileData {
   id: string
-  columns: Array<{
-    name: string
-    type: string
-    sample: any
-  }>
+  columns: Column[]
   previewData: any[]
 }
 
@@ -35,10 +41,17 @@ export default function DataContext() {
 
       if (error) throw error
 
+      // Garantir que columns_metadata é um objeto com a estrutura correta
+      const columnsMetadata = data.columns_metadata as ColumnsMetadata
+      const columns = columnsMetadata?.columns || []
+
+      // Garantir que preview_data é um array
+      const previewData = Array.isArray(data.preview_data) ? data.preview_data : []
+
       setFileData({
         id: data.id,
-        columns: data.columns_metadata?.columns || [],
-        previewData: data.preview_data || []
+        columns,
+        previewData
       })
     } catch (error: any) {
       console.error('Erro ao buscar dados do arquivo:', error)
