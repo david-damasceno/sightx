@@ -14,11 +14,11 @@ serve(async (req) => {
   }
 
   try {
-    const { fileId, page = 1, pageSize = 50 } = await req.json()
-    console.log('Processando arquivo:', { fileId, page, pageSize })
+    const { fileId, page = 1, pageSize = 50, organizationId } = await req.json()
+    console.log('Processando arquivo:', { fileId, page, pageSize, organizationId })
 
-    if (!fileId) {
-      throw new Error('File ID is required')
+    if (!fileId || !organizationId) {
+      throw new Error('File ID e Organization ID são obrigatórios')
     }
 
     const supabase = createClient(
@@ -31,6 +31,7 @@ serve(async (req) => {
       .from('data_imports')
       .select('storage_path, file_type')
       .eq('id', fileId)
+      .eq('organization_id', organizationId)
       .single()
 
     if (fileError || !fileData) {

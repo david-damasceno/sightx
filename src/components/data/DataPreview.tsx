@@ -10,6 +10,7 @@ import {
 import { DataAnalysisTools } from "./DataAnalysisTools"
 import { Maximize, Minimize } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
 import "./data-grid.css"
 
 interface DataPreviewProps {
@@ -26,6 +27,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
   const [duplicates, setDuplicates] = useState<Record<string, number>>({})
   const [currentPage, setCurrentPage] = useState(1)
   const [loading, setLoading] = useState(false)
+  const { currentOrganization } = useAuth()
   const pageSize = 100
 
   const findDuplicates = (columnName: string) => {
@@ -39,13 +41,28 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
   }
 
   const loadData = async (page: number) => {
+    if (!currentOrganization) {
+      console.error('Nenhuma organização selecionada')
+      return
+    }
+
     try {
       setLoading(true)
+      console.log('Carregando dados:', { fileId, page, pageSize, organizationId: currentOrganization.id })
+      
       const { data: fileData, error } = await supabase.functions.invoke('read-file-data', {
-        body: { fileId, page, pageSize }
+        body: { 
+          fileId, 
+          page, 
+          pageSize,
+          organizationId: currentOrganization.id
+        }
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('Erro ao carregar dados:', error)
+        throw error
+      }
 
       setData(prevData => {
         const newData = [...prevData]
@@ -63,8 +80,10 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
   }
 
   useEffect(() => {
-    loadData(1)
-  }, [fileId])
+    if (fileId && currentOrganization) {
+      loadData(1)
+    }
+  }, [fileId, currentOrganization])
 
   const gridColumns = columns.map(col => ({
     key: col.name,
