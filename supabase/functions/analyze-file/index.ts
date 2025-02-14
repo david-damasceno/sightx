@@ -8,7 +8,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const BATCH_SIZE = 50; // Processar 50 colunas por vez
+const BATCH_SIZE = 25; // Reduzido para evitar timeout
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -17,9 +17,8 @@ serve(async (req) => {
 
   try {
     const { fileId } = await req.json()
-    console.log('Processando arquivo:', fileId)
+    console.log('Iniciando processamento do arquivo:', fileId)
 
-    // Criar cliente Supabase com o service role key
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -32,6 +31,7 @@ serve(async (req) => {
     )
 
     // Buscar informações do arquivo
+    console.log('Buscando informações do arquivo...')
     const { data: fileData, error: fileError } = await supabaseAdmin
       .from('data_imports')
       .select('*')
@@ -43,9 +43,14 @@ serve(async (req) => {
       throw new Error('Arquivo não encontrado')
     }
 
-    console.log('Dados do arquivo encontrados:', fileData)
+    console.log('Dados do arquivo encontrados:', {
+      id: fileData.id,
+      nome: fileData.name,
+      caminho: fileData.storage_path
+    })
 
     // Atualizar status para analyzing
+    console.log('Atualizando status para analyzing...')
     const { error: updateError } = await supabaseAdmin
       .from('data_imports')
       .update({ status: 'analyzing' })
@@ -56,7 +61,8 @@ serve(async (req) => {
       throw updateError
     }
 
-    // Baixar o arquivo do storage usando o cliente admin
+    // Baixar o arquivo do storage
+    console.log('Baixando arquivo do storage...')
     const { data: fileBuffer, error: downloadError } = await supabaseAdmin
       .storage
       .from('data_files')
@@ -68,43 +74,57 @@ serve(async (req) => {
       throw downloadError
     }
 
-    console.log('Arquivo baixado com sucesso')
+    console.log('Arquivo baixado com sucesso, convertendo...')
 
-    // Converter para array buffer com tratamento de erro
+    // Converter para array buffer
     let arrayBuffer;
     try {
       arrayBuffer = await fileBuffer.arrayBuffer()
+      console.log('Buffer criado com sucesso, tamanho:', arrayBuffer.byteLength)
     } catch (error) {
       console.error('Erro ao converter arquivo:', error)
       await handleError(supabaseAdmin, fileId, 'Erro ao converter arquivo')
       throw error
     }
 
-    // Ler o arquivo usando xlsx com tratamento de erro
+    // Ler o arquivo Excel
+    console.log('Lendo arquivo Excel...')
     let workbook;
     try {
       workbook = XLSX.read(new Uint8Array(arrayBuffer), { 
         type: 'array',
         cellDates: true,
         cellNF: false,
-        cellText: false
+        cellText: false,
+        WTF: true // Modo debug do XLSX
       })
+      console.log('Arquivo Excel lido com sucesso')
     } catch (error) {
       console.error('Erro ao ler arquivo Excel:', error)
       await handleError(supabaseAdmin, fileId, 'Erro ao ler arquivo Excel')
       throw error
     }
 
+    // Verificar se há planilhas
+    if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+      throw new Error('Arquivo Excel não contém planilhas')
+    }
+
+    console.log('Planilhas encontradas:', workbook.SheetNames)
     const worksheet = workbook.Sheets[workbook.SheetNames[0]]
     
-    // Converter para JSON com tratamento de memória
+    // Converter para JSON
+    console.log('Convertendo para JSON...')
     const jsonData = XLSX.utils.sheet_to_json(worksheet, {
       raw: false,
       dateNF: 'yyyy-mm-dd',
       defval: null
     })
 
-    console.log('Arquivo convertido para JSON:', { totalRows: jsonData.length })
+    console.log('Dados convertidos:', { 
+      totalLinhas: jsonData.length,
+      primeirasLinhas: jsonData.slice(0, 2)
+    })
 
     if (jsonData.length === 0) {
       await handleError(supabaseAdmin, fileId, 'Arquivo está vazio')
@@ -113,11 +133,14 @@ serve(async (req) => {
 
     // Analisar colunas
     const columns = Object.keys(jsonData[0] || {})
+    console.log('Colunas encontradas:', columns)
     const sampleData = jsonData.slice(0, 5)
 
-    // Processar colunas em lotes
+    // Processar colunas em lotes menores
+    console.log('Processando colunas em lotes...')
     for (let i = 0; i < columns.length; i += BATCH_SIZE) {
       const columnBatch = columns.slice(i, i + BATCH_SIZE)
+      console.log(`Processando lote ${i/BATCH_SIZE + 1}, colunas:`, columnBatch)
       
       const columnsData = columnBatch.map(column => ({
         file_id: fileId,
@@ -136,10 +159,11 @@ serve(async (req) => {
         throw batchError
       }
 
-      console.log(`Processado lote de colunas ${i + 1} até ${i + columnBatch.length}`)
+      console.log(`Lote ${i/BATCH_SIZE + 1} processado com sucesso`)
     }
 
-    // Atualizar status para editing
+    // Atualizar status final
+    console.log('Atualizando status final...')
     const { error: finalUpdateError } = await supabaseAdmin
       .from('data_imports')
       .update({
@@ -153,6 +177,7 @@ serve(async (req) => {
       throw finalUpdateError
     }
 
+    console.log('Processamento concluído com sucesso')
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -177,6 +202,7 @@ serve(async (req) => {
 
 // Função auxiliar para tratamento de erros
 async function handleError(supabase: any, fileId: string, errorMessage: string) {
+  console.error('Registrando erro:', errorMessage)
   await supabase
     .from('data_imports')
     .update({ 
