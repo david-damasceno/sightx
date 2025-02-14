@@ -28,6 +28,8 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
 
     setLoading(true)
     try {
+      console.log('Iniciando upload para organização:', currentOrganization.id)
+      
       // Criar registro do import
       const { data: importData, error: importError } = await supabase
         .from('data_imports')
@@ -47,7 +49,12 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
         .select()
         .single()
 
-      if (importError) throw importError
+      if (importError) {
+        console.error('Erro ao criar import:', importError)
+        throw importError
+      }
+
+      console.log('Import criado:', importData)
 
       // Upload do arquivo
       const filePath = `${currentOrganization.id}/${importData.id}/${file.name}`
@@ -55,7 +62,12 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
         .from('data_files')
         .upload(filePath, file)
 
-      if (uploadError) throw uploadError
+      if (uploadError) {
+        console.error('Erro no upload do arquivo:', uploadError)
+        throw uploadError
+      }
+
+      console.log('Arquivo enviado com sucesso:', filePath)
 
       // Atualizar storage_path e status
       const { data: updatedImport, error: updateError } = await supabase
@@ -65,11 +77,16 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
           status: 'uploaded' as ImportStatus
         })
         .eq('id', importData.id)
+        .eq('organization_id', currentOrganization.id) // Garantir que estamos atualizando o registro correto
         .select()
         .single()
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Erro ao atualizar import:', updateError)
+        throw updateError
+      }
 
+      console.log('Import atualizado:', updatedImport)
       setCurrentImport(updatedImport)
       return importData.id
     } catch (error: any) {
@@ -86,33 +103,54 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
   }, [currentOrganization, user, toast])
 
   const analyzeFile = useCallback(async (fileId: string) => {
+    if (!currentOrganization) {
+      throw new Error("Organização não selecionada")
+    }
+
     setLoading(true)
     try {
+      console.log('Iniciando análise do arquivo:', fileId)
+      
       // Atualizar status para analyzing
       const { error: updateError } = await supabase
         .from('data_imports')
         .update({ status: 'analyzing' })
         .eq('id', fileId)
+        .eq('organization_id', currentOrganization.id)
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Erro ao atualizar status:', updateError)
+        throw updateError
+      }
 
       // Chamar função de análise
       const { error } = await supabase.functions
         .invoke('analyze-file', {
-          body: { fileId }
+          body: { 
+            fileId,
+            organizationId: currentOrganization.id 
+          }
         })
 
-      if (error) throw error
+      if (error) {
+        console.error('Erro na função de análise:', error)
+        throw error
+      }
 
       // Buscar dados atualizados
       const { data: importData, error: fetchError } = await supabase
         .from('data_imports')
         .select('*')
         .eq('id', fileId)
+        .eq('organization_id', currentOrganization.id)
         .single()
 
-      if (fetchError) throw fetchError
+      if (fetchError) {
+        console.error('Erro ao buscar dados atualizados:', fetchError)
+        throw fetchError
+      }
 
+      console.log('Análise concluída:', importData)
       setCurrentImport(importData)
     } catch (error: any) {
       console.error('Erro na análise:', error)
@@ -130,10 +168,11 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
           error_message: error.message || "Erro desconhecido na análise"
         })
         .eq('id', fileId)
+        .eq('organization_id', currentOrganization.id)
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [currentOrganization, toast])
 
   return (
     <DataImportContext.Provider
