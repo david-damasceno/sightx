@@ -69,18 +69,19 @@ export default function DataContext() {
         processingResult: processingResult && isProcessingResult(processingResult) ? processingResult : undefined
       })
 
+      // Analisar o arquivo se não houver colunas
       if (columnsData.length === 0) {
-        toast({
-          title: "Aviso",
-          description: "Nenhuma coluna foi encontrada no arquivo. Verifique se o formato está correto.",
-          variant: "destructive"
+        console.log('Iniciando análise do arquivo...')
+        const { error: analyzeError } = await supabase.functions.invoke('analyze-file', {
+          body: { fileId }
         })
+
+        if (analyzeError) {
+          console.error('Erro na análise:', analyzeError)
+          throw analyzeError
+        }
       }
 
-      // Se o processamento já estiver completo, avançar para o próximo passo
-      if (processingResult?.status === 'completed') {
-        setCurrentStep(3)
-      }
     } catch (error: any) {
       console.error('Erro ao buscar dados do arquivo:', error)
       toast({

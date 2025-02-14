@@ -64,11 +64,12 @@ serve(async (req) => {
     const headers = jsonData[0] as string[]
     const dataRows = jsonData.slice(1)
 
-    // Análise das colunas
-    const columnAnalysis = headers.map((header, index) => {
+    // Criar registros para cada coluna
+    const columnPromises = headers.map(async (header, index) => {
       const columnData = dataRows.map(row => row[index])
       const sample = columnData[0]
       
+      // Inferir tipo de dado
       let type = 'text'
       if (typeof sample === 'number') {
         type = Number.isInteger(sample) ? 'integer' : 'numeric'
@@ -78,98 +79,35 @@ serve(async (req) => {
         type = 'timestamp'
       }
 
-      // Detectar padrões
-      const patterns = {
-        email: columnData.some(value => 
-          typeof value === 'string' && 
-          value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
-        ),
-        url: columnData.some(value =>
-          typeof value === 'string' &&
-          value.match(/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/)
-        ),
-        phone: columnData.some(value =>
-          typeof value === 'string' &&
-          value.match(/^[\d\s()-+]+$/)
-        )
-      }
+      const { error: insertError } = await supabase
+        .from('data_file_columns')
+        .insert({
+          file_id: fileId,
+          organization_id: importData.organization_id,
+          original_name: header,
+          data_type: type,
+          sample_data: String(sample),
+          status: 'active'
+        })
 
-      return {
-        name: header,
-        type,
-        sample,
-        nullCount: columnData.filter(v => v === null || v === undefined).length,
-        uniqueCount: new Set(columnData).size,
-        patterns
-      }
+      if (insertError) throw insertError
     })
 
-    // Atualizar metadados
+    await Promise.all(columnPromises)
+
+    // Atualizar status do import
     const { error: updateError } = await supabase
       .from('data_imports')
-      .update({
-        status: 'analyzing',
-        row_count: dataRows.length,
-        columns_metadata: { columns: columnAnalysis },
-        column_analysis: columnAnalysis
-      })
+      .update({ status: 'analyzed' })
       .eq('id', fileId)
 
     if (updateError) throw updateError
 
-    // Chamar Azure OpenAI para sugerir nomes
-    const openaiEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')
-    const openaiKey = Deno.env.get('AZURE_OPENAI_API_KEY')
-    const openaiDeployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT')
-
-    if (openaiEndpoint && openaiKey && openaiDeployment) {
-      try {
-        const response = await fetch(
-          `${openaiEndpoint}/openai/deployments/${openaiDeployment}/chat/completions?api-version=2023-05-15`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'api-key': openaiKey
-            },
-            body: JSON.stringify({
-              messages: [
-                {
-                  role: 'system',
-                  content: 'Você é um especialista em análise de dados. Sugira nomes padronizados para colunas de dados.'
-                },
-                {
-                  role: 'user',
-                  content: `Analise estas colunas e sugira nomes padronizados em snake_case:
-                    ${JSON.stringify(columnAnalysis, null, 2)}`
-                }
-              ],
-              temperature: 0.3,
-              max_tokens: 800
-            })
-          }
-        )
-
-        const suggestions = await response.json()
-        
-        if (suggestions.choices && suggestions.choices[0]) {
-          await supabase
-            .from('data_imports')
-            .update({
-              column_suggestions: suggestions.choices[0].message.content
-            })
-            .eq('id', fileId)
-        }
-      } catch (error) {
-        console.error('Erro ao obter sugestões:', error)
-      }
-    }
-
     return new Response(
       JSON.stringify({
         success: true,
-        columns: columnAnalysis,
-        rowCount: dataRows.length
+        columns: headers.length,
+        rows: dataRows.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
