@@ -31,6 +31,9 @@ export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) 
   const [tableColumns, setTableColumns] = useState(columns)
   const [data, setData] = useState(previewData)
 
+  console.log("Columns:", tableColumns)
+  console.log("Data:", data)
+
   const handleHeaderEdit = (columnName: string, newName: string) => {
     setTableColumns(prev => 
       prev.map(col => col.name === columnName ? { ...col, name: newName } : col)
@@ -108,15 +111,15 @@ export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.map((row, rowIndex) => (
+                {Array.isArray(data) && data.map((row, rowIndex) => (
                   <TableRow key={rowIndex}>
                     <TableCell className="text-center text-muted-foreground">
                       {rowIndex + 1}
                     </TableCell>
                     {tableColumns.map((column) => (
-                      <TableCell key={`${rowIndex}-${column.name}`}>
+                      <TableCell key={`${rowIndex}-${column.name}`} className="p-0">
                         <Input
-                          className="h-8 px-2"
+                          className="h-8 px-2 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                           value={row[column.name] ?? ''}
                           onChange={(e) => handleCellEdit(rowIndex, column.name, e.target.value)}
                         />
