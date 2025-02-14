@@ -62,7 +62,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
         .from('data_file_columns')
         .select('*')
         .eq('file_id', fileId)
-        .order('row_number', { ascending: true })
+        .order('original_name', { ascending: true })
         .range((page - 1) * rowsPerPage, page * rowsPerPage - 1)
 
       if (error) throw error
@@ -91,13 +91,9 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
   const handleSave = async (rowId: string, columnName: string, value: string) => {
     try {
       const { error } = await supabase
-        .from('data_file_changes')
-        .insert({
-          file_id: fileId,
-          row_number: data.find(row => row.id === rowId)?.row_number || 0,
-          column_name: columnName,
-          new_value: value
-        })
+        .from('data_file_columns')
+        .update({ [columnName]: value })
+        .eq('id', rowId)
 
       if (error) throw error
 
@@ -223,3 +219,4 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
     </div>
   )
 }
+
