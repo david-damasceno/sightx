@@ -35,11 +35,60 @@ export default function DataContext() {
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
 
+  const checkFileStatus = async (fileId: string) => {
+    try {
+      console.log('Verificando status do arquivo:', fileId)
+      const { data: importData, error: importError } = await supabase
+        .from('data_imports')
+        .select('*')
+        .eq('id', fileId)
+        .single()
+
+      if (importError) throw importError
+
+      if (importData.status === 'error') {
+        toast({
+          title: "Erro no processamento",
+          description: importData.error_message || "Houve um erro ao processar o arquivo",
+          variant: "destructive"
+        })
+        return false
+      }
+
+      if (importData.status === 'editing') {
+        console.log('Arquivo processado com sucesso')
+        return true
+      }
+
+      return false
+    } catch (error) {
+      console.error('Erro ao verificar status:', error)
+      return false
+    }
+  }
+
   const fetchFileData = async (fileId: string) => {
     try {
       console.log('Buscando dados do arquivo:', fileId)
       setLoading(true)
       
+      // Aguardar até que o arquivo seja processado (máximo 30 segundos)
+      let processed = false
+      let attempts = 0
+      const maxAttempts = 30
+
+      while (!processed && attempts < maxAttempts) {
+        processed = await checkFileStatus(fileId)
+        if (!processed) {
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          attempts++
+        }
+      }
+
+      if (!processed) {
+        throw new Error('Timeout ao processar arquivo')
+      }
+
       // Buscar colunas do arquivo
       const { data: columnsData, error: columnsError } = await supabase
         .from('data_file_columns')
@@ -49,38 +98,13 @@ export default function DataContext() {
 
       if (columnsError) throw columnsError
 
-      // Buscar resultado do processamento
-      const { data: processingResult, error: processingError } = await supabase
-        .from('data_processing_results')
-        .select('*')
-        .eq('file_id', fileId)
-        .maybeSingle()
-
-      if (processingError && processingError.code !== 'PGRST116') {
-        throw processingError
-      }
-
-      console.log('Dados recebidos do banco:', { columnsData, processingResult })
+      console.log('Dados das colunas recebidos:', columnsData)
 
       setFileData({
         id: fileId,
         columns: columnsData.map(adaptColumnMetadata),
-        previewData: [],
-        processingResult: processingResult && isProcessingResult(processingResult) ? processingResult : undefined
+        previewData: []
       })
-
-      // Analisar o arquivo se não houver colunas
-      if (columnsData.length === 0) {
-        console.log('Iniciando análise do arquivo...')
-        const { error: analyzeError } = await supabase.functions.invoke('analyze-file', {
-          body: { fileId }
-        })
-
-        if (analyzeError) {
-          console.error('Erro na análise:', analyzeError)
-          throw analyzeError
-        }
-      }
 
     } catch (error: any) {
       console.error('Erro ao buscar dados do arquivo:', error)
@@ -112,7 +136,6 @@ export default function DataContext() {
     try {
       setLoading(true)
 
-      // Criar um registro de processamento
       const { data: processingResult, error: processingError } = await supabase
         .from('data_processing_results')
         .insert({
