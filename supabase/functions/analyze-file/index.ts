@@ -8,6 +8,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const BATCH_SIZE = 50; // Processar 50 colunas por vez
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -42,7 +44,10 @@ serve(async (req) => {
       .update({ status: 'analyzing' })
       .eq('id', fileId)
 
-    if (updateError) throw updateError
+    if (updateError) {
+      console.error('Erro ao atualizar status:', updateError)
+      throw updateError
+    }
 
     // Baixar o arquivo do storage
     const { data: fileBuffer, error: downloadError } = await supabase
@@ -52,41 +57,79 @@ serve(async (req) => {
 
     if (downloadError) {
       console.error('Erro ao baixar arquivo:', downloadError)
+      await handleError(supabase, fileId, 'Erro ao baixar arquivo: ' + downloadError.message)
       throw downloadError
     }
 
     console.log('Arquivo baixado com sucesso')
 
-    // Converter para array buffer
-    const arrayBuffer = await fileBuffer.arrayBuffer()
+    // Converter para array buffer com tratamento de erro
+    let arrayBuffer;
+    try {
+      arrayBuffer = await fileBuffer.arrayBuffer()
+    } catch (error) {
+      console.error('Erro ao converter arquivo:', error)
+      await handleError(supabase, fileId, 'Erro ao converter arquivo')
+      throw error
+    }
 
-    // Ler o arquivo usando xlsx
-    const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' })
+    // Ler o arquivo usando xlsx com tratamento de erro
+    let workbook;
+    try {
+      workbook = XLSX.read(new Uint8Array(arrayBuffer), { 
+        type: 'array',
+        cellDates: true,
+        cellNF: false,
+        cellText: false
+      })
+    } catch (error) {
+      console.error('Erro ao ler arquivo Excel:', error)
+      await handleError(supabase, fileId, 'Erro ao ler arquivo Excel')
+      throw error
+    }
+
     const worksheet = workbook.Sheets[workbook.SheetNames[0]]
     
-    // Converter para JSON
-    const jsonData = XLSX.utils.sheet_to_json(worksheet)
+    // Converter para JSON com tratamento de memória
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+      raw: false,
+      dateNF: 'yyyy-mm-dd',
+      defval: null
+    })
+
     console.log('Arquivo convertido para JSON:', { totalRows: jsonData.length })
+
+    if (jsonData.length === 0) {
+      await handleError(supabase, fileId, 'Arquivo está vazio')
+      throw new Error('Arquivo está vazio')
+    }
 
     // Analisar colunas
     const columns = Object.keys(jsonData[0] || {})
     const sampleData = jsonData.slice(0, 5)
 
-    // Criar registros de colunas
-    for (const column of columns) {
-      const { error: columnError } = await supabase
-        .from('data_file_columns')
-        .insert({
-          file_id: fileId,
-          organization_id: fileData.organization_id,
-          original_name: column,
-          sample_data: JSON.stringify(sampleData.map(row => row[column])),
-        })
+    // Processar colunas em lotes
+    for (let i = 0; i < columns.length; i += BATCH_SIZE) {
+      const columnBatch = columns.slice(i, i + BATCH_SIZE)
+      
+      const columnsData = columnBatch.map(column => ({
+        file_id: fileId,
+        organization_id: fileData.organization_id,
+        original_name: column,
+        sample_data: JSON.stringify(sampleData.map(row => row[column])),
+      }))
 
-      if (columnError) {
-        console.error('Erro ao criar coluna:', columnError)
-        throw columnError
+      const { error: batchError } = await supabase
+        .from('data_file_columns')
+        .insert(columnsData)
+
+      if (batchError) {
+        console.error('Erro ao criar lote de colunas:', batchError)
+        await handleError(supabase, fileId, 'Erro ao processar colunas: ' + batchError.message)
+        throw batchError
       }
+
+      console.log(`Processado lote de colunas ${i + 1} até ${i + columnBatch.length}`)
     }
 
     // Atualizar status para editing
@@ -98,10 +141,18 @@ serve(async (req) => {
       })
       .eq('id', fileId)
 
-    if (finalUpdateError) throw finalUpdateError
+    if (finalUpdateError) {
+      console.error('Erro ao atualizar status final:', finalUpdateError)
+      throw finalUpdateError
+    }
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Arquivo processado com sucesso' }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'Arquivo processado com sucesso',
+        totalRows: jsonData.length,
+        totalColumns: columns.length
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
@@ -116,3 +167,15 @@ serve(async (req) => {
     )
   }
 })
+
+// Função auxiliar para tratamento de erros
+async function handleError(supabase: any, fileId: string, errorMessage: string) {
+  await supabase
+    .from('data_imports')
+    .update({ 
+      status: 'error',
+      error_message: errorMessage
+    })
+    .eq('id', fileId)
+}
+
