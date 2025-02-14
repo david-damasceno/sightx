@@ -12,7 +12,7 @@ export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: 
   const [dragActive, setDragActive] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const { toast } = useToast()
-  const { currentOrganization } = useAuth()
+  const { currentOrganization, user } = useAuth()
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -53,39 +53,72 @@ export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: 
   }
 
   const processFile = async (file: File) => {
-    if (!currentOrganization) return
+    if (!currentOrganization || !user) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado e ter uma organização selecionada",
+        variant: "destructive"
+      })
+      return
+    }
 
     setIsUploading(true)
     const progressInterval = simulateProgress()
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('organizationId', currentOrganization.id)
+      // Primeiro, criar o registro na tabela data_imports
+      const { data: importData, error: importError } = await supabase
+        .from('data_imports')
+        .insert({
+          organization_id: currentOrganization.id,
+          created_by: user.id,
+          name: file.name,
+          original_filename: file.name,
+          file_type: file.type,
+          status: 'pending',
+          columns_metadata: {},
+          column_analysis: {},
+          data_quality: {},
+          data_validation: {},
+          table_name: file.name.replace(/\.[^/.]+$/, "").toLowerCase().replace(/\s+/g, "_")
+        })
+        .select()
+        .single()
 
-      console.log('Enviando arquivo para análise:', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type
-      })
+      if (importError) throw importError
 
-      const { data, error } = await supabase.functions.invoke('analyze-file', {
-        body: formData,
-      })
+      console.log('Registro de importação criado:', importData)
 
-      if (error) throw error
+      // Upload do arquivo para o storage
+      const filePath = `${currentOrganization.id}/${importData.id}/${file.name}`
+      const { error: uploadError } = await supabase.storage
+        .from('data_files')
+        .upload(filePath, file)
 
-      console.log('Resultado da análise:', data)
+      if (uploadError) throw uploadError
 
+      // Atualizar o registro com o caminho do arquivo
+      const { error: updateError } = await supabase
+        .from('data_imports')
+        .update({
+          storage_path: filePath,
+          status: 'uploaded'
+        })
+        .eq('id', importData.id)
+
+      if (updateError) throw updateError
+
+      console.log('Arquivo processado com sucesso')
+      
       setUploadProgress(100)
       toast({
-        title: "Arquivo analisado com sucesso",
+        title: "Arquivo enviado com sucesso",
         description: "Agora você pode contextualizar os dados.",
       })
 
-      onUploadSuccess(data)
+      onUploadSuccess(importData)
     } catch (error: any) {
-      console.error('Error uploading file:', error)
+      console.error('Erro no upload:', error)
       toast({
         title: "Erro ao analisar arquivo",
         description: error.message || "Não foi possível processar o arquivo. Tente novamente.",
@@ -148,4 +181,3 @@ export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: 
     </div>
   )
 }
-
