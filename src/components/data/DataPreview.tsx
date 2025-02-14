@@ -15,6 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface Column {
   name: string
@@ -37,6 +38,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
   const [totalPages, setTotalPages] = useState(1)
   const rowsPerPage = 50
   const { toast } = useToast()
+  const { currentOrganization } = useAuth()
 
   const fetchData = async () => {
     try {
@@ -69,6 +71,15 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
   }, [page, fileId])
 
   const handleSave = async (rowIndex: number, columnName: string, value: string) => {
+    if (!currentOrganization) {
+      toast({
+        title: "Erro",
+        description: "Organização não encontrada",
+        variant: "destructive"
+      })
+      return
+    }
+
     try {
       // Atualizar dados locais
       const newData = [...data]
@@ -85,7 +96,8 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
           row_id: rowIndex.toString(),
           column_name: columnName,
           old_value: data[rowIndex][columnName],
-          new_value: value
+          new_value: value,
+          organization_id: currentOrganization.id
         })
 
       if (error) throw error
