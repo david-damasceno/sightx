@@ -2,9 +2,16 @@
 import { Json } from "@/integrations/supabase/types"
 
 export interface ColumnMetadata {
-  name: string
-  type: string
-  sample: string
+  id: string
+  file_id: string
+  original_name: string
+  mapped_name: string | null
+  data_type: string | null
+  sample_data: string | null
+  status: string
+  validation_rules: Json
+  organization_id: string
+  created_at: string
 }
 
 export type ImportStatus = 
@@ -17,6 +24,18 @@ export type ImportStatus =
   | 'completed'  // processo finalizado
   | 'error'      // erro em qualquer etapa
 
+export interface ProcessingResult {
+  id: string
+  file_id: string
+  status: 'pending' | 'processing' | 'completed' | 'error'
+  error_message: string | null
+  table_name: string | null
+  organization_id: string
+  created_at: string
+  completed_at: string | null
+  processing_metadata: Json
+}
+
 export interface DataImport {
   id: string
   organization_id: string
@@ -25,15 +44,13 @@ export interface DataImport {
   original_filename: string
   storage_path: string | null
   file_type: string | null
-  columns_metadata: {
-    columns: ColumnMetadata[]
-  }
   status: ImportStatus
   error_message: string | null
   row_count: number | null
   created_at: string | null
   created_by: string | null
-  column_analysis: any[]
   data_quality: Json
   data_validation: Json
+  columns_metadata: Json
+  column_analysis: Json
 }

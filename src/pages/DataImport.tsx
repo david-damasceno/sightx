@@ -5,9 +5,29 @@ import { DataPreview } from "@/components/data/DataPreview"
 import { ColumnMapper } from "@/components/data/ColumnMapper"
 import { cn } from "@/lib/utils"
 import { DataImportProvider, useDataImport } from "@/contexts/DataImportContext"
+import { useState, useEffect } from "react"
+import { supabase } from "@/integrations/supabase/client"
+import { ColumnMetadata } from "@/types/data-imports"
 
 function DataImportContent() {
   const { currentImport, analyzeFile } = useDataImport()
+  const [columns, setColumns] = useState<ColumnMetadata[]>([])
+
+  useEffect(() => {
+    if (currentImport?.id) {
+      // Carregar colunas
+      supabase
+        .from('data_file_columns')
+        .select('*')
+        .eq('file_id', currentImport.id)
+        .order('original_name')
+        .then(({ data, error }) => {
+          if (!error && data) {
+            setColumns(data)
+          }
+        })
+    }
+  }, [currentImport?.id])
 
   const currentStep = currentImport ? (
     currentImport.status === 'pending' || currentImport.status === 'uploading' || currentImport.status === 'uploaded' ? 1 :
@@ -20,15 +40,21 @@ function DataImportContent() {
     await analyzeFile(fileId)
   }
 
-  const handlePreviewNext = () => {
+  const handlePreviewNext = async () => {
     if (currentImport) {
-      // Atualizar status para processing
+      await supabase
+        .from('data_imports')
+        .update({ status: 'processing' })
+        .eq('id', currentImport.id)
     }
   }
 
-  const handleMappingComplete = () => {
+  const handleMappingComplete = async () => {
     if (currentImport) {
-      // Atualizar status para completed
+      await supabase
+        .from('data_imports')
+        .update({ status: 'completed' })
+        .eq('id', currentImport.id)
     }
   }
 
@@ -58,11 +84,7 @@ function DataImportContent() {
           )}>
             <DataPreview 
               fileId={currentImport.id}
-              columns={(currentImport.columns_metadata?.columns || []).map(col => ({
-                name: col.name,
-                type: col.type,
-                sample: col.sample
-              }))}
+              columns={columns}
               previewData={[]}
               onNext={handlePreviewNext}
             />
@@ -74,7 +96,7 @@ function DataImportContent() {
           )}>
             <ColumnMapper
               fileId={currentImport.id}
-              columns={(currentImport.columns_metadata?.columns || [])}
+              columns={columns}
               onMappingComplete={handleMappingComplete}
             />
           </div>

@@ -3,8 +3,7 @@ import { createContext, useContext, useState, useCallback } from "react"
 import { supabase } from "@/integrations/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
-import { Json } from "@/integrations/supabase/types"
-import { DataImport, ImportStatus } from "@/types/data-imports"
+import { DataImport, ImportStatus, ColumnMetadata, ProcessingResult } from "@/types/data-imports"
 
 interface DataImportContextType {
   currentImport: DataImport | null
@@ -40,7 +39,7 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
           file_type: file.type,
           status: 'pending' as ImportStatus,
           columns_metadata: {},
-          column_analysis: [],
+          column_analysis: {},
           data_quality: {},
           data_validation: {},
           table_name: file.name.replace(/\.[^/.]+$/, "").toLowerCase().replace(/\s+/g, "_")
@@ -63,7 +62,7 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
         .from('data_imports')
         .update({
           storage_path: filePath,
-          status: 'processing' as ImportStatus
+          status: 'uploaded' as ImportStatus
         })
         .eq('id', importData.id)
         .select()
@@ -89,6 +88,15 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
   const analyzeFile = useCallback(async (fileId: string) => {
     setLoading(true)
     try {
+      // Atualizar status para analyzing
+      const { error: updateError } = await supabase
+        .from('data_imports')
+        .update({ status: 'analyzing' })
+        .eq('id', fileId)
+
+      if (updateError) throw updateError
+
+      // Chamar função de análise
       const { error } = await supabase.functions
         .invoke('analyze-file', {
           body: { fileId }
@@ -96,6 +104,7 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
 
       if (error) throw error
 
+      // Buscar dados atualizados
       const { data: importData, error: fetchError } = await supabase
         .from('data_imports')
         .select('*')
@@ -112,6 +121,15 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
         description: error.message || "Não foi possível analisar o arquivo",
         variant: "destructive"
       })
+
+      // Atualizar status para error
+      await supabase
+        .from('data_imports')
+        .update({
+          status: 'error',
+          error_message: error.message || "Erro desconhecido na análise"
+        })
+        .eq('id', fileId)
     } finally {
       setLoading(false)
     }
