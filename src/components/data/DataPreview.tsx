@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -142,7 +141,6 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[50px] text-center">#</TableHead>
-                    {/* Use as colunas do primeiro item para renderizar o cabeçalho */}
                     {data.length > 0 && Object.keys(data[0]).map((columnName) => (
                       <TableHead key={columnName} className="min-w-[200px]">
                         <div className="flex items-center justify-between gap-2">
@@ -162,7 +160,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
                         <TableCell key={`${rowIndex}-${columnName}`} className="p-0">
                           <Input
                             className="h-8 px-2 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                            value={value ?? ''}
+                            value={value === null ? '' : String(value)}
                             onChange={(e) => {
                               const newData = [...data]
                               newData[rowIndex][columnName] = e.target.value
