@@ -32,10 +32,14 @@ export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) 
     columns.map(col => ({
       key: col.name,
       name: col.name,
-      editor: TextEditor
+      editor: TextEditor,
+      width: 150
     }))
   )
-  const [rows, setRows] = useState(previewData)
+  const [rows, setRows] = useState(previewData.map((row, index) => ({
+    ...row,
+    id: index
+  })))
 
   function HeaderRenderer({ column }: { column: GridColumn }) {
     if (editingHeader === column.key) {
@@ -77,7 +81,9 @@ export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) 
   const finalColumns = useMemo(() => {
     return gridColumns.map(col => ({
       ...col,
-      headerRenderer: HeaderRenderer
+      headerRenderer: HeaderRenderer,
+      resizable: true,
+      sortable: true
     }))
   }, [gridColumns])
 
@@ -134,6 +140,8 @@ export function DataPreview({ columns, previewData, onNext }: DataPreviewProps) 
           onRowsChange={setRows}
           className="h-[500px]"
           headerRowHeight={45}
+          rowHeight={35}
+          enableVirtualization={true}
           style={{
             "--border": "hsl(var(--border))",
             "--background": "hsl(var(--background))",
