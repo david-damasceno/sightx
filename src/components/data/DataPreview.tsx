@@ -8,7 +8,7 @@ import {
   SheetContent,
 } from "@/components/ui/sheet"
 import { DataAnalysisTools } from "./DataAnalysisTools"
-import { Maximize, Minimize, Loader2 } from "lucide-react"
+import { Minimize, Loader2, PencilLine } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
@@ -135,16 +135,17 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
           </Button>
           <Button 
             variant="outline" 
-            size="icon"
             onClick={() => setIsFullscreen(true)}
+            className="gap-2"
           >
-            <Maximize className="h-4 w-4" />
+            <PencilLine className="h-4 w-4" />
+            Editar dados
           </Button>
         </div>
       </div>
 
       <div className="border rounded-lg overflow-hidden">
-        <ScrollArea className="h-[400px]">
+        <ScrollArea className="h-[600px]">
           <DataGrid
             columns={gridColumns}
             rows={data}
@@ -171,7 +172,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
             <div className="sticky top-0 bg-background z-10 border-b">
               <div className="container py-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium">Visualização em Tela Cheia</h3>
+                  <h3 className="text-lg font-medium">Edição de Dados</h3>
                   <Button 
                     variant="outline" 
                     size="icon"
