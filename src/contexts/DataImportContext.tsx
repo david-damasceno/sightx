@@ -24,8 +24,8 @@ interface DataImport {
   original_filename: string
   storage_path: string | null
   file_type: string
-  row_count: number
-  status: 'pending' | 'uploading' | 'uploaded' | 'analyzing' | 'editing' | 'processing' | 'completed' | 'error'
+  row_count: number | null
+  status: 'pending' | 'processing' | 'completed' | 'error'
   error_message: string | null
   columns_metadata: {
     columns: Column[]
@@ -35,7 +35,9 @@ interface DataImport {
   organization_id: string
   created_by: string
   created_at: string
-  table_name?: string
+  table_name: string
+  data_quality: Json
+  data_validation: Json
 }
 
 interface DataImportContextType {
@@ -70,11 +72,12 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
           name: file.name,
           original_filename: file.name,
           file_type: file.type,
-          status: 'uploading',
+          status: 'pending' as const,
           columns_metadata: {},
           column_analysis: [],
           data_quality: {},
-          data_validation: {}
+          data_validation: {},
+          table_name: file.name.replace(/\.[^/.]+$/, "").toLowerCase().replace(/\s+/g, "_")
         })
         .select()
         .single()
@@ -94,7 +97,7 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
         .from('data_imports')
         .update({
           storage_path: filePath,
-          status: 'uploaded'
+          status: 'processing' as const
         })
         .eq('id', importData.id)
         .select()
@@ -102,7 +105,7 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
 
       if (updateError) throw updateError
 
-      setCurrentImport(updatedImport as DataImport)
+      setCurrentImport(updatedImport as unknown as DataImport)
       return importData.id
     } catch (error: any) {
       console.error('Erro no upload:', error)
@@ -135,7 +138,7 @@ export function DataImportProvider({ children }: { children: React.ReactNode }) 
 
       if (fetchError) throw fetchError
 
-      setCurrentImport(importData as DataImport)
+      setCurrentImport(importData as unknown as DataImport)
     } catch (error: any) {
       console.error('Erro na análise:', error)
       toast({
