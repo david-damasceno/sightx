@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,7 +14,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/components/ui/use-toast"
 import { supabase } from "@/integrations/supabase/client"
-import { Loader2, ChevronLeft, ChevronRight } from "lucide-react"
+import { Loader2, ChevronLeft, ChevronRight, Search } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 
 interface Column {
@@ -35,6 +36,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
   const [page, setPage] = useState(1)
   const [totalRows, setTotalRows] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
+  const [filters, setFilters] = useState<Record<string, string>>({})
   const rowsPerPage = 50
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
@@ -49,7 +51,18 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
 
       if (error) throw error
 
-      setData(fileData.data)
+      let filteredData = fileData.data
+
+      // Aplicar filtros
+      Object.entries(filters).forEach(([column, value]) => {
+        if (value) {
+          filteredData = filteredData.filter((row: any) => 
+            String(row[column]).toLowerCase().includes(value.toLowerCase())
+          )
+        }
+      })
+
+      setData(filteredData)
       setTotalRows(fileData.totalRows)
       setTotalPages(fileData.totalPages)
 
@@ -67,7 +80,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
 
   useEffect(() => {
     fetchData()
-  }, [page, fileId])
+  }, [page, fileId, filters])
 
   const handleSave = async (rowIndex: number, columnName: string, value: string) => {
     if (!currentOrganization) {
@@ -80,7 +93,6 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
     }
 
     try {
-      // Atualizar dados locais
       const newData = [...data]
       newData[rowIndex] = {
         ...newData[rowIndex],
@@ -115,6 +127,13 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
     }
   }
 
+  const handleFilter = (columnName: string, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [columnName]: value
+    }))
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -131,51 +150,66 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
 
       <Card>
         <ScrollArea className="h-[600px] rounded-md border">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : (
-            <div className="p-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[50px] text-center">#</TableHead>
-                    {data.length > 0 && Object.keys(data[0]).map((columnName) => (
-                      <TableHead key={columnName} className="min-w-[200px]">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-medium">{columnName}</span>
-                        </div>
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.map((row, rowIndex) => (
-                    <TableRow key={rowIndex}>
-                      <TableCell className="text-center text-muted-foreground">
-                        {(page - 1) * rowsPerPage + rowIndex + 1}
-                      </TableCell>
-                      {Object.entries(row).map(([columnName, value]) => (
-                        <TableCell key={`${rowIndex}-${columnName}`} className="p-0">
-                          <Input
-                            className="h-8 px-2 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                            value={value === null ? '' : String(value)}
-                            onChange={(e) => {
-                              const newData = [...data]
-                              newData[rowIndex][columnName] = e.target.value
-                              setData(newData)
-                            }}
-                            onBlur={(e) => handleSave(rowIndex, columnName, e.target.value)}
-                          />
-                        </TableCell>
+          <div className="min-w-[1200px]">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : data.length > 0 ? (
+              <div className="p-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[50px] text-center sticky left-0 bg-background">#</TableHead>
+                      {Object.keys(data[0]).map((columnName) => (
+                        <TableHead key={columnName} className="min-w-[200px]">
+                          <div className="space-y-2">
+                            <div className="font-medium">{columnName}</div>
+                            <div className="flex items-center gap-2">
+                              <Search className="h-4 w-4 text-muted-foreground" />
+                              <Input
+                                className="h-8"
+                                placeholder="Filtrar..."
+                                value={filters[columnName] || ''}
+                                onChange={(e) => handleFilter(columnName, e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </TableHead>
                       ))}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                  </TableHeader>
+                  <TableBody>
+                    {data.map((row, rowIndex) => (
+                      <TableRow key={rowIndex}>
+                        <TableCell className="text-center text-muted-foreground sticky left-0 bg-background">
+                          {(page - 1) * rowsPerPage + rowIndex + 1}
+                        </TableCell>
+                        {Object.entries(row).map(([columnName, value]) => (
+                          <TableCell key={`${rowIndex}-${columnName}`} className="p-0">
+                            <Input
+                              className="h-8 px-2 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                              value={value === null ? '' : String(value)}
+                              onChange={(e) => {
+                                const newData = [...data]
+                                newData[rowIndex][columnName] = e.target.value
+                                setData(newData)
+                              }}
+                              onBlur={(e) => handleSave(rowIndex, columnName, e.target.value)}
+                            />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full p-8 text-muted-foreground">
+                Nenhum dado encontrado
+              </div>
+            )}
+          </div>
         </ScrollArea>
 
         <div className="flex items-center justify-between px-4 py-4 border-t">
