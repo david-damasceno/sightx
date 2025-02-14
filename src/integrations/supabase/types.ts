@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      column_mappings: {
+        Row: {
+          created_at: string | null
+          data_type: string
+          description: string | null
+          file_id: string
+          id: string
+          mapped_name: string
+          original_name: string
+          validation_rules: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_type: string
+          description?: string | null
+          file_id: string
+          id?: string
+          mapped_name: string
+          original_name: string
+          validation_rules?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          data_type?: string
+          description?: string | null
+          file_id?: string
+          id?: string
+          mapped_name?: string
+          original_name?: string
+          validation_rules?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "column_mappings_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "data_files_metadata"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_concentration: {
         Row: {
           city: string
@@ -147,6 +188,72 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "data_files_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_files_metadata: {
+        Row: {
+          columns_metadata: Json | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          organization_id: string
+          original_filename: string
+          preview_data: Json | null
+          status: string
+          tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          columns_metadata?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id?: string
+          organization_id: string
+          original_filename: string
+          preview_data?: Json | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          columns_metadata?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          organization_id?: string
+          original_filename?: string
+          preview_data?: Json | null
+          status?: string
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_files_metadata_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_files_metadata_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -610,6 +717,50 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      suggested_analyses: {
+        Row: {
+          analysis_type: string
+          created_at: string | null
+          description: string | null
+          file_id: string
+          id: string
+          metrics: Json | null
+          status: string
+          title: string
+          visualization_type: string | null
+        }
+        Insert: {
+          analysis_type: string
+          created_at?: string | null
+          description?: string | null
+          file_id: string
+          id?: string
+          metrics?: Json | null
+          status?: string
+          title: string
+          visualization_type?: string | null
+        }
+        Update: {
+          analysis_type?: string
+          created_at?: string | null
+          description?: string | null
+          file_id?: string
+          id?: string
+          metrics?: Json | null
+          status?: string
+          title?: string
+          visualization_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suggested_analyses_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "data_files_metadata"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
