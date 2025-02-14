@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Upload, File, X } from "lucide-react"
@@ -16,7 +16,6 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
 
@@ -30,7 +29,7 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     setIsDragging(false)
   }
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
     
@@ -81,51 +80,30 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     try {
       setUploading(true)
 
-      // Criar entrada no banco de dados
-      const { data: fileMetadata, error: dbError } = await supabase
-        .from('data_files_metadata')
-        .insert({
-          organization_id: currentOrganization.id,
-          file_name: selectedFile.name,
-          original_filename: selectedFile.name,
-          file_type: selectedFile.type,
-          file_size: selectedFile.size,
-          status: 'uploading'
-        })
-        .select()
-        .single()
-
-      if (dbError) throw dbError
-
-      // Iniciar análise do arquivo usando o cliente do Supabase
+      // Criar FormData com o arquivo e organizationId
       const formData = new FormData()
       formData.append('file', selectedFile)
       formData.append('organizationId', currentOrganization.id)
 
+      // Chamar a edge function para analisar o arquivo
       const { data, error } = await supabase.functions.invoke('analyze-file', {
         body: formData,
       })
 
       if (error) throw error
 
-      // Atualizar metadados com resultado da análise
-      const { error: updateError } = await supabase
-        .from('data_files_metadata')
-        .update({
-          status: 'ready',
-          columns_metadata: data.columns,
-          preview_data: data.previewData
-        })
-        .eq('id', fileMetadata.id)
+      console.log('Resultado da análise:', data)
 
-      if (updateError) throw updateError
+      if (!data?.file_id) {
+        throw new Error('ID do arquivo não retornado pela análise')
+      }
 
       toast({
         title: "Upload concluído",
         description: "Seu arquivo foi enviado com sucesso.",
       })
 
-      onUploadComplete(fileMetadata.id)
+      onUploadComplete(data.file_id)
     } catch (error: any) {
       console.error('Erro no upload:', error)
       toast({
@@ -140,9 +118,6 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
 
   const removeFile = () => {
     setSelectedFile(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
   }
 
   return (
@@ -152,8 +127,8 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
       "hover:border-primary/50"
     )}>
       <input
-        ref={fileInputRef}
         type="file"
+        id="file-upload"
         className="hidden"
         onChange={handleFileSelect}
         accept=".csv,.xlsx,.xls"
@@ -200,7 +175,7 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
 
             <Button
               variant="outline"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => document.getElementById('file-upload')?.click()}
             >
               Selecionar Arquivo
             </Button>
