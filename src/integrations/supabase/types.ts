@@ -148,6 +148,114 @@ export type Database = {
           },
         ]
       }
+      data_file_changes: {
+        Row: {
+          column_name: string
+          created_at: string | null
+          created_by: string | null
+          file_id: string | null
+          id: string
+          new_value: Json | null
+          organization_id: string | null
+          original_value: Json | null
+          row_number: number
+        }
+        Insert: {
+          column_name: string
+          created_at?: string | null
+          created_by?: string | null
+          file_id?: string | null
+          id?: string
+          new_value?: Json | null
+          organization_id?: string | null
+          original_value?: Json | null
+          row_number: number
+        }
+        Update: {
+          column_name?: string
+          created_at?: string | null
+          created_by?: string | null
+          file_id?: string | null
+          id?: string
+          new_value?: Json | null
+          organization_id?: string | null
+          original_value?: Json | null
+          row_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_file_changes_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "data_files_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_file_changes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_file_columns: {
+        Row: {
+          created_at: string | null
+          data_type: string
+          description: string | null
+          file_id: string | null
+          final_name: string | null
+          id: string
+          is_nullable: boolean | null
+          organization_id: string | null
+          original_name: string
+          suggested_name: string | null
+          validation_rules: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_type: string
+          description?: string | null
+          file_id?: string | null
+          final_name?: string | null
+          id?: string
+          is_nullable?: boolean | null
+          organization_id?: string | null
+          original_name: string
+          suggested_name?: string | null
+          validation_rules?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          data_type?: string
+          description?: string | null
+          file_id?: string | null
+          final_name?: string | null
+          id?: string
+          is_nullable?: boolean | null
+          organization_id?: string | null
+          original_name?: string
+          suggested_name?: string | null
+          validation_rules?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_file_columns_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "data_files_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "data_file_columns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_files: {
         Row: {
           content_type: string
@@ -213,11 +321,16 @@ export type Database = {
           file_name: string
           file_size: number
           file_type: string
+          final_table_name: string | null
           id: string
           organization_id: string
           original_filename: string
           preview_data: Json | null
+          processing_error: string | null
+          processing_progress: number | null
+          processing_status: string | null
           status: string
+          storage_path: string | null
           tags: string[] | null
           updated_at: string | null
         }
@@ -232,11 +345,16 @@ export type Database = {
           file_name: string
           file_size: number
           file_type: string
+          final_table_name?: string | null
           id?: string
           organization_id: string
           original_filename: string
           preview_data?: Json | null
+          processing_error?: string | null
+          processing_progress?: number | null
+          processing_status?: string | null
           status?: string
+          storage_path?: string | null
           tags?: string[] | null
           updated_at?: string | null
         }
@@ -251,11 +369,16 @@ export type Database = {
           file_name?: string
           file_size?: number
           file_type?: string
+          final_table_name?: string | null
           id?: string
           organization_id?: string
           original_filename?: string
           preview_data?: Json | null
+          processing_error?: string | null
+          processing_progress?: number | null
+          processing_status?: string | null
           status?: string
+          storage_path?: string | null
           tags?: string[] | null
           updated_at?: string | null
         }
@@ -773,54 +896,6 @@ export type Database = {
             columns: ["file_id"]
             isOneToOne: false
             referencedRelation: "data_files_metadata"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      temp_imported_data: {
-        Row: {
-          created_at: string | null
-          id: string
-          import_id: string
-          organization_id: string
-          row_data: Json
-          row_number: number
-          status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          import_id: string
-          organization_id: string
-          row_data: Json
-          row_number: number
-          status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          import_id?: string
-          organization_id?: string
-          row_data?: Json
-          row_number?: number
-          status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "temp_imported_data_import_id_fkey"
-            columns: ["import_id"]
-            isOneToOne: false
-            referencedRelation: "data_files_metadata"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "temp_imported_data_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
