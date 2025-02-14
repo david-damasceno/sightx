@@ -56,6 +56,44 @@ export type Database = {
           },
         ]
       }
+      data_analysis_results: {
+        Row: {
+          analysis_type: string
+          column_name: string
+          created_at: string | null
+          file_id: string
+          id: string
+          organization_id: string
+          results: Json
+        }
+        Insert: {
+          analysis_type: string
+          column_name: string
+          created_at?: string | null
+          file_id: string
+          id?: string
+          organization_id: string
+          results?: Json
+        }
+        Update: {
+          analysis_type?: string
+          column_name?: string
+          created_at?: string | null
+          file_id?: string
+          id?: string
+          organization_id?: string
+          results?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_analysis_results_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "data_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_file_changes: {
         Row: {
           changed_by: string | null
@@ -290,6 +328,47 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_transformations: {
+        Row: {
+          applied_at: string | null
+          column_name: string
+          created_at: string | null
+          file_id: string
+          id: string
+          organization_id: string
+          parameters: Json
+          transformation_type: string
+        }
+        Insert: {
+          applied_at?: string | null
+          column_name: string
+          created_at?: string | null
+          file_id: string
+          id?: string
+          organization_id: string
+          parameters?: Json
+          transformation_type: string
+        }
+        Update: {
+          applied_at?: string | null
+          column_name?: string
+          created_at?: string | null
+          file_id?: string
+          id?: string
+          organization_id?: string
+          parameters?: Json
+          transformation_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_transformations_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "data_imports"
             referencedColumns: ["id"]
           },
         ]

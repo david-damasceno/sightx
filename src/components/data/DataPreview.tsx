@@ -313,6 +313,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
                   onAnalyzeDuplicates={findDuplicates}
                   selectedColumn={selectedColumn}
                   duplicates={duplicates}
+                  fileId={fileId}
                 />
               </div>
             </div>
