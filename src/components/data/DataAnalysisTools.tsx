@@ -1,21 +1,20 @@
 
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
-import { 
-  Copy, 
-  FileSearch, 
+import {
+  Copy,
   FileWarning,
-  Filter,
   RefreshCcw,
+  Filter,
   Table,
-  ChevronRight
 } from "lucide-react"
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Separator } from "@/components/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { cn } from "@/lib/utils"
 
 interface DataAnalysisToolsProps {
   columns: string[]
@@ -24,11 +23,11 @@ interface DataAnalysisToolsProps {
   duplicates: Record<string, number>
 }
 
-export function DataAnalysisTools({ 
-  columns, 
-  onAnalyzeDuplicates, 
+export function DataAnalysisTools({
+  columns,
+  onAnalyzeDuplicates,
   selectedColumn,
-  duplicates 
+  duplicates
 }: DataAnalysisToolsProps) {
   const getDuplicatesCount = () => {
     if (!selectedColumn) return 0
@@ -36,108 +35,74 @@ export function DataAnalysisTools({
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="mb-4">
-        <h3 className="text-lg font-medium mb-2">Ferramentas de Análise</h3>
-        <p className="text-sm text-muted-foreground">
-          Selecione uma ferramenta para analisar seus dados
-        </p>
-      </div>
-
-      <ScrollArea className="flex-1">
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="duplicates">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-2">
-                <Copy className="h-4 w-4" />
-                <span>Análise de Duplicatas</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-2 py-2">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Selecione uma coluna para encontrar valores duplicados
-                </p>
+    <div className="flex items-center gap-2">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className="gap-2"
+          >
+            <Copy className="h-4 w-4" />
+            Análise de Duplicatas
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h4 className="font-medium leading-none">Selecione uma coluna</h4>
+              <p className="text-sm text-muted-foreground">
+                Escolha uma coluna para analisar valores duplicados
+              </p>
+            </div>
+            <Separator />
+            <ScrollArea className="h-[200px]">
+              <div className="space-y-2">
                 {columns.map(column => (
                   <Button
                     key={column}
                     variant={selectedColumn === column ? "secondary" : "ghost"}
-                    className="w-full justify-start"
+                    className="w-full justify-start text-left"
                     onClick={() => onAnalyzeDuplicates(column)}
                   >
-                    <ChevronRight className="h-4 w-4 mr-2" />
                     {column}
                   </Button>
                 ))}
-                {selectedColumn && (
-                  <div className="mt-4 p-4 bg-muted rounded-md">
-                    <p className="text-sm font-medium">Resultados da Análise</p>
-                    <p className="text-sm text-muted-foreground">
-                      {getDuplicatesCount()} valores duplicados encontrados
-                    </p>
-                  </div>
-                )}
               </div>
-            </AccordionContent>
-          </AccordionItem>
+            </ScrollArea>
+            {selectedColumn && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">Resultados</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {getDuplicatesCount()} valores duplicados encontrados
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
 
-          <AccordionItem value="quality">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-2">
-                <FileWarning className="h-4 w-4" />
-                <span>Qualidade dos Dados</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <p className="text-sm text-muted-foreground py-4">
-                Em breve: análise de valores nulos, inconsistências e formatos
-              </p>
-            </AccordionContent>
-          </AccordionItem>
+      <Button variant="outline" className="gap-2" disabled>
+        <FileWarning className="h-4 w-4" />
+        Qualidade dos Dados
+      </Button>
 
-          <AccordionItem value="transform">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-2">
-                <RefreshCcw className="h-4 w-4" />
-                <span>Transformações</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <p className="text-sm text-muted-foreground py-4">
-                Em breve: conversão de tipos, normalização e padronização
-              </p>
-            </AccordionContent>
-          </AccordionItem>
+      <Button variant="outline" className="gap-2" disabled>
+        <RefreshCcw className="h-4 w-4" />
+        Transformações
+      </Button>
 
-          <AccordionItem value="filter">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                <span>Filtros Avançados</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <p className="text-sm text-muted-foreground py-4">
-                Em breve: filtros complexos e condicionais
-              </p>
-            </AccordionContent>
-          </AccordionItem>
+      <Button variant="outline" className="gap-2" disabled>
+        <Filter className="h-4 w-4" />
+        Filtros Avançados
+      </Button>
 
-          <AccordionItem value="stats">
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center gap-2">
-                <Table className="h-4 w-4" />
-                <span>Estatísticas</span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <p className="text-sm text-muted-foreground py-4">
-                Em breve: análises estatísticas básicas
-              </p>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </ScrollArea>
+      <Button variant="outline" className="gap-2" disabled>
+        <Table className="h-4 w-4" />
+        Estatísticas
+      </Button>
     </div>
   )
 }

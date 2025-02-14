@@ -295,26 +295,28 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
 
       <Sheet open={isFullscreen} onOpenChange={setIsFullscreen}>
         <SheetContent side="bottom" className="h-screen w-screen p-0">
-          <div className="flex h-full">
-            <div className="w-[300px] border-r p-4 bg-muted/30">
-              <DataAnalysisTools
-                columns={Object.keys(data[0] || {})}
-                onAnalyzeDuplicates={findDuplicates}
-                selectedColumn={selectedColumn}
-                duplicates={duplicates}
-              />
+          <div className="flex flex-col h-full">
+            <div className="sticky top-0 bg-background z-10 border-b">
+              <div className="container py-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium">Visualização em Tela Cheia</h3>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => setIsFullscreen(false)}
+                  >
+                    <Minimize className="h-4 w-4" />
+                  </Button>
+                </div>
+                <DataAnalysisTools
+                  columns={Object.keys(data[0] || {})}
+                  onAnalyzeDuplicates={findDuplicates}
+                  selectedColumn={selectedColumn}
+                  duplicates={duplicates}
+                />
+              </div>
             </div>
             <div className="flex-1 overflow-auto">
-              <div className="sticky top-0 bg-background z-10 p-4 border-b flex justify-between items-center">
-                <h3 className="text-lg font-medium">Visualização em Tela Cheia</h3>
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  onClick={() => setIsFullscreen(false)}
-                >
-                  <Minimize className="h-4 w-4" />
-                </Button>
-              </div>
               <div className="min-w-[1200px]">
                 {loading ? (
                   <div className="flex items-center justify-center h-full">
