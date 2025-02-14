@@ -312,12 +312,15 @@ export type Database = {
       data_files_metadata: {
         Row: {
           analysis_summary: string | null
+          column_suggestions: Json | null
           columns_metadata: Json | null
           created_at: string | null
           created_by: string | null
           data_context: Json | null
           description: string | null
           detected_patterns: Json | null
+          edited_storage_path: string | null
+          editing_status: string | null
           file_name: string
           file_size: number
           file_type: string
@@ -336,12 +339,15 @@ export type Database = {
         }
         Insert: {
           analysis_summary?: string | null
+          column_suggestions?: Json | null
           columns_metadata?: Json | null
           created_at?: string | null
           created_by?: string | null
           data_context?: Json | null
           description?: string | null
           detected_patterns?: Json | null
+          edited_storage_path?: string | null
+          editing_status?: string | null
           file_name: string
           file_size: number
           file_type: string
@@ -360,12 +366,15 @@ export type Database = {
         }
         Update: {
           analysis_summary?: string | null
+          column_suggestions?: Json | null
           columns_metadata?: Json | null
           created_at?: string | null
           created_by?: string | null
           data_context?: Json | null
           description?: string | null
           detected_patterns?: Json | null
+          edited_storage_path?: string | null
+          editing_status?: string | null
           file_name?: string
           file_size?: number
           file_type?: string
