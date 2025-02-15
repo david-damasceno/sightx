@@ -117,11 +117,11 @@ serve(async (req) => {
     `
 
     const baseEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint
-    const apiUrl = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2024-02-15-preview`
+    const apiUrl = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-07-01-preview`
     
     console.log('Chamando Azure OpenAI:', {
       url: apiUrl,
-      temChaveApi: !!apiKey,
+      temChaveApi: !!apiKey
     })
 
     const azureResponse = await fetch(apiUrl, {
@@ -145,9 +145,12 @@ serve(async (req) => {
         max_tokens: 800,
         top_p: 0.95,
         frequency_penalty: 0,
-        presence_penalty: 0
+        presence_penalty: 0,
+        stop: null
       }),
     })
+
+    console.log('Status da resposta Azure OpenAI:', azureResponse.status)
 
     if (!azureResponse.ok) {
       const errorText = await azureResponse.text()
@@ -165,9 +168,12 @@ serve(async (req) => {
       primeiraEscolha: data.choices?.[0]
     })
 
+    if (!data.choices?.[0]?.message?.content) {
+      throw new Error('Resposta inválida do Azure OpenAI')
+    }
+
     let suggestions
     try {
-      // A resposta já vem como JSON, não precisamos fazer parse
       const content = data.choices[0].message.content
       suggestions = typeof content === 'string' ? JSON.parse(content) : content
 
