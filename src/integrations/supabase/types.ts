@@ -9,6 +9,66 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      column_suggestions: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          error_message: string | null
+          file_id: string
+          id: string
+          needs_review: boolean | null
+          organization_id: string
+          original_name: string
+          status: string | null
+          suggested_name: string | null
+          type: string | null
+          validation_message: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          error_message?: string | null
+          file_id: string
+          id?: string
+          needs_review?: boolean | null
+          organization_id: string
+          original_name: string
+          status?: string | null
+          suggested_name?: string | null
+          type?: string | null
+          validation_message?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          error_message?: string | null
+          file_id?: string
+          id?: string
+          needs_review?: boolean | null
+          organization_id?: string
+          original_name?: string
+          status?: string | null
+          suggested_name?: string | null
+          type?: string | null
+          validation_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "column_suggestions_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "data_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "column_suggestions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_concentration: {
         Row: {
           city: string
