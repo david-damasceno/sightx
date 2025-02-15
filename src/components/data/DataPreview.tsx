@@ -111,7 +111,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
 
   if (loading && data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[800px] space-y-4">
+      <div className="flex flex-col items-center justify-center min-h-[80vh] space-y-4">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
         <p className="text-sm text-muted-foreground">
           Carregando dados...
@@ -144,13 +144,14 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-hidden h-[800px]">
+      <div className="border rounded-lg overflow-hidden h-[80vh]">
         <ScrollArea className="h-full">
           <DataGrid
             columns={gridColumns}
             rows={data}
-            className="h-full rdg-light"
+            className="rdg-light"
             rowHeight={35}
+            style={{ height: '100%', minHeight: '100%' }}
             onRowsChange={setData}
             onScroll={async (event) => {
               const { scrollTop, clientHeight, scrollHeight } = event.currentTarget
@@ -190,13 +191,14 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
                 />
               </div>
             </div>
-            <div className="flex-1 overflow-auto px-4">
+            <div className="flex-1 overflow-hidden">
               <ScrollArea className="h-full">
                 <DataGrid
                   columns={gridColumns}
                   rows={data}
-                  className="h-full rdg-light"
+                  className="rdg-light h-full"
                   rowHeight={35}
+                  style={{ height: 'calc(100vh - 150px)' }}
                   onRowsChange={setData}
                   onScroll={async (event) => {
                     const { scrollTop, clientHeight, scrollHeight } = event.currentTarget
