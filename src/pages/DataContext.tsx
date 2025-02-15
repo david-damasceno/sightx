@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { ProcessSteps } from "@/components/data/ProcessSteps"
 import { FileUploader } from "@/components/data/FileUploader"
 import { DataPreview } from "@/components/data/DataPreview"
-import { ColumnMapper } from "@/components/data/ColumnMapper"
+import { ColumnMapper } from "@/components/data-import/ColumnMapper"
 import { UploadedFilesList } from "@/components/data/UploadedFilesList"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
@@ -199,7 +199,7 @@ export default function DataContext() {
                       "transition-all duration-300",
                       currentStep === 2 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
                     )}>
-                      <DataPreview
+                      <DataPreview 
                         columns={fileData.columns}
                         previewData={fileData.previewData}
                         fileId={fileData.id}
