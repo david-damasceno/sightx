@@ -168,7 +168,7 @@ export default function DataContext() {
 
       <div className={cn(
         "transition-all duration-300",
-        currentStep === 1 && !loading ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
+        currentStep === 1 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
       )}>
         <FileUploader onUploadComplete={handleUploadComplete} />
       </div>
