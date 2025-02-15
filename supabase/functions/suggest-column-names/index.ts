@@ -48,12 +48,12 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!)
 
     if (!apiKey || !endpoint || !deployment) {
+      console.error('Configurações do Azure OpenAI:', {
+        temApiKey: !!apiKey,
+        temEndpoint: !!endpoint,
+        temDeployment: !!deployment
+      })
       throw new Error('Configurações do Azure OpenAI incompletas')
-    }
-
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      throw new Error('Token de autenticação não fornecido')
     }
 
     const { description, columns, fileId, organizationId, sampleData } = await req.json()
@@ -66,7 +66,8 @@ serve(async (req) => {
       description,
       columnsCount: columns.length,
       fileId,
-      organizationId
+      organizationId,
+      primeirasAmostras: sampleData?.slice(0, 2)
     })
 
     // Inserir sugestões iniciais como pendentes
@@ -105,20 +106,25 @@ serve(async (req) => {
       ).join('\n')}
       
       Retorne apenas um array JSON com o seguinte formato para cada coluna:
-      {
-        "original_name": "nome_original",
-        "suggested_name": "nome_sugerido_em_snake_case",
-        "type": "tipo_sugerido",
-        "description": "breve descrição"
-      }
+      [
+        {
+          "original_name": "nome_original",
+          "suggested_name": "nome_sugerido_em_snake_case",
+          "type": "tipo_sugerido",
+          "description": "breve descrição"
+        }
+      ]
     `
 
     const baseEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint
-    const url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2024-02-15-preview`
+    const apiUrl = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2024-02-15-preview`
     
-    console.log('Chamando Azure OpenAI')
+    console.log('Chamando Azure OpenAI:', {
+      url: apiUrl,
+      temChaveApi: !!apiKey,
+    })
 
-    const azureResponse = await fetch(url, {
+    const azureResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -139,22 +145,33 @@ serve(async (req) => {
         max_tokens: 800,
         top_p: 0.95,
         frequency_penalty: 0,
-        presence_penalty: 0,
-        stop: null
+        presence_penalty: 0
       }),
     })
 
     if (!azureResponse.ok) {
       const errorText = await azureResponse.text()
+      console.error('Erro na resposta do Azure OpenAI:', {
+        status: azureResponse.status,
+        texto: errorText
+      })
       throw new Error(`Erro na API do Azure OpenAI: [${azureResponse.status}] ${errorText}`)
     }
 
     const data = await azureResponse.json()
-    console.log('Resposta do Azure OpenAI recebida')
+    console.log('Resposta do Azure OpenAI recebida:', {
+      temResposta: !!data,
+      temEscolhas: !!data.choices,
+      primeiraEscolha: data.choices?.[0]
+    })
 
     let suggestions
     try {
-      suggestions = JSON.parse(data.choices[0].message.content)
+      // A resposta já vem como JSON, não precisamos fazer parse
+      const content = data.choices[0].message.content
+      suggestions = typeof content === 'string' ? JSON.parse(content) : content
+
+      console.log('Sugestões obtidas:', suggestions.slice(0, 2))
       
       // Processar e validar cada sugestão
       const processedSuggestions = suggestions.map((suggestion: any) => {
@@ -181,6 +198,8 @@ serve(async (req) => {
           status: 'completed'
         }
       })
+
+      console.log('Sugestões processadas:', processedSuggestions.slice(0, 2))
 
       // Atualizar sugestões no banco
       const { error: updateError } = await supabase
