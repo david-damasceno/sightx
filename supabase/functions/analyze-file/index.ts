@@ -113,9 +113,37 @@ serve(async (req) => {
     console.log('Planilhas encontradas:', workbook.SheetNames)
     const worksheet = workbook.Sheets[workbook.SheetNames[0]]
     
-    // Converter para JSON
-    console.log('Convertendo para JSON...')
+    // Encontrar a linha real do cabeçalho
+    let headerRow = 1
+    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1')
+    
+    // Procurar a primeira linha que não tenha células vazias ou com __EMPTY
+    for (let R = range.s.r; R <= range.e.r; R++) {
+      let validHeaders = true
+      let hasContent = false
+      
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const cell = worksheet[XLSX.utils.encode_cell({r: R, c: C})]
+        if (cell) {
+          hasContent = true
+          if (cell.v?.toString().startsWith('__EMPTY')) {
+            validHeaders = false
+            break
+          }
+        }
+      }
+      
+      if (validHeaders && hasContent) {
+        headerRow = R
+        break
+      }
+    }
+    
+    console.log('Linha do cabeçalho encontrada:', headerRow + 1)
+    
+    // Converter para JSON usando a linha correta do cabeçalho
     const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+      range: headerRow,
       raw: false,
       dateNF: 'yyyy-mm-dd',
       defval: null
