@@ -12,6 +12,8 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Separator } from "@/components/ui/separator"
 import { ColumnMetadata, ProcessingResult, ImportStatus } from "@/types/data-imports"
 import { adaptColumnMetadata } from "@/utils/columnAdapter"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { FileUp } from "lucide-react"
 
 interface Column {
   name: string
@@ -149,78 +151,95 @@ export default function DataContext() {
   }
 
   return (
-    <div className="container max-w-7xl mx-auto py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Coluna principal - Importação */}
-        <div className="lg:col-span-2 space-y-8">
-          <div className="space-y-4">
-            <h1 className="text-3xl font-bold tracking-tight">Importação de Dados</h1>
-            <p className="text-muted-foreground">
-              Importe seus dados para começar a análise
-            </p>
+    <div className="min-h-screen bg-gradient-to-b from-background to-accent/5">
+      <div className="container max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Coluna principal - Importação */}
+          <div className="lg:col-span-2 space-y-8">
+            <Card className="border-none shadow-lg">
+              <CardHeader className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <FileUp className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-3xl">Importação de Dados</CardTitle>
+                    <CardDescription className="text-base">
+                      Importe seus dados para começar a análise
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                <ProcessSteps
+                  currentStep={currentStep}
+                  onStepClick={handleStepChange}
+                />
+
+                {loading && (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                )}
+
+                <div className={cn(
+                  "transition-all duration-300",
+                  currentStep === 1 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
+                )}>
+                  <Card className="border border-dashed">
+                    <CardContent className="pt-6">
+                      <FileUploader onUploadComplete={handleUploadComplete} />
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {fileData && (
+                  <>
+                    <div className={cn(
+                      "transition-all duration-300",
+                      currentStep === 2 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
+                    )}>
+                      <DataPreview
+                        columns={fileData.columns}
+                        previewData={fileData.previewData}
+                        fileId={fileData.id}
+                        onNext={handlePreviewComplete}
+                      />
+                    </div>
+
+                    <div className={cn(
+                      "transition-all duration-300",
+                      currentStep === 3 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
+                    )}>
+                      <ColumnMapper
+                        fileId={fileData.id}
+                        columns={fileData.columns}
+                        onMappingComplete={handleMappingComplete}
+                        processingStatus={fileData.processingResult?.status}
+                        tableName={fileData.processingResult?.table_name}
+                        errorMessage={fileData.processingResult?.error_message}
+                      />
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
-          <ProcessSteps
-            currentStep={currentStep}
-            onStepClick={handleStepChange}
-          />
-
-          {loading && (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          )}
-
-          <div className={cn(
-            "transition-all duration-300",
-            currentStep === 1 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
-          )}>
-            <div className="bg-card border rounded-lg p-6">
-              <FileUploader onUploadComplete={handleUploadComplete} />
-            </div>
-          </div>
-
-          {fileData && (
-            <>
-              <div className={cn(
-                "transition-all duration-300",
-                currentStep === 2 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
-              )}>
-                <DataPreview
-                  columns={fileData.columns}
-                  previewData={fileData.previewData}
-                  fileId={fileData.id}
-                  onNext={handlePreviewComplete}
-                />
-              </div>
-
-              <div className={cn(
-                "transition-all duration-300",
-                currentStep === 3 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
-              )}>
-                <ColumnMapper
-                  fileId={fileData.id}
-                  columns={fileData.columns}
-                  onMappingComplete={handleMappingComplete}
-                  processingStatus={fileData.processingResult?.status}
-                  tableName={fileData.processingResult?.table_name}
-                  errorMessage={fileData.processingResult?.error_message}
-                />
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Coluna lateral - Arquivos recentes */}
-        <div className="space-y-6">
+          {/* Coluna lateral - Arquivos recentes */}
           <div>
-            <h2 className="text-lg font-semibold">Arquivos Importados</h2>
-            <p className="text-sm text-muted-foreground">
-              Histórico de arquivos enviados para análise
-            </p>
+            <Card className="border-none shadow-lg">
+              <CardHeader>
+                <CardTitle>Arquivos Importados</CardTitle>
+                <CardDescription>
+                  Histórico de arquivos enviados para análise
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <UploadedFilesList />
+              </CardContent>
+            </Card>
           </div>
-          <Separator />
-          <UploadedFilesList />
         </div>
       </div>
     </div>
