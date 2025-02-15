@@ -4,10 +4,12 @@ import { ProcessSteps } from "@/components/data/ProcessSteps"
 import { FileUploader } from "@/components/data/FileUploader"
 import { DataPreview } from "@/components/data/DataPreview"
 import { ColumnMapper } from "@/components/data/ColumnMapper"
+import { UploadedFilesList } from "@/components/data/UploadedFilesList"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { Separator } from "@/components/ui/separator"
 import { ColumnMetadata, ProcessingResult, ImportStatus } from "@/types/data-imports"
 import { adaptColumnMetadata } from "@/utils/columnAdapter"
 
@@ -147,61 +149,80 @@ export default function DataContext() {
   }
 
   return (
-    <div className="container max-w-7xl mx-auto py-8 space-y-8">
-      <div className="space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight">Importação de Dados</h1>
-        <p className="text-muted-foreground">
-          Importe seus dados para começar a análise
-        </p>
-      </div>
+    <div className="container max-w-7xl mx-auto py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Coluna principal - Importação */}
+        <div className="lg:col-span-2 space-y-8">
+          <div className="space-y-4">
+            <h1 className="text-3xl font-bold tracking-tight">Importação de Dados</h1>
+            <p className="text-muted-foreground">
+              Importe seus dados para começar a análise
+            </p>
+          </div>
 
-      <ProcessSteps
-        currentStep={currentStep}
-        onStepClick={handleStepChange}
-      />
+          <ProcessSteps
+            currentStep={currentStep}
+            onStepClick={handleStepChange}
+          />
 
-      {loading && (
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          {loading && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          )}
+
+          <div className={cn(
+            "transition-all duration-300",
+            currentStep === 1 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
+          )}>
+            <div className="bg-card border rounded-lg p-6">
+              <FileUploader onUploadComplete={handleUploadComplete} />
+            </div>
+          </div>
+
+          {fileData && (
+            <>
+              <div className={cn(
+                "transition-all duration-300",
+                currentStep === 2 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
+              )}>
+                <DataPreview
+                  columns={fileData.columns}
+                  previewData={fileData.previewData}
+                  fileId={fileData.id}
+                  onNext={handlePreviewComplete}
+                />
+              </div>
+
+              <div className={cn(
+                "transition-all duration-300",
+                currentStep === 3 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
+              )}>
+                <ColumnMapper
+                  fileId={fileData.id}
+                  columns={fileData.columns}
+                  onMappingComplete={handleMappingComplete}
+                  processingStatus={fileData.processingResult?.status}
+                  tableName={fileData.processingResult?.table_name}
+                  errorMessage={fileData.processingResult?.error_message}
+                />
+              </div>
+            </>
+          )}
         </div>
-      )}
 
-      <div className={cn(
-        "transition-all duration-300",
-        currentStep === 1 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
-      )}>
-        <FileUploader onUploadComplete={handleUploadComplete} />
+        {/* Coluna lateral - Arquivos recentes */}
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-lg font-semibold">Arquivos Importados</h2>
+            <p className="text-sm text-muted-foreground">
+              Histórico de arquivos enviados para análise
+            </p>
+          </div>
+          <Separator />
+          <UploadedFilesList />
+        </div>
       </div>
-
-      {fileData && (
-        <>
-          <div className={cn(
-            "transition-all duration-300",
-            currentStep === 2 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
-          )}>
-            <DataPreview
-              columns={fileData.columns}
-              previewData={fileData.previewData}
-              fileId={fileData.id}
-              onNext={handlePreviewComplete}
-            />
-          </div>
-
-          <div className={cn(
-            "transition-all duration-300",
-            currentStep === 3 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
-          )}>
-            <ColumnMapper
-              fileId={fileData.id}
-              columns={fileData.columns}
-              onMappingComplete={handleMappingComplete}
-              processingStatus={fileData.processingResult?.status}
-              tableName={fileData.processingResult?.table_name}
-              errorMessage={fileData.processingResult?.error_message}
-            />
-          </div>
-        </>
-      )}
     </div>
   )
 }
