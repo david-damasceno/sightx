@@ -295,9 +295,14 @@ export type Database = {
           file_id: string
           id: string
           organization_id: string
+          processed_rows: number | null
+          processing_ended_at: string | null
           processing_metadata: Json | null
+          processing_started_at: string | null
+          progress: number | null
           status: string
           table_name: string | null
+          total_rows: number | null
         }
         Insert: {
           completed_at?: string | null
@@ -306,9 +311,14 @@ export type Database = {
           file_id: string
           id?: string
           organization_id: string
+          processed_rows?: number | null
+          processing_ended_at?: string | null
           processing_metadata?: Json | null
+          processing_started_at?: string | null
+          progress?: number | null
           status?: string
           table_name?: string | null
+          total_rows?: number | null
         }
         Update: {
           completed_at?: string | null
@@ -317,9 +327,14 @@ export type Database = {
           file_id?: string
           id?: string
           organization_id?: string
+          processed_rows?: number | null
+          processing_ended_at?: string | null
           processing_metadata?: Json | null
+          processing_started_at?: string | null
+          progress?: number | null
           status?: string
           table_name?: string | null
+          total_rows?: number | null
         }
         Relationships: [
           {

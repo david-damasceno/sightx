@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { ProcessSteps } from "@/components/data/ProcessSteps"
 import { FileUploader } from "@/components/data/FileUploader"
@@ -114,6 +115,8 @@ export default function DataContext() {
           organization_id: currentOrganization.id,
           status: 'processing' as const,
           processing_started_at: new Date().toISOString(),
+          total_rows: fileData.previewData.length,
+          progress: 0,
           table_name: `data_${fileData.id.replace(/-/g, '_')}`
         })
         .select()
