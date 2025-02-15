@@ -4,7 +4,6 @@ import { useDropzone } from "react-dropzone"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { UploadCloud, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
@@ -16,7 +15,6 @@ interface FileUploaderProps {
 
 export function FileUploader({ onUploadComplete }: FileUploaderProps) {
   const [uploading, setUploading] = useState(false)
-  const [context, setContext] = useState("")
   const { toast } = useToast()
   const { currentOrganization, user } = useAuth()
 
@@ -46,7 +44,7 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
           original_filename: file.name,
           file_type: file.type,
           status: 'pending',
-          context: context,
+          context: '',
           columns_metadata: {},
           column_analysis: {},
           data_quality: {},
@@ -93,7 +91,7 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     } finally {
       setUploading(false)
     }
-  }, [currentOrganization, user, context, toast, onUploadComplete])
+  }, [currentOrganization, user, toast, onUploadComplete])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -106,46 +104,32 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
   })
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <label className="text-sm font-medium">
-          Contexto dos Dados
-        </label>
-        <Textarea
-          placeholder="Descreva o que esses dados representam. Ex: 'Esta planilha contém o registro das vendas de produtos na loja física.'"
-          value={context}
-          onChange={(e) => setContext(e.target.value)}
-          className="h-24"
-        />
-      </div>
-
-      <div
-        {...getRootProps()}
-        className={cn(
-          "border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors",
-          isDragActive && "border-primary/50 bg-primary/5",
-          uploading && "opacity-50 cursor-not-allowed"
+    <div
+      {...getRootProps()}
+      className={cn(
+        "border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors",
+        isDragActive && "border-primary/50 bg-primary/5",
+        uploading && "opacity-50 cursor-not-allowed"
+      )}
+    >
+      <input {...getInputProps()} />
+      <div className="flex flex-col items-center gap-2">
+        <UploadCloud className="h-8 w-8 text-muted-foreground" />
+        {uploading ? (
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Enviando arquivo...</span>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Arraste e solte seu arquivo aqui, ou clique para selecionar
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Formatos suportados: CSV, XLS, XLSX
+            </p>
+          </>
         )}
-      >
-        <input {...getInputProps()} />
-        <div className="flex flex-col items-center gap-2">
-          <UploadCloud className="h-8 w-8 text-muted-foreground" />
-          {uploading ? (
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Enviando arquivo...</span>
-            </div>
-          ) : (
-            <>
-              <p className="text-sm text-muted-foreground">
-                Arraste e solte seu arquivo aqui, ou clique para selecionar
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Formatos suportados: CSV, XLS, XLSX
-              </p>
-            </>
-          )}
-        </div>
       </div>
     </div>
   )
