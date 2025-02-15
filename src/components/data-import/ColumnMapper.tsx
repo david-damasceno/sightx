@@ -1,4 +1,3 @@
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,13 +21,26 @@ interface Column {
 }
 
 interface ColumnMapperProps {
+  fileId: string
   columns: Column[]
   previewData: any[]
   onMappingComplete: (tableName: string, previewData: any) => void
-  onCancel: () => void
+  onCancel?: () => void
+  processingStatus?: 'pending' | 'processing' | 'completed' | 'error'
+  tableName?: string
+  errorMessage?: string
 }
 
-export function ColumnMapper({ columns, previewData, onMappingComplete, onCancel }: ColumnMapperProps) {
+export function ColumnMapper({ 
+  fileId,
+  columns, 
+  previewData, 
+  onMappingComplete, 
+  onCancel,
+  processingStatus = 'pending',
+  tableName,
+  errorMessage
+}: ColumnMapperProps) {
   const [tableName, setTableName] = useState("")
   const [columnMappings, setColumnMappings] = useState<Record<string, { description: string, type: string, validation?: string[] }>>({})
   const [isProcessing, setIsProcessing] = useState(false)
