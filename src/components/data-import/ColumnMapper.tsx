@@ -41,7 +41,7 @@ export function ColumnMapper({
   tableName,
   errorMessage
 }: ColumnMapperProps) {
-  const [tableName, setTableName] = useState("")
+  const [tableNameInput, setTableNameInput] = useState(tableName || "")
   const [columnMappings, setColumnMappings] = useState<Record<string, { description: string, type: string, validation?: string[] }>>({})
   const [isProcessing, setIsProcessing] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(true)
@@ -136,25 +136,25 @@ export function ColumnMapper({
   }
 
   const handleCreateTable = async () => {
-    if (!tableName || !currentOrganization) return
+    if (!tableNameInput || !currentOrganization) return
 
     setIsProcessing(true)
     try {
       console.log('Enviando dados para criar tabela:', {
-        tableName,
+        tableName: tableNameInput,
         columns: columnMappings,
         previewData
       })
 
       const { data, error } = await supabase.functions.invoke('create-data-table', {
         body: {
-          tableName,
+          tableName: tableNameInput,
           columns: columnMappings,
           organizationId: currentOrganization.id,
           previewData,
-          columnAnalysis: [], // Será preenchido pela função
-          suggestedIndexes: [], // Será preenchido pela função
-          dataValidation: {} // Será preenchido pela função
+          columnAnalysis: [],
+          suggestedIndexes: [],
+          dataValidation: {}
         }
       })
 
@@ -167,7 +167,7 @@ export function ColumnMapper({
         description: "Os dados foram importados e contextualizados.",
       })
 
-      onMappingComplete(tableName, previewData)
+      onMappingComplete(tableNameInput, previewData)
     } catch (error: any) {
       console.error('Error creating table:', error)
       toast({
@@ -204,8 +204,8 @@ export function ColumnMapper({
             <Label htmlFor="table-name">Nome da Tabela</Label>
             <Input
               id="table-name"
-              value={tableName}
-              onChange={(e) => setTableName(e.target.value)}
+              value={tableNameInput}
+              onChange={(e) => setTableNameInput(e.target.value)}
               placeholder="Ex: vendas_2024"
               className="mt-1"
             />
@@ -260,7 +260,7 @@ export function ColumnMapper({
             </Button>
             <Button
               onClick={handleCreateTable}
-              disabled={!tableName || isProcessing}
+              disabled={!tableNameInput || isProcessing}
             >
               {isProcessing ? "Processando..." : "Criar Tabela e Importar Dados"}
             </Button>

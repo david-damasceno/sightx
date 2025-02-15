@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { ProcessSteps } from "@/components/data/ProcessSteps"
 import { FileUploader } from "@/components/data/FileUploader"
@@ -214,6 +213,7 @@ export default function DataContext() {
                       <ColumnMapper
                         fileId={fileData.id}
                         columns={fileData.columns}
+                        previewData={fileData.previewData}
                         onMappingComplete={handleMappingComplete}
                         processingStatus={fileData.processingResult?.status}
                         tableName={fileData.processingResult?.table_name}
