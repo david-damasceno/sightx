@@ -13,7 +13,8 @@ import { Separator } from "@/components/ui/separator"
 import { ColumnMetadata, ProcessingResult, ImportStatus } from "@/types/data-imports"
 import { adaptColumnMetadata } from "@/utils/columnAdapter"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { FileUp } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { FileUp, Upload, Database, BarChart3 } from "lucide-react"
 
 interface Column {
   name: string
@@ -44,7 +45,6 @@ export default function DataContext() {
       console.log('Iniciando busca de dados do arquivo:', fileId)
       setLoading(true)
       
-      // Buscar primeira página dos dados para inferir as colunas
       const { data: firstPageData, error } = await supabase.functions.invoke('read-file-data', {
         body: { 
           fileId, 
@@ -62,7 +62,6 @@ export default function DataContext() {
         throw new Error('Nenhum dado encontrado no arquivo')
       }
 
-      // Criar colunas baseado nos dados recebidos
       const inferredColumns = Object.keys(firstPageData.data[0]).map(key => ({
         name: key,
         type: 'text',
@@ -154,20 +153,44 @@ export default function DataContext() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-accent/5">
-      <div className="container max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Coluna principal - Importação */}
-          <div className="lg:col-span-2 space-y-8">
-            <Card className="border-none shadow-lg">
+      <div className="container max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Cabeçalho da página */}
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+            Central de Dados
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Importe, gerencie e analise seus dados de forma simples e eficiente
+          </p>
+        </div>
+
+        {/* Área principal com abas */}
+        <Tabs defaultValue="upload" className="space-y-8">
+          <div className="flex justify-center">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="upload" className="space-x-2">
+                <Upload className="w-4 h-4" />
+                <span>Importar Dados</span>
+              </TabsTrigger>
+              <TabsTrigger value="files" className="space-x-2">
+                <Database className="w-4 h-4" />
+                <span>Arquivos Salvos</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="upload" className="space-y-8">
+            {/* Área de Upload e Processamento */}
+            <Card className="border-none shadow-lg bg-white/50 backdrop-blur-sm">
               <CardHeader className="space-y-2">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-primary/10 rounded-lg">
                     <FileUp className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-3xl">Importação de Dados</CardTitle>
-                    <CardDescription className="text-base">
-                      Importe seus dados para começar a análise
+                    <CardTitle className="text-2xl">Importação de Dados</CardTitle>
+                    <CardDescription>
+                      Siga os passos abaixo para importar seus dados
                     </CardDescription>
                   </div>
                 </div>
@@ -188,7 +211,7 @@ export default function DataContext() {
                   "transition-all duration-300",
                   currentStep === 1 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
                 )}>
-                  <Card className="border border-dashed">
+                  <Card className="border border-dashed bg-white/50">
                     <CardContent className="pt-6">
                       <FileUploader onUploadComplete={handleUploadComplete} />
                     </CardContent>
@@ -227,23 +250,30 @@ export default function DataContext() {
                 )}
               </CardContent>
             </Card>
-          </div>
+          </TabsContent>
 
-          {/* Coluna lateral - Arquivos recentes */}
-          <div>
-            <Card className="border-none shadow-lg">
+          <TabsContent value="files">
+            {/* Área de Arquivos Salvos */}
+            <Card className="border-none shadow-lg bg-white/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Arquivos Importados</CardTitle>
-                <CardDescription>
-                  Histórico de arquivos enviados para análise
-                </CardDescription>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Database className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl">Arquivos Importados</CardTitle>
+                    <CardDescription>
+                      Histórico de arquivos enviados para análise
+                    </CardDescription>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <UploadedFilesList />
               </CardContent>
             </Card>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )
