@@ -1,7 +1,6 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY')
 const endpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')
@@ -37,32 +36,34 @@ function validateColumnName(name: string): { isValid: boolean; reason?: string }
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
     if (!apiKey || !endpoint || !deployment) {
-      console.error('Configurações do Azure OpenAI:', {
-        temApiKey: !!apiKey,
-        temEndpoint: !!endpoint,
-        temDeployment: !!deployment
+      console.error('Azure OpenAI configuration missing:', {
+        hasApiKey: !!apiKey,
+        hasEndpoint: !!endpoint,
+        hasDeployment: !!deployment
       })
-      throw new Error('Configurações do Azure OpenAI incompletas')
+      throw new Error('Missing required Azure OpenAI configuration')
     }
 
     const { description, columns, sampleData } = await req.json()
 
     if (!description || !columns || !Array.isArray(columns)) {
-      throw new Error('Dados de entrada inválidos')
+      throw new Error('Invalid input data')
     }
 
-    console.log('Processando requisição:', {
+    console.log('Processing request:', {
       description,
       columnsCount: columns.length,
-      primeirasAmostras: sampleData?.slice(0, 2)
+      sampleDataCount: sampleData?.length
     })
 
+    // Construir o prompt
     const prompt = `
       Como um especialista em análise de dados, sugira nomes apropriados para as colunas de uma tabela PostgreSQL.
       
@@ -92,15 +93,15 @@ serve(async (req) => {
       ]
     `
 
+    // Remover qualquer barra final do endpoint
     const baseEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint
-    const apiUrl = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-07-01-preview`
     
-    console.log('Chamando Azure OpenAI:', {
-      url: apiUrl,
-      temChaveApi: !!apiKey
-    })
+    // Construir a URL correta para a API do Azure OpenAI
+    const url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-07-01-preview`
+    
+    console.log('Calling Azure OpenAI API at:', url)
 
-    const azureResponse = await fetch(apiUrl, {
+    const azureResponse = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -117,7 +118,7 @@ serve(async (req) => {
             content: prompt
           }
         ],
-        temperature: 0.3,
+        temperature: 0.7,
         max_tokens: 800,
         top_p: 0.95,
         frequency_penalty: 0,
@@ -126,36 +127,32 @@ serve(async (req) => {
       }),
     })
 
-    console.log('Status da resposta Azure OpenAI:', azureResponse.status)
+    console.log('Azure OpenAI response status:', azureResponse.status)
 
     if (!azureResponse.ok) {
       const errorText = await azureResponse.text()
-      console.error('Erro na resposta do Azure OpenAI:', {
-        status: azureResponse.status,
-        texto: errorText
-      })
-      throw new Error(`Erro na API do Azure OpenAI: [${azureResponse.status}] ${errorText}`)
+      console.error('Azure OpenAI Error Response:', errorText)
+      throw new Error(`Azure OpenAI API Error: ${errorText}`)
     }
 
     const data = await azureResponse.json()
-    console.log('Resposta do Azure OpenAI recebida:', {
-      temResposta: !!data,
-      temEscolhas: !!data.choices,
-      primeiraEscolha: data.choices?.[0]
+    console.log('Azure OpenAI Response received:', {
+      hasResponse: !!data,
+      hasChoices: !!data.choices,
+      firstChoice: data.choices?.[0]
     })
 
     if (!data.choices?.[0]?.message?.content) {
-      throw new Error('Resposta inválida do Azure OpenAI')
+      throw new Error('Invalid response format from Azure OpenAI')
     }
 
-    let suggestions
     try {
       const content = data.choices[0].message.content
-      suggestions = typeof content === 'string' ? JSON.parse(content) : content
+      const suggestions = typeof content === 'string' ? JSON.parse(content) : content
 
-      console.log('Sugestões obtidas:', suggestions.slice(0, 2))
+      console.log('Suggestions received:', suggestions.slice(0, 2))
       
-      // Processar e validar cada sugestão
+      // Process and validate each suggestion
       const processedSuggestions = suggestions.map((suggestion: any) => {
         const validation = validateColumnName(suggestion.suggested_name)
         if (!validation.isValid) {
@@ -178,10 +175,10 @@ serve(async (req) => {
         }
       })
 
+      console.log('Processed suggestions:', processedSuggestions.slice(0, 2))
+
       return new Response(
-        JSON.stringify({ 
-          suggestions: processedSuggestions 
-        }),
+        JSON.stringify({ suggestions: processedSuggestions }),
         { 
           headers: { 
             ...corsHeaders,
@@ -191,16 +188,16 @@ serve(async (req) => {
       )
 
     } catch (error) {
-      console.error('Erro ao processar sugestões:', error)
-      throw new Error('Falha ao processar sugestões da resposta da IA')
+      console.error('Error processing suggestions:', error)
+      throw new Error('Failed to process AI response suggestions')
     }
 
   } catch (error) {
-    console.error('Erro na função suggest-column-names:', error)
+    console.error('Error in suggest-column-names function:', error)
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: error.stack || 'Stack não disponível'
+        details: error.stack || 'Stack trace not available'
       }),
       { 
         status: 500,
