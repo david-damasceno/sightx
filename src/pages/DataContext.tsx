@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { ProcessSteps } from "@/components/data/ProcessSteps"
 import { FileUploader } from "@/components/data/FileUploader"
@@ -14,7 +13,7 @@ import { ColumnMetadata, ProcessingResult, ImportStatus } from "@/types/data-imp
 import { adaptColumnMetadata } from "@/utils/columnAdapter"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FileUp, Upload, Database, BarChart3 } from "lucide-react"
+import { FileUp, Upload, Database, BarChart3, FileSpreadsheet, Activity, Settings } from "lucide-react"
 
 interface Column {
   name: string
@@ -152,39 +151,83 @@ export default function DataContext() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-accent/5">
+    <div className="min-h-screen bg-gradient-to-b from-background via-accent/5 to-background">
       <div className="container max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-8">
-        {/* Cabeçalho da página */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+        <div className="text-center space-y-6 animate-fade-in">
+          <div className="inline-block p-2 rounded-full bg-primary/10 mb-4">
+            <FileSpreadsheet className="h-8 w-8 text-primary animate-pulse" />
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-600 to-primary bg-300% animate-gradient">
             Central de Dados
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Importe, gerencie e analise seus dados de forma simples e eficiente
           </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+            <Card className="bg-white/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300 border-none">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-primary/10 rounded-xl">
+                    <Upload className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm text-muted-foreground">Arquivos Importados</p>
+                    <p className="text-2xl font-semibold">128</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-white/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300 border-none">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-purple-500/10 rounded-xl">
+                    <Activity className="h-6 w-6 text-purple-500" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm text-muted-foreground">Processamentos</p>
+                    <p className="text-2xl font-semibold">1.2K</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-white/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300 border-none">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-green-500/10 rounded-xl">
+                    <BarChart3 className="h-6 w-6 text-green-500" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm text-muted-foreground">Análises</p>
+                    <p className="text-2xl font-semibold">3.4K</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        {/* Área principal com abas */}
         <Tabs defaultValue="upload" className="space-y-8">
           <div className="flex justify-center">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="upload" className="space-x-2">
+            <TabsList className="grid w-full max-w-md grid-cols-2 p-1 bg-white/50 backdrop-blur-sm">
+              <TabsTrigger value="upload" className="space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Upload className="w-4 h-4" />
                 <span>Importar Dados</span>
               </TabsTrigger>
-              <TabsTrigger value="files" className="space-x-2">
+              <TabsTrigger value="files" className="space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Database className="w-4 h-4" />
                 <span>Arquivos Salvos</span>
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="upload" className="space-y-8">
-            {/* Área de Upload e Processamento */}
-            <Card className="border-none shadow-lg bg-white/50 backdrop-blur-sm">
+          <TabsContent value="upload" className="space-y-8 animate-fade-in">
+            <Card className="border-none shadow-lg bg-white/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
               <CardHeader className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
+                  <div className="p-3 bg-primary/10 rounded-xl">
                     <FileUp className="h-6 w-6 text-primary" />
                   </div>
                   <div>
@@ -203,15 +246,18 @@ export default function DataContext() {
 
                 {loading && (
                   <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <div className="relative">
+                      <div className="w-12 h-12 border-4 border-primary/30 rounded-full"></div>
+                      <div className="absolute top-0 w-12 h-12 border-4 border-primary rounded-full border-t-transparent animate-spin"></div>
+                    </div>
                   </div>
                 )}
 
                 <div className={cn(
-                  "transition-all duration-300",
-                  currentStep === 1 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
+                  "transition-all duration-500 transform",
+                  currentStep === 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 h-0 overflow-hidden"
                 )}>
-                  <Card className="border border-dashed bg-white/50">
+                  <Card className="border border-dashed bg-white/50 hover:border-primary/50 transition-colors">
                     <CardContent className="pt-6">
                       <FileUploader onUploadComplete={handleUploadComplete} />
                     </CardContent>
@@ -221,8 +267,8 @@ export default function DataContext() {
                 {fileData && (
                   <>
                     <div className={cn(
-                      "transition-all duration-300",
-                      currentStep === 2 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
+                      "transition-all duration-500 transform",
+                      currentStep === 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 h-0 overflow-hidden"
                     )}>
                       <DataPreview 
                         columns={fileData.columns}
@@ -233,8 +279,8 @@ export default function DataContext() {
                     </div>
 
                     <div className={cn(
-                      "transition-all duration-300",
-                      currentStep === 3 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
+                      "transition-all duration-500 transform",
+                      currentStep === 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 h-0 overflow-hidden"
                     )}>
                       <ColumnMapper
                         fileId={fileData.id}
@@ -252,12 +298,11 @@ export default function DataContext() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="files">
-            {/* Área de Arquivos Salvos */}
-            <Card className="border-none shadow-lg bg-white/50 backdrop-blur-sm">
+          <TabsContent value="files" className="animate-fade-in">
+            <Card className="border-none shadow-lg bg-white/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
+                  <div className="p-3 bg-primary/10 rounded-xl">
                     <Database className="h-6 w-6 text-primary" />
                   </div>
                   <div>
