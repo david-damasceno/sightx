@@ -6,8 +6,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY')
 const endpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')
 const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT')
-const supabaseUrl = Deno.env.get('SUPABASE_URL')
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,9 +42,6 @@ serve(async (req) => {
   }
 
   try {
-    // Inicializar cliente Supabase com service role key
-    const supabase = createClient(supabaseUrl!, supabaseServiceKey!)
-
     if (!apiKey || !endpoint || !deployment) {
       console.error('Configurações do Azure OpenAI:', {
         temApiKey: !!apiKey,
@@ -56,7 +51,7 @@ serve(async (req) => {
       throw new Error('Configurações do Azure OpenAI incompletas')
     }
 
-    const { description, columns, fileId, organizationId, sampleData } = await req.json()
+    const { description, columns, sampleData } = await req.json()
 
     if (!description || !columns || !Array.isArray(columns)) {
       throw new Error('Dados de entrada inválidos')
@@ -65,27 +60,8 @@ serve(async (req) => {
     console.log('Processando requisição:', {
       description,
       columnsCount: columns.length,
-      fileId,
-      organizationId,
       primeirasAmostras: sampleData?.slice(0, 2)
     })
-
-    // Inserir sugestões iniciais como pendentes
-    const initialSuggestions = columns.map(col => ({
-      organization_id: organizationId,
-      file_id: fileId,
-      original_name: col,
-      status: 'pending'
-    }))
-
-    const { error: insertError } = await supabase
-      .from('column_suggestions')
-      .insert(initialSuggestions)
-
-    if (insertError) {
-      console.error('Erro ao inserir sugestões iniciais:', insertError)
-      throw insertError
-    }
 
     const prompt = `
       Como um especialista em análise de dados, sugira nomes apropriados para as colunas de uma tabela PostgreSQL.
@@ -193,62 +169,32 @@ serve(async (req) => {
         }
         
         return {
-          organization_id: organizationId,
-          file_id: fileId,
           original_name: suggestion.original_name,
           suggested_name: suggestion.suggested_name,
           type: suggestion.type,
           description: suggestion.description,
           needs_review: suggestion.needs_review || false,
-          validation_message: suggestion.validation_message,
-          status: 'completed'
+          validation_message: suggestion.validation_message
         }
       })
 
-      console.log('Sugestões processadas:', processedSuggestions.slice(0, 2))
+      return new Response(
+        JSON.stringify({ 
+          suggestions: processedSuggestions 
+        }),
+        { 
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          } 
+        }
+      )
 
-      // Atualizar sugestões no banco
-      const { error: updateError } = await supabase
-        .from('column_suggestions')
-        .upsert(processedSuggestions, {
-          onConflict: 'file_id,original_name'
-        })
-
-      if (updateError) {
-        console.error('Erro ao atualizar sugestões:', updateError)
-        throw updateError
-      }
-
-      console.log('Sugestões processadas e salvas com sucesso')
     } catch (error) {
       console.error('Erro ao processar sugestões:', error)
-      
-      // Atualizar status para erro
-      const { error: updateError } = await supabase
-        .from('column_suggestions')
-        .update({ 
-          status: 'error',
-          error_message: error.message
-        })
-        .eq('file_id', fileId)
-        .eq('status', 'pending')
-
-      if (updateError) {
-        console.error('Erro ao atualizar status de erro:', updateError)
-      }
-
       throw new Error('Falha ao processar sugestões da resposta da IA')
     }
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      { 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        } 
-      }
-    )
   } catch (error) {
     console.error('Erro na função suggest-column-names:', error)
     return new Response(
