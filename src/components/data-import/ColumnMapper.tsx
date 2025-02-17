@@ -1,7 +1,8 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Progress } from "@/components/ui/progress"
 import {
   Select,
   SelectContent,
@@ -44,9 +45,45 @@ export function ColumnMapper({
   const [tableNameInput, setTableNameInput] = useState(tableName || "")
   const [columnMappings, setColumnMappings] = useState<Record<string, { description: string, type: string, validation?: string[] }>>({})
   const [isProcessing, setIsProcessing] = useState(false)
+  const [progress, setProgress] = useState(0)
   const [showSuggestions, setShowSuggestions] = useState(true)
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
+
+  useEffect(() => {
+    if (processingStatus === 'processing' && tableName) {
+      const interval = setInterval(async () => {
+        const { data, error } = await supabase
+          .from('data_processing_results')
+          .select('progress, status, error_message')
+          .eq('table_name', tableName)
+          .single()
+
+        if (error) {
+          console.error('Erro ao buscar progresso:', error)
+          return
+        }
+
+        if (data) {
+          setProgress(data.progress || 0)
+          
+          if (data.status === 'completed') {
+            clearInterval(interval)
+            onMappingComplete(tableName, previewData)
+          } else if (data.status === 'error') {
+            clearInterval(interval)
+            toast({
+              title: "Erro no processamento",
+              description: data.error_message || "Ocorreu um erro ao processar os dados",
+              variant: "destructive",
+            })
+          }
+        }
+      }, 1000)
+
+      return () => clearInterval(interval)
+    }
+  }, [processingStatus, tableName])
 
   const dataTypes = [
     // Texto
@@ -94,7 +131,6 @@ export function ColumnMapper({
   const handleSuggestionsApplied = (suggestions: { [key: string]: string }) => {
     const newMappings: Record<string, { description: string, type: string }> = {}
     Object.entries(suggestions).forEach(([originalName, suggestedName]) => {
-      // Inferir o tipo usando a função do banco
       const sampleValue = String(columns.find(c => c.name === originalName)?.sample || '')
       const inferredType = inferColumnType(sampleValue)
       
@@ -180,14 +216,6 @@ export function ColumnMapper({
     }
   }
 
-  const handleCancelSuggestions = () => {
-    setShowSuggestions(false)
-  }
-
-  const handleContinueMapping = () => {
-    setShowSuggestions(false)
-  }
-
   return (
     <div className="space-y-6">
       {showSuggestions ? (
@@ -195,8 +223,8 @@ export function ColumnMapper({
           columns={columns.map(c => c.name)}
           sampleData={previewData}
           onSuggestionsApplied={handleSuggestionsApplied}
-          onCancel={handleCancelSuggestions}
-          onContinue={handleContinueMapping}
+          onCancel={onCancel}
+          onContinue={() => setShowSuggestions(false)}
         />
       ) : (
         <>
@@ -208,8 +236,19 @@ export function ColumnMapper({
               onChange={(e) => setTableNameInput(e.target.value)}
               placeholder="Ex: vendas_2024"
               className="mt-1"
+              disabled={isProcessing}
             />
           </div>
+
+          {(processingStatus === 'processing' || isProcessing) && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Processando dados...</span>
+                <span>{progress}%</span>
+              </div>
+              <Progress value={progress} />
+            </div>
+          )}
 
           <div className="space-y-4">
             <h3 className="font-medium">Mapeamento de Colunas</h3>
@@ -228,6 +267,7 @@ export function ColumnMapper({
                     value={columnMappings[column.name]?.description || ""}
                     onChange={(e) => handleColumnDescriptionChange(column.name, e.target.value)}
                     placeholder="Descreva o significado desta coluna"
+                    disabled={isProcessing}
                   />
                 </div>
                 <div>
@@ -235,6 +275,7 @@ export function ColumnMapper({
                   <Select
                     value={columnMappings[column.name]?.type || column.type}
                     onValueChange={(value) => handleColumnTypeChange(column.name, value)}
+                    disabled={isProcessing}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o tipo" />
