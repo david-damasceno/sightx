@@ -1,4 +1,4 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts"
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY')
@@ -28,10 +28,7 @@ serve(async (req) => {
     const { message, context } = await req.json()
     console.log('Processing request:', { message, context })
 
-    // Remover qualquer barra final do endpoint
     const baseEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint
-    
-    // Construir a URL correta para a API do Azure OpenAI
     const url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-07-01-preview`
     
     console.log('Calling Azure OpenAI at:', url)

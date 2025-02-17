@@ -1,5 +1,4 @@
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY')
@@ -36,7 +35,6 @@ function validateColumnName(name: string): { isValid: boolean; reason?: string }
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -63,7 +61,6 @@ serve(async (req) => {
       sampleDataCount: sampleData?.length
     })
 
-    // Construir o prompt
     const prompt = `
       Como um especialista em análise de dados, sugira nomes apropriados para as colunas de uma tabela PostgreSQL.
       
@@ -93,10 +90,7 @@ serve(async (req) => {
       ]
     `
 
-    // Remover qualquer barra final do endpoint
     const baseEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint
-    
-    // Construir a URL correta para a API do Azure OpenAI
     const url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-07-01-preview`
     
     console.log('Calling Azure OpenAI API at:', url)
@@ -152,7 +146,6 @@ serve(async (req) => {
 
       console.log('Suggestions received:', suggestions.slice(0, 2))
       
-      // Process and validate each suggestion
       const processedSuggestions = suggestions.map((suggestion: any) => {
         const validation = validateColumnName(suggestion.suggested_name)
         if (!validation.isValid) {
