@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { ProcessSteps } from "@/components/data/ProcessSteps"
 import { FileUploader } from "@/components/data/FileUploader"
@@ -13,7 +14,7 @@ import { ColumnMetadata, ProcessingResult, ImportStatus } from "@/types/data-imp
 import { adaptColumnMetadata } from "@/utils/columnAdapter"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FileUp, Upload, Database, BarChart3, FileSpreadsheet, Activity, Settings } from "lucide-react"
+import { FileUp, Upload, Database } from "lucide-react"
 
 interface Column {
   name: string
@@ -151,64 +152,8 @@ export default function DataContext() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-accent/5 to-background">
+    <div className="min-h-screen bg-gradient-to-b from-background to-background via-accent/5">
       <div className="container max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="text-center space-y-6 animate-fade-in">
-          <div className="inline-block p-2 rounded-full bg-primary/10 mb-4">
-            <FileSpreadsheet className="h-8 w-8 text-primary animate-pulse" />
-          </div>
-          <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-600 to-primary bg-300% animate-gradient">
-            Central de Dados
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Importe, gerencie e analise seus dados de forma simples e eficiente
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-            <Card className="bg-white/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300 border-none">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-primary/10 rounded-xl">
-                    <Upload className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-sm text-muted-foreground">Arquivos Importados</p>
-                    <p className="text-2xl font-semibold">128</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-white/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300 border-none">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-purple-500/10 rounded-xl">
-                    <Activity className="h-6 w-6 text-purple-500" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-sm text-muted-foreground">Processamentos</p>
-                    <p className="text-2xl font-semibold">1.2K</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-white/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300 border-none">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-green-500/10 rounded-xl">
-                    <BarChart3 className="h-6 w-6 text-green-500" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-sm text-muted-foreground">Análises</p>
-                    <p className="text-2xl font-semibold">3.4K</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
         <Tabs defaultValue="upload" className="space-y-8">
           <div className="flex justify-center">
             <TabsList className="grid w-full max-w-md grid-cols-2 p-1 bg-white/50 backdrop-blur-sm">
