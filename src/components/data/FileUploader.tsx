@@ -126,7 +126,7 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
               Arraste e solte seu arquivo aqui, ou clique para selecionar
             </p>
             <p className="text-xs text-muted-foreground">
-              Formatos suportados: CSV, XLS, XLSX
+              CSV, XLS, XLSX
             </p>
           </>
         )}
