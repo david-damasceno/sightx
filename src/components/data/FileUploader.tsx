@@ -114,14 +114,14 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     >
       <input {...getInputProps()} />
       <div className="flex flex-col items-center gap-2">
-        <UploadCloud className="h-8 w-8 text-muted-foreground" />
         {uploading ? (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <span>Enviando arquivo...</span>
           </div>
         ) : (
           <>
+            <UploadCloud className="h-8 w-8 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
               Arraste e solte seu arquivo aqui, ou clique para selecionar
             </p>
