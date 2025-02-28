@@ -11,6 +11,7 @@ import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { useNavigate } from "react-router-dom"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 
 interface UploadedFile {
   id: string
@@ -103,28 +104,22 @@ export function UploadedFilesList() {
   }
 
   const handleDelete = async (file: UploadedFile) => {
-    if (!file.storage_path) {
-      toast({
-        title: "Erro ao excluir arquivo",
-        description: "Caminho do arquivo não encontrado",
-        variant: "destructive"
-      })
-      return
-    }
-
     try {
       setDeletingId(file.id)
 
-      // 1. Excluir o arquivo do storage
+      // 1. Excluir o arquivo do storage apenas se houver um caminho de armazenamento
       if (file.storage_path) {
         const { error: storageError } = await supabase.storage
           .from('data_files')
           .remove([file.storage_path])
 
-        if (storageError) throw storageError
+        if (storageError) {
+          console.error("Erro ao remover arquivo do storage:", storageError)
+          // Não interrompe o processo, continua para excluir o registro do banco
+        }
       }
 
-      // 2. Excluir o registro do banco de dados
+      // 2. Excluir o registro do banco de dados, independentemente se o arquivo físico existe ou não
       const { error: dbError } = await supabase
         .from('data_imports')
         .delete()
@@ -153,6 +148,19 @@ export function UploadedFilesList() {
 
   const handleView = (file: UploadedFile) => {
     navigate(`/reports/data-context/${file.id}`)
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-yellow-100 text-yellow-800">Pendente</span>
+      case 'uploaded':
+        return <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-800">Enviado</span>
+      case 'error':
+        return <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-red-100 text-red-800">Erro</span>
+      default:
+        return <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-800">{status}</span>
+    }
   }
 
   if (loading) {
@@ -185,7 +193,10 @@ export function UploadedFilesList() {
                   <FileText className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-medium">{file.name}</h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium">{file.name}</h4>
+                    {getStatusBadge(file.status)}
+                  </div>
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     {format(new Date(file.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
@@ -197,6 +208,7 @@ export function UploadedFilesList() {
                   variant="ghost" 
                   size="icon"
                   onClick={() => handleView(file)}
+                  title="Visualizar"
                 >
                   <Eye className="h-4 w-4" />
                 </Button>
@@ -205,6 +217,7 @@ export function UploadedFilesList() {
                   size="icon"
                   onClick={() => handleDownload(file)}
                   disabled={downloadingId === file.id || !file.storage_path}
+                  title={file.storage_path ? "Baixar" : "Arquivo indisponível para download"}
                 >
                   {downloadingId === file.id ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
@@ -218,6 +231,7 @@ export function UploadedFilesList() {
                       variant="ghost" 
                       size="icon"
                       disabled={deletingId === file.id}
+                      title="Excluir"
                     >
                       {deletingId === file.id ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
@@ -231,6 +245,15 @@ export function UploadedFilesList() {
                       <AlertDialogTitle>Excluir arquivo</AlertDialogTitle>
                       <AlertDialogDescription>
                         Tem certeza que deseja excluir o arquivo "{file.name}"? Esta ação não pode ser desfeita.
+                        {!file.storage_path && (
+                          <Alert className="mt-2" variant="destructive">
+                            <AlertTitle>Aviso</AlertTitle>
+                            <AlertDescription>
+                              Este arquivo parece estar incompleto ou com erro de upload.
+                              A exclusão removerá o registro, mas nenhum arquivo físico será excluído.
+                            </AlertDescription>
+                          </Alert>
+                        )}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
