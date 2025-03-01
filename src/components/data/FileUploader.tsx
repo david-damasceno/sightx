@@ -37,7 +37,7 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     setUploadProgress(0)
 
     try {
-      console.log('Iniciando upload do arquivo:', file.name, 'tamanho:', Math.round(file.size / 1024), 'KB')
+      console.log('Iniciando upload do arquivo:', file.name, 'tamanho:', Math.round(file.size / 1024), 'KB', 'tipo:', file.type)
       
       // Validar tamanho máximo (50MB)
       if (file.size > 50 * 1024 * 1024) {
