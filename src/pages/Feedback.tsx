@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { MessageSquare, PlusCircle, BarChart2, Send, Loader2, Mail, Copy, Link2, ArrowUpRight, Users, CheckCircle, Clock, Settings2, ExternalLink, Filter, Eye, Trash2, Edit, HelpCircle } from "lucide-react"
@@ -18,16 +17,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Json } from "@/integrations/supabase/types"
 
 type NPSSurvey = {
   id: string
   title: string
   description: string | null
-  status: 'draft' | 'active' | 'inactive' | 'archived' | 'completed'
+  status: 'draft' | 'active' | 'inactive' | 'archived'
   created_at: string
   type: 'simple' | 'detailed' | 'advanced'
   organization_id: string
-  settings: any
+  settings: Json
 }
 
 type AIPromptType = 'manual' | 'recommend'
@@ -228,6 +228,12 @@ export default function Feedback() {
         return
       }
 
+      // Transformando questions e ai_suggestion em objetos JSON compatíveis
+      const settingsObject: Record<string, any> = {
+        ai_suggestion: aiSuggestion,
+        questions: questions
+      }
+
       const { data, error } = await supabase
         .from('nps_surveys')
         .insert({
@@ -236,10 +242,7 @@ export default function Feedback() {
           description: surveyDescription,
           status: 'draft',
           type: questions.length > 3 ? 'detailed' : 'simple',
-          settings: {
-            ai_suggestion: aiSuggestion,
-            questions: questions
-          }
+          settings: settingsObject as Json
         })
         .select()
 
@@ -900,170 +903,3 @@ export default function Feedback() {
                         <Card className="p-6">
                           <h3 className="text-lg font-medium mb-4">Distribuição de Respostas</h3>
                           <div className="space-y-6">
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-sm">
-                                <span>Promotores (9-10)</span>
-                                <span>{surveyStats.promoters_percentage}%</span>
-                              </div>
-                              <Progress value={surveyStats.promoters_percentage} className="h-2 bg-muted" />
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-sm">
-                                <span>Neutros (7-8)</span>
-                                <span>{surveyStats.passives_percentage}%</span>
-                              </div>
-                              <Progress value={surveyStats.passives_percentage} className="h-2 bg-muted" />
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-sm">
-                                <span>Detratores (0-6)</span>
-                                <span>{surveyStats.detractors_percentage}%</span>
-                              </div>
-                              <Progress value={surveyStats.detractors_percentage} className="h-2 bg-muted" />
-                            </div>
-                          </div>
-                        </Card>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-10 space-y-4 text-center">
-                        <BarChart2 className="h-12 w-12 text-muted-foreground" />
-                        <div>
-                          <p className="text-muted-foreground">
-                            Nenhum resultado encontrado para esta pesquisa.
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Compartilhe a pesquisa com seus clientes para começar a coletar respostas.
-                          </p>
-                        </div>
-                        <Button
-                          onClick={() => {
-                            setShareDialogOpen(true)
-                            setSelectedSurveyId(viewSurvey?.id || null)
-                          }}
-                        >
-                          <Link2 className="mr-2 h-4 w-4" />
-                          Compartilhar Pesquisa
-                        </Button>
-                      </div>
-                    )
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-10 space-y-4 text-center">
-                      <BarChart2 className="h-12 w-12 text-muted-foreground" />
-                      <div>
-                        <p className="text-muted-foreground">
-                          Resultados disponíveis apenas para pesquisas ativas ou concluídas.
-                        </p>
-                        {viewSurvey?.status === 'draft' && (
-                          <p className="text-sm text-muted-foreground">
-                            Publique esta pesquisa para começar a coletar respostas.
-                          </p>
-                        )}
-                      </div>
-                      {viewSurvey?.status === 'draft' && (
-                        <Button
-                          onClick={() => {
-                            updateSurveyStatus(viewSurvey.id, 'active')
-                            setViewSurvey(null)
-                          }}
-                        >
-                          <ArrowUpRight className="mr-2 h-4 w-4" />
-                          Publicar Pesquisa
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </TabsContent>
-                
-                <TabsContent value="configuracoes" className="space-y-4 py-4">
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Status atual</Label>
-                        <Select defaultValue={viewSurvey?.status} disabled={!viewSurvey}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="draft">Rascunho</SelectItem>
-                            <SelectItem value="active">Ativa</SelectItem>
-                            <SelectItem value="inactive">Inativa</SelectItem>
-                            <SelectItem value="completed">Concluída</SelectItem>
-                            <SelectItem value="archived">Arquivada</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label>Tipo de pesquisa</Label>
-                        <Select defaultValue={viewSurvey?.type} disabled={!viewSurvey}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="simple">Simples</SelectItem>
-                            <SelectItem value="detailed">Detalhada</SelectItem>
-                            <SelectItem value="advanced">Avançada</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Título da pesquisa</Label>
-                      <Input defaultValue={viewSurvey?.title} disabled={!viewSurvey} />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Descrição</Label>
-                      <Textarea defaultValue={viewSurvey?.description || ""} disabled={!viewSurvey} />
-                    </div>
-                    
-                    <Button disabled variant="outline" className="w-full">
-                      <Edit className="mr-2 h-4 w-4" />
-                      Editar Pesquisa
-                    </Button>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setViewSurvey(null)}>
-                Fechar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Modal de confirmação de exclusão */}
-        <Dialog open={!!confirmDeleteId} onOpenChange={(open) => !open && setConfirmDeleteId(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirmar exclusão</DialogTitle>
-              <DialogDescription>
-                Tem certeza que deseja excluir esta pesquisa? Esta ação não pode ser desfeita.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setConfirmDeleteId(null)}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                variant="destructive"
-                onClick={() => confirmDeleteId && deleteSurvey(confirmDeleteId)}
-              >
-                Excluir
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </main>
-    </div>
-  )
-}
