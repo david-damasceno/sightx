@@ -3,7 +3,6 @@ import { useCallback, useState } from "react"
 import { useDropzone } from "react-dropzone"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { UploadCloud, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
@@ -34,6 +33,12 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     setUploading(true)
 
     try {
+      // Gerar nome de tabela único baseado no nome do arquivo
+      const tableName = `data_${file.name
+        .replace(/\.[^/.]+$/, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "_")}_${Date.now().toString().slice(-6)}`
+
       // Criar registro do import
       const { data: importData, error: importError } = await supabase
         .from('data_imports')
@@ -43,13 +48,13 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
           name: file.name,
           original_filename: file.name,
           file_type: file.type,
-          status: 'pending',
+          status: 'uploading',
           context: '',
           columns_metadata: {},
           column_analysis: {},
           data_quality: {},
           data_validation: {},
-          table_name: file.name.replace(/\.[^/.]+$/, "").toLowerCase().replace(/\s+/g, "_")
+          table_name: tableName
         })
         .select()
         .single()
@@ -69,15 +74,25 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
         .from('data_imports')
         .update({
           storage_path: filePath,
-          status: 'uploaded'
+          status: 'processing'
         })
         .eq('id', importData.id)
 
       if (updateError) throw updateError
 
+      // Iniciar processamento do arquivo para criar tabela
+      const { error: processingError } = await supabase.functions.invoke('process-file-upload', {
+        body: { 
+          fileId: importData.id,
+          organizationId: currentOrganization.id 
+        }
+      })
+
+      if (processingError) throw processingError
+
       toast({
         title: "Sucesso",
-        description: "Arquivo enviado com sucesso",
+        description: "Arquivo enviado e processamento iniciado",
       })
 
       onUploadComplete(importData.id)
@@ -118,7 +133,7 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
         {uploading ? (
           <div className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Enviando arquivo...</span>
+            <span>Enviando e processando arquivo...</span>
           </div>
         ) : (
           <>
@@ -127,6 +142,9 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
             </p>
             <p className="text-xs text-muted-foreground">
               Formatos suportados: CSV, XLS, XLSX
+            </p>
+            <p className="mt-2 text-xs text-primary">
+              O arquivo será importado diretamente para o banco de dados.
             </p>
           </>
         )}
