@@ -1,23 +1,31 @@
 
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.32.0'
+// @ts-ignore
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.0'
 import { corsHeaders } from '../_shared/cors.ts'
-import * as XLSX from 'https://esm.sh/xlsx@0.18.5'
 
 interface ProcessFileUploadRequest {
-  fileId: string;
-  organizationId: string;
+  fileId: string
+  organizationId: string
 }
 
 interface ColumnDefinition {
-  name: string;
-  type: string;
-  original_name: string;
-  sample_value: any;
+  name: string
+  type: string
 }
 
-serve(async (req) => {
-  // Lidar com opções de CORS
+interface DataImport {
+  id: string
+  organization_id: string
+  name: string
+  original_filename: string
+  storage_path: string
+  file_type: string
+  status: string
+  table_name: string
+}
+
+Deno.serve(async (req: Request) => {
+  // Gerenciar CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -39,7 +47,7 @@ serve(async (req) => {
       .select('*')
       .eq('id', fileId)
       .eq('organization_id', organizationId)
-      .single()
+      .single() as { data: DataImport, error: any }
     
     if (fileError || !fileData) {
       console.error('Erro ao buscar arquivo:', fileError)
@@ -64,61 +72,83 @@ serve(async (req) => {
       throw new Error(downloadError?.message || 'Não foi possível baixar o arquivo')
     }
     
-    console.log('Arquivo baixado com sucesso, processando...')
+    console.log('Arquivo baixado com sucesso, tamanho:', fileContent.size, 'bytes')
     
-    // Processar o arquivo baseado no tipo
-    const fileType = fileData.file_type
-    const arrayBuffer = await fileContent.arrayBuffer()
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' })
-    const sheetName = workbook.SheetNames[0]
-    const worksheet = workbook.Sheets[sheetName]
-    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
+    // Processar o arquivo de acordo com o tipo
+    let jsonData: any[] = []
+    const fileType = fileData.file_type || fileData.original_filename.split('.').pop()?.toLowerCase()
     
-    if (jsonData.length < 2) {
-      throw new Error('Arquivo vazio ou sem dados suficientes')
+    if (fileType?.includes('csv') || fileData.original_filename.endsWith('.csv')) {
+      const text = await fileContent.text()
+      
+      // Processar CSV para JSON
+      const lines = text.split('\n')
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''))
+      
+      jsonData = lines.slice(1)
+        .filter(line => line.trim().length > 0) // Remover linhas vazias
+        .map(line => {
+          const values = line.split(',').map(v => v.trim().replace(/"/g, ''))
+          const row: Record<string, any> = {}
+          
+          headers.forEach((header, idx) => {
+            row[header] = values[idx] || ''
+          })
+          
+          return row
+        })
+    } 
+    else if (fileType?.includes('excel') || 
+             fileData.original_filename.endsWith('.xlsx') || 
+             fileData.original_filename.endsWith('.xls')) {
+      // Aqui precisaríamos de uma biblioteca para processar Excel
+      // Mas o Deno runtime não suporta isso facilmente
+      // Retorne um erro amigável
+      throw new Error('Processamento de arquivos Excel não está disponível neste momento. Por favor, converta para CSV e tente novamente.')
     }
-
-    console.log(`Processando ${jsonData.length} linhas de dados`)
-
-    // Identificar cabeçalhos e tipos de dados
-    const headers = jsonData[0] as string[]
-    const firstDataRow = jsonData[1] as any[]
+    else {
+      throw new Error(`Tipo de arquivo não suportado: ${fileType}`)
+    }
+    
+    if (jsonData.length === 0) {
+      throw new Error('Não foi possível extrair dados do arquivo ou o arquivo está vazio')
+    }
+    
+    console.log(`Dados extraídos: ${jsonData.length} linhas`)
+    
+    // Identificar tipos de coluna com base na primeira linha de dados
     const columnDefinitions: ColumnDefinition[] = []
     
-    // Inferir tipos de dados
-    for (let i = 0; i < headers.length; i++) {
-      const header = headers[i]
-      const sampleValue = firstDataRow[i]
-      const columnName = header
-        .toLowerCase()
-        .replace(/[^a-z0-9_]/g, '_')
+    if (jsonData.length > 0) {
+      const sampleRow = jsonData[0]
       
-      let dataType = 'text' // default
-      
-      if (typeof sampleValue === 'number') {
-        if (Number.isInteger(sampleValue)) {
-          dataType = 'integer'
-        } else {
-          dataType = 'numeric(15,2)'
+      Object.keys(sampleRow).forEach(key => {
+        let type = 'text'
+        const value = sampleRow[key]
+        
+        // Inferir tipo básico
+        if (!isNaN(Number(value)) && value !== '') {
+          // Se tem ponto decimal, é numeric
+          if (value.includes('.')) {
+            type = 'numeric'
+          } else {
+            type = 'integer'
+          }
+        } 
+        // Tentar detectar datas (simplificado)
+        else if (/^\d{2}[\/\-]\d{2}[\/\-]\d{4}$/.test(value) || 
+                /^\d{4}[\/\-]\d{2}[\/\-]\d{2}$/.test(value)) {
+          type = 'date'
         }
-      } else if (
-        typeof sampleValue === 'string' && 
-        !isNaN(Date.parse(sampleValue))
-      ) {
-        dataType = 'timestamp with time zone'
-      } else if (
-        typeof sampleValue === 'string' && 
-        (sampleValue.toLowerCase() === 'true' || 
-         sampleValue.toLowerCase() === 'false')
-      ) {
-        dataType = 'boolean'
-      }
-      
-      columnDefinitions.push({
-        name: columnName,
-        type: dataType,
-        original_name: header,
-        sample_value: sampleValue
+        // Para booleanos
+        else if (['true', 'false', 'yes', 'no', 'sim', 'não'].includes(value.toLowerCase())) {
+          type = 'boolean'
+        }
+        
+        columnDefinitions.push({
+          name: key.toLowerCase().replace(/\s+/g, '_'),
+          type: type
+        })
       })
     }
     
@@ -132,7 +162,7 @@ serve(async (req) => {
       'create_dynamic_table',
       {
         p_table_name: fileData.table_name,
-        p_columns: columnDefinitions,
+        p_columns: columnDefinitionsJson,
         p_organization_id: organizationId
       }
     )
@@ -142,80 +172,81 @@ serve(async (req) => {
       throw new Error(`Erro ao criar tabela: ${tableError.message}`)
     }
     
-    console.log('Tabela criada com sucesso:', fileData.table_name)
+    console.log('Tabela criada com sucesso:', tableResult)
     
-    // Inserir os dados na nova tabela
-    const dataInserts = []
-    for (let i = 1; i < jsonData.length; i++) {
-      const row = jsonData[i] as any[]
-      const rowData: Record<string, any> = { organization_id: organizationId }
+    // Inserir os dados na tabela
+    console.log(`Iniciando inserção de ${jsonData.length} registros na tabela ${fileData.table_name}`)
+    
+    // Processamos em lotes para evitar sobrecarga
+    const batchSize = 100
+    let insertedCount = 0
+    let errorCount = 0
+    
+    for (let i = 0; i < jsonData.length; i += batchSize) {
+      const batch = jsonData.slice(i, i + batchSize)
       
-      for (let j = 0; j < columnDefinitions.length; j++) {
-        if (j < row.length) {
-          rowData[columnDefinitions[j].name] = row[j]
-        }
-      }
+      // Preparar os registros para inserção
+      const records = batch.map(row => {
+        const record: Record<string, any> = { organization_id: organizationId }
+        
+        // Mapear as colunas da definição
+        columnDefinitions.forEach(col => {
+          const originalKey = Object.keys(row).find(
+            k => k.toLowerCase().replace(/\s+/g, '_') === col.name
+          )
+          
+          if (originalKey) {
+            let value = row[originalKey]
+            
+            // Conversão de tipos
+            if (col.type === 'integer' && !isNaN(Number(value))) {
+              value = parseInt(value)
+            } else if (col.type === 'numeric' && !isNaN(Number(value))) {
+              value = parseFloat(value)
+            } else if (col.type === 'boolean') {
+              value = ['true', 'yes', 'sim', '1'].includes(value.toLowerCase())
+            }
+            
+            record[col.name] = value
+          }
+        })
+        
+        return record
+      })
       
-      dataInserts.push(rowData)
-    }
-    
-    console.log(`Preparando para inserir ${dataInserts.length} registros`)
-    
-    // Inserir em lotes de 1000 registros
-    const batchSize = 1000
-    for (let i = 0; i < dataInserts.length; i += batchSize) {
-      const batch = dataInserts.slice(i, i + batchSize)
-      const { error: insertError } = await supabase
+      // Inserir o lote
+      const { data: insertData, error: insertError } = await supabase
         .from(fileData.table_name)
-        .insert(batch)
+        .insert(records)
       
       if (insertError) {
-        console.error('Erro ao inserir dados:', insertError)
-        throw new Error(`Erro ao inserir dados: ${insertError.message}`)
+        console.error(`Erro ao inserir lote ${i / batchSize + 1}:`, insertError)
+        errorCount++
+      } else {
+        insertedCount += records.length
+        console.log(`Lote ${i / batchSize + 1} inserido com sucesso, total: ${insertedCount}`)
       }
-      
-      console.log(`Inseridos ${Math.min(i + batchSize, dataInserts.length)} de ${dataInserts.length} registros`)
     }
     
-    // Criar metadados de colunas
-    for (const column of columnDefinitions) {
-      await supabase
-        .from('column_metadata')
-        .insert({
-          import_id: fileId,
-          original_name: column.original_name,
-          data_type: column.type,
-          sample_values: JSON.stringify([column.sample_value]),
-          organization_id: organizationId
-        })
-    }
-    
-    console.log('Metadados de colunas criados')
-    
-    // Atualizar status do import
+    // Atualizar status
     await supabase
       .from('data_imports')
       .update({
-        status: 'completed',
-        row_count: jsonData.length - 1, // Excluir linha de cabeçalho
-        metadata: {
-          columns: columnDefinitions.map(c => ({
-            name: c.name,
-            original_name: c.original_name,
-            type: c.type
-          }))
-        }
+        status: errorCount > 0 ? 'error' : 'completed',
+        error_message: errorCount > 0 ? `${errorCount} lotes com erro na importação` : null,
+        row_count: insertedCount
       })
       .eq('id', fileId)
     
-    console.log('Processamento concluído com sucesso')
+    console.log(`Importação concluída: ${insertedCount} registros inseridos, ${errorCount} lotes com erro`)
     
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Arquivo processado com sucesso',
-        table_name: fileData.table_name,
-        row_count: jsonData.length - 1
+        message: `Arquivo processado com sucesso: ${insertedCount} registros inseridos`,
+        records: insertedCount,
+        errors: errorCount,
+        table: fileData.table_name
       }),
       {
         headers: {
@@ -225,13 +256,14 @@ serve(async (req) => {
         status: 200
       }
     )
+  }
+  catch (error) {
+    console.error('Erro no processamento:', error.message)
     
-  } catch (error) {
-    console.error('Erro durante processamento:', error)
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        message: `Erro no processamento: ${error.message}`
       }),
       {
         headers: {
