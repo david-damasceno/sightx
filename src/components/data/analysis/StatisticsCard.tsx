@@ -56,7 +56,7 @@ export function StatisticsCard({ columnName, statistics }: StatisticsCardProps) 
           </dl>
         </div>
 
-        {statistics.quartiles && (
+        {statistics.quartiles && statistics.quartiles.length > 0 && (
           <div>
             <h4 className="font-medium mb-4">Quartis</h4>
             <dl className="space-y-2">

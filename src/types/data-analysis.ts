@@ -17,4 +17,7 @@ export interface ColumnStatistics {
   distinctCount: number
   nullCount: number
   distribution: Record<string, number>
+  mean?: number
+  median?: number
+  quartiles?: number[]
 }
