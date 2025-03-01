@@ -8,6 +8,13 @@ import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { ColumnMetadata } from "@/types/data-imports"
 
+// Interface para compatibilidade com o componente ColumnMapper
+interface Column {
+  name: string
+  type: string
+  sample: string
+}
+
 export default function DataImport() {
   const [fileId, setFileId] = useState<string | null>(null)
   const [tableName, setTableName] = useState<string | null>(null)
@@ -36,11 +43,11 @@ export default function DataImport() {
         id: col.id,
         import_id: col.import_id || fileId || '',
         original_name: col.original_name,
-        display_name: col.mapped_name || null,
-        description: null,
+        display_name: col.display_name || col.original_name, // Usar original_name como fallback
+        description: col.description || null,
         data_type: col.data_type,
-        sample_values: col.sample_data || [],
-        statistics: col.validation_rules || {},
+        sample_values: col.sample_values || [],
+        statistics: col.statistics || {},
         created_at: col.created_at
       }));
       
@@ -66,7 +73,7 @@ export default function DataImport() {
         await supabase
           .from('column_metadata')
           .update({
-            mapped_name: col.display_name,
+            display_name: col.display_name,
             description: col.description
           })
           .eq('id', col.id)
@@ -78,6 +85,19 @@ export default function DataImport() {
       console.error('Error saving column mappings:', error)
     }
   }
+
+  // Converter ColumnMetadata para o formato Column esperado pelo componente ColumnMapper
+  const convertToColumnFormat = (metadataColumns: ColumnMetadata[]): Column[] => {
+    return metadataColumns.map(col => ({
+      name: col.original_name,
+      type: col.data_type,
+      sample: Array.isArray(col.sample_values) && col.sample_values.length > 0 
+        ? String(col.sample_values[0]) 
+        : typeof col.sample_values === 'object' 
+          ? JSON.stringify(col.sample_values).substring(0, 50) 
+          : String(col.sample_values)
+    }));
+  }
   
   return (
     <div className="container mx-auto py-8">
@@ -87,7 +107,7 @@ export default function DataImport() {
         </CardHeader>
         <CardContent>
           {step === 1 && (
-            <FileUploader onUploadComplete={handleUploadComplete} />
+            <FileUploader onUploadSuccess={handleUploadComplete} />
           )}
           
           {step === 2 && fileId && (
@@ -99,8 +119,13 @@ export default function DataImport() {
           
           {step === 3 && fileId && columns.length > 0 && (
             <ColumnMapper 
-              columns={columns} 
-              onMappingComplete={handleMappingComplete}
+              columns={convertToColumnFormat(columns)} 
+              onMappingComplete={(tableName, previewData) => {
+                setTableName(tableName);
+                // Como as assinaturas de função são diferentes, precisamos fazer uma adaptação
+                // para manter a compatibilidade com a lógica existente
+                handleMappingComplete(columns);
+              }}
             />
           )}
           

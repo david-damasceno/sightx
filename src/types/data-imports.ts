@@ -112,4 +112,5 @@ export interface ChartConfig {
   nameKey?: string;
   color: string;
   name: string;
+  [key: string]: any; // Adicionando um índice de assinatura para compatibilidade com Json
 }

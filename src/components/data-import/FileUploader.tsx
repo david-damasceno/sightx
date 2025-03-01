@@ -1,80 +1,45 @@
 
-import { useState } from "react"
-import { Upload, FileText } from "lucide-react"
+import { useCallback, useState } from "react"
+import { useDropzone } from "react-dropzone"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/use-toast"
-import { supabase } from "@/integrations/supabase/client"
+import { UploadCloud, Loader2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/contexts/AuthContext"
-import { Progress } from "@/components/ui/progress"
+import { supabase } from "@/integrations/supabase/client"
 
-export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: any) => void }) {
-  const [isUploading, setIsUploading] = useState(false)
-  const [dragActive, setDragActive] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
+interface FileUploaderProps {
+  onUploadSuccess: (fileId: string) => void
+}
+
+export function FileUploader({ onUploadSuccess }: FileUploaderProps) {
+  const [uploading, setUploading] = useState(false)
   const { toast } = useToast()
   const { currentOrganization, user } = useAuth()
 
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true)
-    } else if (e.type === "dragleave") {
-      setDragActive(false)
-    }
-  }
-
-  const simulateProgress = () => {
-    setUploadProgress(0)
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 95) {
-          clearInterval(interval)
-          return prev
-        }
-        return prev + 5
-      })
-    }, 100)
-    return interval
-  }
-
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-
-    const file = e.dataTransfer?.files?.[0]
-    if (file) await processFile(file)
-  }
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) await processFile(file)
-  }
-
-  const processFile = async (file: File) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (!currentOrganization || !user) {
       toast({
         title: "Erro",
-        description: "Você precisa estar logado e ter uma organização selecionada",
+        description: "Usuário não autenticado ou organização não selecionada",
         variant: "destructive"
       })
       return
     }
 
-    setIsUploading(true)
-    const progressInterval = simulateProgress()
+    if (acceptedFiles.length === 0) return
+
+    const file = acceptedFiles[0]
+    setUploading(true)
 
     try {
-      console.log('Iniciando upload do arquivo:', {
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
-        organizationId: currentOrganization.id,
-        userId: user.id
-      })
+      // Gerar nome de tabela único baseado no nome do arquivo
+      const tableName = `data_${file.name
+        .replace(/\.[^/.]+$/, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "_")}_${Date.now().toString().slice(-6)}`
 
-      // Primeiro, criar o registro na tabela data_imports
+      // Criar registro do import
       const { data: importData, error: importError } = await supabase
         .from('data_imports')
         .insert({
@@ -83,134 +48,109 @@ export function FileUploader({ onUploadSuccess }: { onUploadSuccess: (fileData: 
           name: file.name,
           original_filename: file.name,
           file_type: file.type,
-          status: 'pending',
+          status: 'uploading',
+          context: '',
+          description: '',
+          metadata: {},
           columns_metadata: {},
           column_analysis: {},
           data_quality: {},
           data_validation: {},
-          table_name: file.name.replace(/\.[^/.]+$/, "").toLowerCase().replace(/\s+/g, "_")
+          table_name: tableName
         })
         .select()
         .single()
 
-      if (importError) {
-        console.error('Erro ao criar registro de importação:', importError)
-        throw importError
-      }
+      if (importError) throw importError
 
-      console.log('Registro de importação criado:', importData)
-
-      // Upload do arquivo para o storage
+      // Upload do arquivo
       const filePath = `${currentOrganization.id}/${importData.id}/${file.name}`
-      console.log('Iniciando upload para storage, caminho:', filePath)
-
       const { error: uploadError } = await supabase.storage
         .from('data_files')
         .upload(filePath, file)
 
-      if (uploadError) {
-        console.error('Erro no upload do arquivo:', uploadError)
-        throw uploadError
-      }
+      if (uploadError) throw uploadError
 
-      console.log('Upload para storage concluído')
-
-      // Atualizar o registro com o caminho do arquivo
+      // Atualizar storage_path e status
       const { error: updateError } = await supabase
         .from('data_imports')
         .update({
           storage_path: filePath,
-          status: 'uploaded'
+          status: 'processing'
         })
         .eq('id', importData.id)
 
-      if (updateError) {
-        console.error('Erro ao atualizar registro:', updateError)
-        throw updateError
-      }
+      if (updateError) throw updateError
 
-      console.log('Registro atualizado com sucesso')
-
-      // Iniciar o processamento do arquivo
-      const { error: analyzeError } = await supabase.functions.invoke('analyze-file', {
-        body: { fileId: importData.id }
+      // Iniciar processamento do arquivo para criar tabela automaticamente
+      const { error: processingError } = await supabase.functions.invoke('process-file-upload', {
+        body: { 
+          fileId: importData.id,
+          organizationId: currentOrganization.id 
+        }
       })
 
-      if (analyzeError) {
-        console.error('Erro ao analisar arquivo:', analyzeError)
-        throw analyzeError
-      }
+      if (processingError) throw processingError
 
-      console.log('Arquivo processado com sucesso')
-      
-      setUploadProgress(100)
       toast({
-        title: "Arquivo enviado com sucesso",
-        description: "Agora você pode contextualizar os dados.",
+        title: "Sucesso",
+        description: "Arquivo enviado e processamento iniciado. A tabela está sendo criada automaticamente.",
       })
 
-      onUploadSuccess(importData)
+      onUploadSuccess(importData.id)
     } catch (error: any) {
       console.error('Erro no upload:', error)
       toast({
-        title: "Erro ao analisar arquivo",
-        description: error.message || "Não foi possível processar o arquivo. Tente novamente.",
-        variant: "destructive",
+        title: "Erro no upload",
+        description: error.message || "Não foi possível fazer o upload do arquivo",
+        variant: "destructive"
       })
     } finally {
-      clearInterval(progressInterval)
-      setIsUploading(false)
-      setUploadProgress(0)
+      setUploading(false)
     }
-  }
+  }, [currentOrganization, user, toast, onUploadSuccess])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    maxFiles: 1,
+    accept: {
+      'text/csv': ['.csv'],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+    }
+  })
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg transition-colors ${
-        dragActive
-          ? "border-primary bg-primary/10"
-          : "border-muted hover:border-primary/50"
-      }`}
-      onDragEnter={handleDrag}
-      onDragLeave={handleDrag}
-      onDragOver={handleDrag}
-      onDrop={handleDrop}
+      {...getRootProps()}
+      className={cn(
+        "border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors",
+        isDragActive && "border-primary/50 bg-primary/5",
+        uploading && "opacity-50 cursor-not-allowed"
+      )}
     >
-      <input
-        type="file"
-        id="file-upload"
-        className="hidden"
-        accept=".csv,.xlsx,.xls"
-        onChange={handleFileUpload}
-        disabled={isUploading}
-      />
-      <label
-        htmlFor="file-upload"
-        className="flex flex-col items-center gap-2 cursor-pointer"
-      >
-        {isUploading ? (
-          <>
-            <FileText className="w-12 h-12 text-muted-foreground animate-pulse" />
-            <Progress value={uploadProgress} className="w-[200px] h-2" />
-            <p className="text-sm text-muted-foreground">
-              Analisando arquivo...
-            </p>
-          </>
+      <input {...getInputProps()} />
+      <div className="flex flex-col items-center gap-2">
+        <UploadCloud className="h-8 w-8 text-muted-foreground" />
+        {uploading ? (
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Enviando e processando arquivo...</span>
+          </div>
         ) : (
           <>
-            <Upload className="w-12 h-12 text-muted-foreground animate-bounce" />
-            <Button variant="outline" className="relative">
-              Selecionar arquivo
-              <span className="absolute -top-1 -right-1 text-[10px] text-muted-foreground">
-                ou arraste aqui
-              </span>
-            </Button>
             <p className="text-sm text-muted-foreground">
-              Arquivos suportados: CSV, Excel (.xlsx, .xls)
+              Arraste e solte seu arquivo aqui, ou clique para selecionar
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Formatos suportados: CSV, XLS, XLSX
+            </p>
+            <p className="mt-2 text-xs text-primary">
+              O arquivo será importado diretamente para o banco de dados.
             </p>
           </>
         )}
-      </label>
+      </div>
     </div>
   )
 }

@@ -1,346 +1,409 @@
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, BarChart, PieChart, LineChart, AreaChart } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import { supabase } from "@/integrations/supabase/client"
-import { DataAnalysis, ChartConfig, DataVisualization } from "@/types/data-imports"
-import { AreaChart as RechartsAreaChart, BarChart as RechartsBarChart, LineChart as RechartsLineChart, PieChart as RechartsPieChart, 
-  Area, Bar, Line, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, ResponsiveContainer } from 'recharts'
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { ChartConfig, DataVisualization } from "@/types/data-imports";
+import { BarChart, LineChart, AreaChart, PieChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, Bar, Line, Area, Pie, Cell } from "recharts";
+
+// Componente para renderizar gráficos de linhas
+const LineChartComponent = ({ config }: { config: ChartConfig }) => (
+  <div className="w-full h-64">
+    <h3 className="text-lg font-semibold mb-2">{config.title}</h3>
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={config.data}>
+        <XAxis dataKey={config.nameKey || "name"} />
+        <YAxis />
+        <Tooltip />
+        <Legend />
+        <Line type="monotone" dataKey={config.dataKey} stroke={config.color} name={config.name} />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
+);
+
+// Componente para renderizar gráficos de barras
+const BarChartComponent = ({ config }: { config: ChartConfig }) => (
+  <div className="w-full h-64">
+    <h3 className="text-lg font-semibold mb-2">{config.title}</h3>
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={config.data}>
+        <XAxis dataKey={config.nameKey || "name"} />
+        <YAxis />
+        <Tooltip />
+        <Legend />
+        <Bar dataKey={config.dataKey} fill={config.color} name={config.name} />
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+);
+
+// Componente para renderizar gráficos de área
+const AreaChartComponent = ({ config }: { config: ChartConfig }) => (
+  <div className="w-full h-64">
+    <h3 className="text-lg font-semibold mb-2">{config.title}</h3>
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={config.data}>
+        <XAxis dataKey={config.nameKey || "name"} />
+        <YAxis />
+        <Tooltip />
+        <Legend />
+        <Area type="monotone" dataKey={config.dataKey} fill={config.color} stroke={config.color} name={config.name} />
+      </AreaChart>
+    </ResponsiveContainer>
+  </div>
+);
+
+// Componente para renderizar gráficos de pizza
+const PieChartComponent = ({ config }: { config: ChartConfig }) => (
+  <div className="w-full h-64">
+    <h3 className="text-lg font-semibold mb-2">{config.title}</h3>
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie 
+          data={config.data} 
+          dataKey={config.dataKey} 
+          nameKey={config.nameKey || "name"} 
+          fill={config.color}
+          label
+        >
+          {config.data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={`hsl(${index * 45}, 70%, 50%)`} />
+          ))}
+        </Pie>
+        <Tooltip />
+        <Legend />
+      </PieChart>
+    </ResponsiveContainer>
+  </div>
+);
+
+// Cores para os gráficos
+const CHART_COLORS = [
+  "#2563eb", // blue-600
+  "#16a34a", // green-600
+  "#d97706", // amber-600
+  "#dc2626", // red-600
+  "#8b5cf6", // violet-500
+  "#ec4899", // pink-500
+  "#0284c7", // sky-600
+  "#84cc16"  // lime-500
+];
 
 interface VisualizationBuilderProps {
-  fileId: string
-  analysisId: string
+  fileId: string;
+  columns: any[];
+  data: any[];
 }
 
-export function VisualizationBuilder({ fileId, analysisId }: VisualizationBuilderProps) {
-  const [loading, setLoading] = useState(false)
-  const [generating, setGenerating] = useState(false)
-  const [analysis, setAnalysis] = useState<DataAnalysis | null>(null)
-  const [visualizations, setVisualizations] = useState<DataVisualization[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
+export function VisualizationBuilder({ fileId, columns, data }: VisualizationBuilderProps) {
+  const [savedVisualizations, setSavedVisualizations] = useState<DataVisualization[]>([]);
+  const [chartType, setChartType] = useState<string>("bar");
+  const [title, setTitle] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [nameKey, setNameKey] = useState<string>("");
+  const [dataKey, setDataKey] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (analysisId) {
-      fetchAnalysisDetails()
+    if (fileId) {
+      fetchVisualizations();
     }
-  }, [analysisId])
+  }, [fileId]);
 
-  const fetchAnalysisDetails = async () => {
-    try {
-      setLoading(true)
+  useEffect(() => {
+    if (columns.length > 0) {
+      // Automaticamente seleciona a primeira coluna como chave de nome
+      setNameKey(columns[0].name || columns[0].original_name);
+
+      // Tenta encontrar uma coluna numérica para usar como valor
+      const numericColumn = columns.find(col => 
+        col.data_type === 'integer' || 
+        col.data_type === 'numeric' || 
+        col.data_type === 'double precision'
+      );
       
-      // Buscar detalhes da análise
-      const { data: analysisData, error: analysisError } = await supabase
+      if (numericColumn) {
+        setDataKey(numericColumn.name || numericColumn.original_name);
+      } else if (columns.length > 1) {
+        // Se não encontrar uma coluna numérica, usa a segunda coluna
+        setDataKey(columns[1].name || columns[1].original_name);
+      }
+    }
+  }, [columns]);
+
+  const fetchVisualizations = async () => {
+    try {
+      const { data: analyses, error: analysesError } = await supabase
         .from('data_analyses')
-        .select('*')
-        .eq('id', analysisId)
-        .single()
-
-      if (analysisError) throw analysisError
-      setAnalysis(analysisData)
+        .select('id')
+        .eq('import_id', fileId);
       
-      // Buscar visualizações existentes
-      const { data: visData, error: visError } = await supabase
-        .from('data_visualizations')
-        .select('*')
-        .eq('analysis_id', analysisId)
-        .order('created_at', { ascending: true })
-
-      if (visError) throw visError
-      setVisualizations(visData || [])
-    } catch (error: any) {
-      console.error('Erro ao buscar detalhes da análise:', error)
-      setError(error.message)
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os detalhes da análise.",
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const generateVisualizations = async () => {
-    if (!fileId || !analysisId) return
-    
-    try {
-      setGenerating(true)
-      toast({
-        title: "Processando",
-        description: "Gerando visualizações baseadas nos dados...",
-      })
+      if (analysesError) throw analysesError;
       
-      const { data, error } = await supabase.functions.invoke('generate-visualizations', {
-        body: { 
-          fileId,
-          analysisId,
-        }
-      })
-
-      if (error) throw error
-      
-      if (data?.success) {
-        toast({
-          title: "Concluído",
-          description: "Visualizações geradas com sucesso!",
-        })
+      if (analyses && analyses.length > 0) {
+        const analysisIds = analyses.map(a => a.id);
         
-        // Atualizar lista de visualizações
-        await fetchAnalysisDetails()
-      } else {
-        throw new Error(data?.message || 'Falha ao gerar visualizações')
+        const { data: visualizations, error: visualizationsError } = await supabase
+          .from('data_visualizations')
+          .select('*')
+          .in('analysis_id', analysisIds);
+        
+        if (visualizationsError) throw visualizationsError;
+        
+        setSavedVisualizations(visualizations || []);
       }
-    } catch (error: any) {
-      console.error('Erro ao gerar visualizações:', error)
+    } catch (error) {
+      console.error('Error fetching visualizations:', error);
+    }
+  };
+
+  const saveVisualization = async () => {
+    if (!fileId || !chartType || !title || !dataKey || !nameKey) {
       toast({
-        title: "Erro",
-        description: error.message || "Não foi possível gerar as visualizações.",
+        title: "Campos obrigatórios",
+        description: "Todos os campos são obrigatórios para criar uma visualização",
         variant: "destructive"
-      })
-    } finally {
-      setGenerating(false)
+      });
+      return;
     }
-  }
 
-  const renderChart = (visualization: DataVisualization) => {
-    const config = visualization.configuration as any
-    
-    if (!config || !config.type) {
-      return <div>Configuração de gráfico inválida</div>
-    }
-    
-    switch (config.type) {
-      case 'line':
-        return (
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsLineChart data={config.data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey={config.nameKey || "name"} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey={config.dataKey} stroke={config.color} name={config.name} />
-              </RechartsLineChart>
-            </ResponsiveContainer>
-          </div>
-        )
-      case 'bar':
-        return (
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsBarChart data={config.data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey={config.nameKey || "name"} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey={config.dataKey} fill={config.color} name={config.name} />
-              </RechartsBarChart>
-            </ResponsiveContainer>
-          </div>
-        )
-      case 'area':
-        return (
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsAreaChart data={config.data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey={config.nameKey || "name"} />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Area type="monotone" dataKey={config.dataKey} stroke={config.color} fill={config.color} name={config.name} />
-              </RechartsAreaChart>
-            </ResponsiveContainer>
-          </div>
-        )
-      case 'pie':
-        return (
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsPieChart margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-                <Pie 
-                  data={config.data} 
-                  dataKey={config.dataKey} 
-                  nameKey={config.nameKey || "name"}
-                  cx="50%" 
-                  cy="50%" 
-                  outerRadius={80} 
-                  fill={config.color}
-                  label
-                  name={config.name}
-                >
-                  {config.data.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={`#${Math.floor(Math.random()*16777215).toString(16)}`} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </RechartsPieChart>
-            </ResponsiveContainer>
-          </div>
-        )
-      default:
-        return <div>Tipo de gráfico não suportado: {config.type}</div>
-    }
-  }
+    setLoading(true);
 
-  const handleSaveVisualization = async (chartConfig: any) => {
-    if (!analysisId) return
-    
     try {
-      setLoading(true)
+      // Primeiro, verifica se já existe uma análise para este arquivo
+      const { data: analyses, error: analysesError } = await supabase
+        .from('data_analyses')
+        .select('id')
+        .eq('import_id', fileId)
+        .eq('analysis_type', 'visualization');
       
-      // Converter para formato adequado para JSON
-      const configForStorage = {
-        type: chartConfig.type,
-        title: chartConfig.title,
-        description: chartConfig.description || '',
-        data: chartConfig.data,
-        dataKey: chartConfig.dataKey,
-        nameKey: chartConfig.nameKey || 'name',
-        color: chartConfig.color,
-        name: chartConfig.name
+      if (analysesError) throw analysesError;
+      
+      let analysisId;
+      
+      if (analyses && analyses.length > 0) {
+        analysisId = analyses[0].id;
+      } else {
+        // Cria uma nova análise se não existir
+        const { data: newAnalysis, error: newAnalysisError } = await supabase
+          .from('data_analyses')
+          .insert({
+            import_id: fileId,
+            analysis_type: 'visualization',
+            configuration: {},
+            results: {}
+          })
+          .select()
+          .single();
+        
+        if (newAnalysisError) throw newAnalysisError;
+        
+        analysisId = newAnalysis.id;
       }
       
-      const { data, error } = await supabase
+      // Prepara a configuração do gráfico como um objeto que é compatível com Json
+      const chartConfig: Record<string, any> = {
+        type: chartType,
+        title: title,
+        description: description || undefined,
+        dataKey: dataKey,
+        nameKey: nameKey,
+        color: CHART_COLORS[Math.floor(Math.random() * CHART_COLORS.length)],
+        name: dataKey,
+        data: data.map(item => ({
+          [nameKey]: item[nameKey],
+          [dataKey]: typeof item[dataKey] === 'string' ? parseFloat(item[dataKey]) : item[dataKey]
+        }))
+      };
+      
+      // Agora insere a visualização
+      const { data: newVisualization, error: visualizationError } = await supabase
         .from('data_visualizations')
         .insert({
           analysis_id: analysisId,
-          type: chartConfig.type,
-          configuration: configForStorage
+          type: chartType,
+          configuration: chartConfig
         })
         .select()
-
-      if (error) throw error
+        .single();
+      
+      if (visualizationError) throw visualizationError;
       
       toast({
-        title: "Sucesso",
-        description: "Visualização salva com sucesso!",
-      })
+        title: "Visualização criada",
+        description: "A visualização foi salva com sucesso."
+      });
       
-      // Atualizar lista de visualizações
-      await fetchAnalysisDetails()
+      // Atualiza a lista de visualizações
+      fetchVisualizations();
+      
+      // Limpa o formulário
+      setTitle("");
+      setDescription("");
+      
     } catch (error: any) {
-      console.error('Erro ao salvar visualização:', error)
+      console.error('Error saving visualization:', error);
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível salvar a visualização.",
+        description: error.message || "Não foi possível salvar a visualização",
         variant: "destructive"
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  if (error) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center justify-center text-center p-6">
-            <p className="text-destructive mb-4">{error}</p>
-            <Button onClick={fetchAnalysisDetails}>Tentar novamente</Button>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (loading && !analysis) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center justify-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Carregando detalhes da análise...</p>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+  const renderChart = (visualization: DataVisualization) => {
+    const config = visualization.configuration as any;
+    
+    if (!config || !config.type) return null;
+    
+    switch (config.type) {
+      case 'line':
+        return <LineChartComponent config={config} />;
+      case 'bar':
+        return <BarChartComponent config={config} />;
+      case 'area':
+        return <AreaChartComponent config={config} />;
+      case 'pie':
+        return <PieChartComponent config={config} />;
+      default:
+        return <div>Tipo de gráfico não suportado</div>;
+    }
+  };
 
   return (
-    <Card className="shadow-md bg-background">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <BarChart className="h-5 w-5 text-primary" />
-          Visualizações
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {visualizations.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">
-              Nenhuma visualização gerada. Gere visualizações baseadas nos dados analisados.
-            </p>
-            <Button 
-              onClick={generateVisualizations} 
-              disabled={generating}
-              className="flex items-center gap-2"
-            >
-              {generating && <Loader2 className="h-4 w-4 animate-spin" />}
-              Gerar Visualizações
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Criar nova visualização</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Tipo de gráfico</label>
+                <Select value={chartType} onValueChange={setChartType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo de gráfico" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bar">Gráfico de barras</SelectItem>
+                    <SelectItem value="line">Gráfico de linhas</SelectItem>
+                    <SelectItem value="area">Gráfico de área</SelectItem>
+                    <SelectItem value="pie">Gráfico de pizza</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Título</label>
+                <Input 
+                  value={title} 
+                  onChange={(e) => setTitle(e.target.value)} 
+                  placeholder="Título do gráfico" 
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Descrição (opcional)</label>
+              <Input 
+                value={description} 
+                onChange={(e) => setDescription(e.target.value)} 
+                placeholder="Descrição do gráfico" 
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Coluna de categoria (eixo X)</label>
+                <Select value={nameKey} onValueChange={setNameKey}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a coluna para categorias" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {columns.map((column) => (
+                      <SelectItem key={column.id || column.name || column.original_name} value={column.name || column.original_name}>
+                        {column.display_name || column.name || column.original_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Coluna de valor (eixo Y)</label>
+                <Select value={dataKey} onValueChange={setDataKey}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a coluna para valores" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {columns.map((column) => (
+                      <SelectItem key={column.id || column.name || column.original_name} value={column.name || column.original_name}>
+                        {column.display_name || column.name || column.original_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <Button onClick={saveVisualization} disabled={loading} className="w-full">
+              {loading ? "Salvando..." : "Salvar visualização"}
             </Button>
           </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-md font-medium">Visualizações Geradas</h3>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={generateVisualizations} 
-                disabled={generating}
-                className="flex items-center gap-2"
-              >
-                {generating && <Loader2 className="h-3 w-3 animate-spin" />}
-                Regenerar
-              </Button>
-            </div>
-            
-            <Tabs defaultValue={visualizations[0]?.id.toString() || "0"} className="w-full">
-              <TabsList className="w-full justify-start overflow-x-auto">
-                {visualizations.map((vis) => (
-                  <TabsTrigger key={vis.id} value={vis.id.toString()} className="flex-shrink-0">
-                    {(vis.configuration as any)?.title || `Gráfico ${vis.id.substring(0, 6)}`}
-                  </TabsTrigger>
-                ))}
+        </CardContent>
+      </Card>
+
+      {savedVisualizations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Visualizações salvas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="grid" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="grid">Grade</TabsTrigger>
+                <TabsTrigger value="list">Lista</TabsTrigger>
               </TabsList>
-              
-              {visualizations.map((vis) => (
-                <TabsContent key={vis.id} value={vis.id.toString()} className="pt-4">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-md">
-                        {(vis.configuration as any)?.title || "Visualização"}
-                      </CardTitle>
-                      {(vis.configuration as any)?.description && (
-                        <p className="text-sm text-muted-foreground">
-                          {(vis.configuration as any).description}
-                        </p>
-                      )}
-                    </CardHeader>
-                    <CardContent>
-                      <div className="border rounded-md p-4 bg-background">
-                        {renderChart(vis)}
-                      </div>
-                      <div className="mt-4 text-sm text-muted-foreground">
-                        <p>Tipo: <span className="font-medium capitalize">{(vis.configuration as any)?.type}</span></p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              ))}
+              <TabsContent value="grid">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {savedVisualizations.map((visualization) => (
+                    <Card key={visualization.id} className="overflow-hidden">
+                      <CardContent className="p-4">
+                        {renderChart(visualization)}
+                        {visualization.configuration && typeof visualization.configuration === 'object' && (
+                          <p className="text-sm text-muted-foreground mt-2">
+                            {(visualization.configuration as any).description}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+              <TabsContent value="list">
+                <div className="space-y-4">
+                  {savedVisualizations.map((visualization) => (
+                    <Card key={visualization.id}>
+                      <CardContent className="p-4">
+                        {visualization.configuration && typeof visualization.configuration === 'object' && (
+                          <h3 className="text-lg font-semibold mb-2">
+                            {(visualization.configuration as any).title || `Visualização ${visualization.type}`}
+                          </h3>
+                        )}
+                        {renderChart(visualization)}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
             </Tabs>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
 }

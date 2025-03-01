@@ -11,9 +11,7 @@ base_dir = "functions"
 # post_build = ["npx", "supabase", "functions", "deploy", "--no-verify-jwt"]
 
 # List of functions to include when building
-[functions]
+[[functions]]
 # Functions will be deployed to Supabase Edge Functions
-
-# Function configuration
-[functions.port]
+name = "port"
 verify_jwt = false
