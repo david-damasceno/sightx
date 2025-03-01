@@ -19,6 +19,7 @@ export default function DataImport() {
   const [fileId, setFileId] = useState<string | null>(null)
   const [tableName, setTableName] = useState<string | null>(null)
   const [columns, setColumns] = useState<ColumnMetadata[]>([])
+  const [previewData, setPreviewData] = useState<any[]>([])
   const [step, setStep] = useState(1)
   const { currentOrganization } = useAuth()
   
@@ -52,8 +53,47 @@ export default function DataImport() {
       }));
       
       setColumns(adaptedColumns)
+      
+      // Carrega os dados de prévia da tabela
+      if (data.length > 0 && fileId) {
+        fetchPreviewData(fileId)
+      }
     } catch (error) {
       console.error('Error fetching columns:', error)
+    }
+  }
+  
+  const fetchPreviewData = async (fileId: string) => {
+    try {
+      // Buscar a informação do arquivo para obter o table_name
+      const { data: fileData, error: fileError } = await supabase
+        .from('data_imports')
+        .select('table_name')
+        .eq('id', fileId)
+        .single()
+        
+      if (fileError) throw fileError
+      
+      if (fileData?.table_name) {
+        setTableName(fileData.table_name)
+        
+        // Buscar os dados de prévia usando a função RPC ou diretamente da tabela
+        const { data, error } = await supabase
+          .rpc('get_table_data', { 
+            table_name: fileData.table_name,
+            row_limit: 10
+          })
+          
+        if (error) throw error
+        
+        // Converter o resultado para array
+        const tableData = Array.isArray(data) ? data : 
+                          typeof data === 'object' ? Object.values(data) : [];
+        
+        setPreviewData(tableData)
+      }
+    } catch (error) {
+      console.error('Error fetching preview data:', error)
     }
   }
   
@@ -119,7 +159,9 @@ export default function DataImport() {
           
           {step === 3 && fileId && columns.length > 0 && (
             <ColumnMapper 
-              columns={convertToColumnFormat(columns)} 
+              fileId={fileId}
+              columns={convertToColumnFormat(columns)}
+              previewData={previewData} 
               onMappingComplete={(tableName, previewData) => {
                 setTableName(tableName);
                 // Como as assinaturas de função são diferentes, precisamos fazer uma adaptação
