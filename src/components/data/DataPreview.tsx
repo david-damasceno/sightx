@@ -46,6 +46,7 @@ import { Badge } from "@/components/ui/badge"
 import { DataQualityCard } from "./analysis/DataQualityCard"
 import { StatisticsCard } from "./analysis/StatisticsCard"
 import "./data-grid.css"
+import { DataIntegrityAnalysis } from "./analysis/DataIntegrityAnalysis"
 
 interface DataPreviewProps {
   columns: { name: string; type: string; sample: any }[]
