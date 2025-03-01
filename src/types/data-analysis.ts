@@ -20,4 +20,11 @@ export interface ColumnStatistics {
   mean?: number
   median?: number
   quartiles?: number[]
+  min?: number
+  max?: number
+  stdDev?: number
+  skewness?: number
+  outlierCount?: number
+  dataType?: string
+  validationScore?: number
 }

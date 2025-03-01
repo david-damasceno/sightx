@@ -405,7 +405,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
           </Card>
         </TabsContent>
 
-        <TabsContent value="analysis" className="space-y-4">
+        <TabsContent value="analysis" className="space-y-6">
           <Card className="border shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -413,10 +413,12 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
                 Resumo dos Dados
               </CardTitle>
               <CardDescription>
-                Análise estatística dos dados importados
+                Análise estatística e de qualidade dos dados importados
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-8">
+              <DataIntegrityAnalysis fileId={fileId} />
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium">Qualidade dos Dados</h3>
@@ -431,6 +433,16 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
                             type: "missing_values", 
                             description: "Valores em branco na coluna 'Razão Social'", 
                             rowCount: 3 
+                          },
+                          { 
+                            type: "format_issues", 
+                            description: "Formato inconsistente na coluna 'Data'", 
+                            rowCount: 2 
+                          },
+                          { 
+                            type: "outliers", 
+                            description: "Valores atípicos na coluna 'Valor'", 
+                            rowCount: 1 
                           }
                         ]
                       }}
@@ -451,7 +463,10 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
                         count: data.length,
                         distinctCount: new Set(data.map(row => row[columns[0].name])).size,
                         nullCount: data.filter(row => row[columns[0].name] == null).length,
-                        distribution: {}
+                        distribution: {},
+                        mean: 42.5,
+                        median: 38,
+                        quartiles: [25, 38, 42, 60]
                       }}
                     />
                   ) : (
