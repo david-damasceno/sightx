@@ -85,3 +85,29 @@ export interface ImportStepData {
   visualizations: DataVisualization[]
 }
 
+// Tipos para análise de qualidade
+export interface DataQuality {
+  columnQuality: {
+    [columnName: string]: {
+      completeness: number;
+      uniqueness: number;
+      validFormat: number;
+      issues: string[];
+    }
+  };
+  overallCompleteness: number;
+  overallQuality: number;
+  issuesCount: number;
+}
+
+// Tipos para visualizações
+export interface ChartConfig {
+  type: string;
+  title: string;
+  description?: string;
+  data: any[];
+  dataKey: string;
+  nameKey?: string;
+  color: string;
+  name: string;
+}

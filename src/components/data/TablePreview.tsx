@@ -1,61 +1,70 @@
 
-import { useState, useEffect } from "react"
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Loader2, Database, Table as TableIcon } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { useEffect, useState } from "react"
+import ReactDataGrid from "react-data-grid"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { supabase } from "@/integrations/supabase/client"
-import { Button } from "@/components/ui/button"
-import { ColumnMetadata } from "@/types/data-import-flow"
+import { useToast } from "@/hooks/use-toast"
+import { Loader2 } from "lucide-react"
+import { ColumnMetadata } from "@/types/data-imports"
 
 interface TablePreviewProps {
-  fileId: string
   tableName: string
-  onContextClick: () => void
+  fileId: string
 }
 
-export function TablePreview({ fileId, tableName, onContextClick }: TablePreviewProps) {
-  const [data, setData] = useState<any[]>([])
-  const [columns, setColumns] = useState<ColumnMetadata[]>([])
+export function TablePreview({ tableName, fileId }: TablePreviewProps) {
   const [loading, setLoading] = useState(true)
+  const [data, setData] = useState<any[]>([])
+  const [gridColumns, setGridColumns] = useState<any[]>([])
+  const [columnMetadata, setColumnMetadata] = useState<ColumnMetadata[]>([])
   const { toast } = useToast()
 
   useEffect(() => {
-    async function fetchData() {
+    const fetchData = async () => {
       try {
         setLoading(true)
         
         // Buscar metadados das colunas
-        const { data: columnsData, error: columnsError } = await supabase
+        const { data: metadataData, error: metadataError } = await supabase
           .from('column_metadata')
           .select('*')
           .eq('import_id', fileId)
         
-        if (columnsError) throw columnsError
+        if (metadataError) throw metadataError
         
-        // Buscar amostra de dados da tabela
-        const { data: tableData, error: tableError } = await supabase
-          .from(tableName)
-          .select('*')
-          .limit(10)
+        if (metadataData) {
+          setColumnMetadata(metadataData as unknown as ColumnMetadata[])
+        }
         
-        if (tableError) throw tableError
+        // Usar RPC para buscar dados da tabela (via função no banco de dados)
+        const { data, error } = await supabase.rpc('get_table_data', { 
+          table_name: tableName, 
+          row_limit: 100 
+        })
         
-        setData(tableData || [])
-        setColumns(columnsData || [])
+        if (error) throw error
+        
+        if (data && data.length > 0) {
+          setData(data)
+          
+          // Configurar colunas para o DataGrid
+          const firstRow = data[0]
+          const columns = Object.keys(firstRow)
+            .filter(key => key !== 'id' && key !== 'organization_id' && key !== 'created_at')
+            .map(key => ({
+              key,
+              name: key,
+              resizable: true,
+              sortable: true
+            }))
+          
+          setGridColumns(columns)
+        }
       } catch (error: any) {
-        console.error('Erro ao buscar dados:', error)
+        console.error('Erro ao carregar dados:', error)
         toast({
           title: "Erro",
-          description: "Não foi possível carregar os dados da tabela",
+          description: error.message || "Não foi possível carregar os dados da tabela",
           variant: "destructive"
         })
       } finally {
@@ -63,121 +72,36 @@ export function TablePreview({ fileId, tableName, onContextClick }: TablePreview
       }
     }
     
-    fetchData()
-  }, [fileId, tableName, toast])
-
-  const getColumnName = (originalName: string) => {
-    const column = columns.find(col => col.original_name === originalName)
-    return column?.display_name || originalName
-  }
-
-  const getDataType = (originalName: string) => {
-    const column = columns.find(col => col.original_name === originalName)
-    return column?.data_type || 'text'
-  }
-
-  if (loading) {
-    return (
-      <Card className="border border-border/40 shadow-sm">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-xl">Carregando Tabela</CardTitle>
-          <CardDescription>
-            Aguarde enquanto carregamos a prévia dos dados...
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center p-6">
-          <div className="flex flex-col items-center gap-2 text-center">
-            <Loader2 className="h-8 w-8 text-primary animate-spin" />
-            <p className="text-sm text-muted-foreground">
-              Carregando dados da tabela...
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (data.length === 0) {
-    return (
-      <Card className="border border-border/40 shadow-sm">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-xl">Tabela Vazia</CardTitle>
-          <CardDescription>
-            Não há dados para exibir na tabela
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center p-6">
-          <div className="flex flex-col items-center gap-2 text-center">
-            <Database className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              Nenhum dado foi encontrado na tabela
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  // Obter colunas do primeiro objeto no array de dados
-  const dataColumns = Object.keys(data[0]).filter(col => 
-    col !== 'id' && col !== 'created_at' && col !== 'organization_id'
-  )
-
+    if (tableName && fileId) {
+      fetchData()
+    }
+  }, [tableName, fileId, toast])
+  
   return (
-    <Card className="border border-border/40 shadow-sm">
-      <CardHeader className="space-y-1">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <TableIcon className="h-5 w-5 text-primary" />
-              <CardTitle className="text-xl">{tableName}</CardTitle>
-            </div>
-            <CardDescription>
-              Prévia da tabela criada com {columns.length} colunas
-            </CardDescription>
-          </div>
-          <Button onClick={onContextClick}>
-            Continuar para Contextualização
-          </Button>
-        </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Visualização dos Dados</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="border rounded-md overflow-hidden">
-          <div className="max-h-96 overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {dataColumns.map(column => (
-                    <TableHead key={column}>
-                      <div className="flex flex-col gap-1">
-                        <span>{getColumnName(column)}</span>
-                        <Badge variant="outline" className="text-xs font-normal">
-                          {getDataType(column)}
-                        </Badge>
-                      </div>
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((row, index) => (
-                  <TableRow key={index} className={index % 2 === 0 ? "bg-muted/30" : ""}>
-                    {dataColumns.map(column => (
-                      <TableCell key={`${index}-${column}`}>
-                        {row[column] !== null ? 
-                          String(row[column]).substring(0, 100) + 
-                          (String(row[column]).length > 100 ? '...' : '') 
-                          : 
-                          <span className="text-muted-foreground italic">null</span>
-                        }
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        </div>
+        ) : (
+          <div className="border rounded-md overflow-hidden h-[300px]">
+            {data.length > 0 ? (
+              <ReactDataGrid
+                columns={gridColumns}
+                rows={data}
+                className="fill-grid h-full rdg-light"
+              />
+            ) : (
+              <div className="flex justify-center items-center h-full text-muted-foreground">
+                Nenhum dado disponível
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   )

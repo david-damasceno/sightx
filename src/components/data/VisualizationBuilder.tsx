@@ -1,394 +1,444 @@
 
 import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { ChartContainer, ChartTitle, Chart, Line, Bar, Area, Pie } from "@/components/ui/chart"
-import { Loader2, BarChart, PieChart, LineChart, LayoutDashboard, Sparkles, Share, ArrowRight } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
-import { useAuth } from "@/contexts/AuthContext"
-import { DataImport, DataAnalysis, DataVisualization } from "@/types/data-imports"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ChartConfig, DataAnalysis, DataVisualization } from "@/types/data-imports"
+import { LineChart, BarChart, PieChart, AreaChart, Line, Bar, Area, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts"
+import { AlertTriangle, BarChart2, CheckCircle, Loader2, PieChart as PieChartIcon, TrendingUp } from "lucide-react"
 
 interface VisualizationBuilderProps {
-  fileId: string | null
+  fileId: string
   onComplete: () => void
 }
 
 export function VisualizationBuilder({ fileId, onComplete }: VisualizationBuilderProps) {
   const [loading, setLoading] = useState(true)
-  const [analyzing, setAnalyzing] = useState(false)
-  const [fileInfo, setFileInfo] = useState<DataImport | null>(null)
+  const [generating, setGenerating] = useState(false)
   const [analyses, setAnalyses] = useState<DataAnalysis[]>([])
   const [visualizations, setVisualizations] = useState<DataVisualization[]>([])
-  const [activeTab, setActiveTab] = useState('suggested')
   const { toast } = useToast()
-  const { currentOrganization } = useAuth()
+  const [selectedAnalysis, setSelectedAnalysis] = useState<string | null>(null)
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A259FF', '#4CAF50', '#F44336', '#3F51B5']
 
   useEffect(() => {
-    if (!fileId || !currentOrganization) return
-
-    const fetchData = async () => {
+    const loadVisualizations = async () => {
       try {
         setLoading(true)
-
-        // Buscar informações do arquivo
-        const { data: fileData, error: fileError } = await supabase
-          .from('data_imports')
-          .select('*')
-          .eq('id', fileId)
-          .single()
-
-        if (fileError) throw fileError
-        setFileInfo(fileData)
-
-        // Buscar análises existentes
+        
+        // Buscar análises
         const { data: analysesData, error: analysesError } = await supabase
           .from('data_analyses')
           .select('*')
           .eq('import_id', fileId)
-          .order('created_at', { ascending: false })
-
+        
         if (analysesError) throw analysesError
-        setAnalyses(analysesData || [])
-
-        // Buscar visualizações existentes
-        const { data: visData, error: visError } = await supabase
-          .from('data_visualizations')
-          .select('*')
-          .eq('analysis_id', analysesData?.[0]?.id || '')
-          .order('created_at', { ascending: false })
-
-        if (visError && analysesData?.[0]?.id) throw visError
-        setVisualizations(visData || [])
+        
+        if (analysesData && analysesData.length > 0) {
+          setAnalyses(analysesData as unknown as DataAnalysis[])
+          
+          // Definir a primeira análise como selecionada
+          setSelectedAnalysis(analysesData[0].id)
+          
+          // Buscar visualizações associadas
+          const { data: visData, error: visError } = await supabase
+            .from('data_visualizations')
+            .select('*')
+            .in('analysis_id', analysesData.map(a => a.id))
+          
+          if (visError) throw visError
+          
+          if (visData) {
+            setVisualizations(visData as unknown as DataVisualization[])
+          } else {
+            // Se não tem visualizações, gerar
+            await generateVisualizations()
+          }
+        } else {
+          // Se não tem análises, gerar
+          await generateAnalyses()
+        }
       } catch (error: any) {
-        console.error('Erro ao carregar dados:', error)
+        console.error('Erro ao carregar visualizações:', error)
         toast({
           title: "Erro",
-          description: error.message || "Não foi possível carregar os dados de visualização",
+          description: error.message || "Não foi possível carregar as visualizações",
           variant: "destructive"
         })
       } finally {
         setLoading(false)
       }
     }
-
-    fetchData()
-  }, [fileId, currentOrganization, toast])
-
-  const generateVisualizations = async () => {
-    if (!fileId || !fileInfo) return
-
+    
+    loadVisualizations()
+  }, [fileId, toast])
+  
+  const generateAnalyses = async () => {
     try {
-      setAnalyzing(true)
+      setGenerating(true)
       
-      const { data, error } = await supabase.functions.invoke('generate-visualizations', {
-        body: { 
-          fileId,
-          tableName: fileInfo.table_name,
-          organizationId: currentOrganization?.id
-        }
-      })
-
-      if (error) throw error
-
-      // Recarregar visualizações após a geração
-      const { data: analysesData } = await supabase
-        .from('data_analyses')
-        .select('*')
-        .eq('import_id', fileId)
-        .order('created_at', { ascending: false })
-
-      if (analysesData && analysesData.length > 0) {
-        setAnalyses(analysesData)
-        
-        const { data: visData } = await supabase
-          .from('data_visualizations')
-          .select('*')
-          .eq('analysis_id', analysesData[0].id)
-          .order('created_at', { ascending: false })
-          
-        setVisualizations(visData || [])
-      }
-
       toast({
-        title: "Visualizações geradas",
-        description: "As visualizações foram geradas com sucesso baseadas na análise dos dados"
+        title: "Analisando dados",
+        description: "Gerando análises de dados...",
       })
+      
+      const { data, error } = await supabase.functions.invoke('analyze-table-context', {
+        body: { fileId }
+      })
+      
+      if (error) throw error
+      
+      if (data && Array.isArray(data)) {
+        // Atualizar lista de análises
+        setAnalyses(data as unknown as DataAnalysis[])
+        
+        if (data.length > 0) {
+          setSelectedAnalysis(data[0].id)
+          await generateVisualizations()
+        }
+      }
     } catch (error: any) {
-      console.error('Erro na geração:', error)
+      console.error('Erro ao gerar análises:', error)
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível gerar as visualizações",
+        description: error.message || "Não foi possível gerar análises",
         variant: "destructive"
       })
     } finally {
-      setAnalyzing(false)
+      setGenerating(false)
     }
   }
-
+  
+  const generateVisualizations = async () => {
+    try {
+      setGenerating(true)
+      
+      toast({
+        title: "Gerando visualizações",
+        description: "Criando visualizações para os dados...",
+      })
+      
+      const { data, error } = await supabase.functions.invoke('generate-visualizations', {
+        body: { fileId, analysisIds: analyses.map(a => a.id) }
+      })
+      
+      if (error) throw error
+      
+      if (data && Array.isArray(data)) {
+        setVisualizations(data as unknown as DataVisualization[])
+        
+        toast({
+          title: "Sucesso",
+          description: "Visualizações geradas com sucesso!",
+        })
+      }
+    } catch (error: any) {
+      console.error('Erro ao gerar visualizações:', error)
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível gerar visualizações",
+        variant: "destructive"
+      })
+    } finally {
+      setGenerating(false)
+    }
+  }
+  
   const renderVisualization = (visualization: DataVisualization) => {
-    const config = visualization.configuration
-    
-    if (!config || !config.type) {
+    if (!visualization.configuration || typeof visualization.configuration !== 'object') {
       return (
-        <div className="flex items-center justify-center h-72 bg-muted/20 rounded-md">
-          <p className="text-muted-foreground">Configuração inválida</p>
+        <div className="flex items-center justify-center h-[300px]">
+          <AlertTriangle className="h-8 w-8 text-yellow-500 mr-2" />
+          <span>Configuração de visualização inválida</span>
+        </div>
+      )
+    }
+    
+    const config = visualization.configuration as unknown as ChartConfig
+    
+    if (!config || !config.data || !Array.isArray(config.data) || config.data.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-[300px]">
+          <AlertTriangle className="h-8 w-8 text-yellow-500 mr-2" />
+          <span>Dados insuficientes para visualização</span>
         </div>
       )
     }
     
     switch (config.type) {
-      case 'bar':
-        return (
-          <ChartContainer className="h-72">
-            <ChartTitle>{config.title}</ChartTitle>
-            <Chart>
-              <Bar 
-                data={config.data}
-                dataKey={config.dataKey}
-                fill={config.color || "#7c3aed"}
-                name={config.name}
-              />
-            </Chart>
-          </ChartContainer>
-        )
-        
       case 'line':
         return (
-          <ChartContainer className="h-72">
-            <ChartTitle>{config.title}</ChartTitle>
-            <Chart>
+          <ResponsiveContainer width="100%" height={300} className="mt-4">
+            <LineChart data={config.data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={config.dataKey} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
               <Line 
-                data={config.data} 
-                dataKey={config.dataKey}
-                stroke={config.color || "#0ea5e9"}
+                type="monotone" 
+                dataKey={config.name} 
+                stroke={config.color} 
+                name={config.name} 
+                activeDot={{ r: 8 }} 
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        )
+        
+      case 'bar':
+        return (
+          <ResponsiveContainer width="100%" height={300} className="mt-4">
+            <BarChart data={config.data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={config.dataKey} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar 
+                dataKey={config.name} 
+                fill={config.color} 
                 name={config.name}
               />
-            </Chart>
-          </ChartContainer>
+            </BarChart>
+          </ResponsiveContainer>
         )
         
       case 'area':
         return (
-          <ChartContainer className="h-72">
-            <ChartTitle>{config.title}</ChartTitle>
-            <Chart>
+          <ResponsiveContainer width="100%" height={300} className="mt-4">
+            <AreaChart data={config.data}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={config.dataKey} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
               <Area 
-                data={config.data} 
-                dataKey={config.dataKey}
-                fill={config.color || "#10b981"}
-                stroke={config.color || "#10b981"}
+                type="monotone" 
+                dataKey={config.name} 
+                fill={config.color} 
+                stroke={config.color} 
                 name={config.name}
               />
-            </Chart>
-          </ChartContainer>
+            </AreaChart>
+          </ResponsiveContainer>
         )
         
       case 'pie':
         return (
-          <ChartContainer className="h-72">
-            <ChartTitle>{config.title}</ChartTitle>
-            <Chart>
-              <Pie 
+          <ResponsiveContainer width="100%" height={300} className="mt-4">
+            <PieChart>
+              <Pie
                 data={config.data}
-                dataKey={config.dataKey}
-                nameKey={config.nameKey}
-                fill={config.color || "#8b5cf6"}
-                name={config.name}
-              />
-            </Chart>
-          </ChartContainer>
+                cx="50%"
+                cy="50%"
+                labelLine={true}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey={config.name}
+                nameKey={config.dataKey}
+                label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+              >
+                {config.data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
         )
         
       default:
         return (
-          <div className="flex items-center justify-center h-72 bg-muted/20 rounded-md">
-            <p className="text-muted-foreground">Tipo de visualização não suportado</p>
+          <div className="flex items-center justify-center h-[300px]">
+            <AlertTriangle className="h-8 w-8 text-yellow-500 mr-2" />
+            <span>Tipo de visualização não suportado: {config.type}</span>
           </div>
         )
     }
   }
-
-  return (
-    <Card className="shadow-md border border-border/40 bg-background">
-      <CardHeader className="pb-0">
-        <div className="flex items-center gap-2">
-          <LayoutDashboard className="h-5 w-5 text-primary" />
-          <CardTitle>Visualização e Análise</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="p-6 space-y-6">
-        {loading ? (
-          <div className="flex items-center justify-center h-[400px]">
-            <div className="flex flex-col items-center gap-2">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-muted-foreground text-sm">
-                Carregando visualizações...
+  
+  if (loading || generating) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <div className="text-center">
+              <p className="text-lg font-medium">
+                {generating ? "Gerando Visualizações" : "Carregando Visualizações"}
+              </p>
+              <p className="text-muted-foreground">
+                {generating 
+                  ? "Analisando padrões nos dados e criando gráficos..."
+                  : "Buscando visualizações existentes..."}
               </p>
             </div>
           </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <h3 className="text-md font-medium">Visualizações Disponíveis</h3>
-                <p className="text-sm text-muted-foreground">
-                  Visualize os dados ou gere novas análises com IA
-                </p>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="gap-1"
-                onClick={generateVisualizations}
-                disabled={analyzing}
-              >
-                {analyzing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="h-4 w-4" />
-                )}
-                {analyzing ? "Gerando..." : "Gerar Visualizações com IA"}
-              </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+  
+  if (analyses.length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <AlertTriangle className="h-12 w-12 text-yellow-500" />
+            <div className="text-center">
+              <p className="text-lg font-medium">Nenhuma Análise Disponível</p>
+              <p className="text-muted-foreground">
+                Não foi possível encontrar ou gerar análises para este conjunto de dados.
+              </p>
             </div>
-
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-3 mb-4">
-                <TabsTrigger value="suggested" className="gap-1">
-                  <Sparkles className="h-4 w-4" />
-                  <span>Sugeridos</span>
-                  {visualizations.length > 0 && (
-                    <Badge variant="secondary" className="ml-1">
-                      {visualizations.length}
-                    </Badge>
+            <Button onClick={generateAnalyses}>
+              Tentar Novamente
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+  
+  // Filtrar visualizações para a análise selecionada
+  const visualizationsForSelectedAnalysis = visualizations.filter(
+    v => v.analysis_id === selectedAnalysis
+  )
+  
+  const selectedAnalysisData = analyses.find(a => a.id === selectedAnalysis)
+  
+  return (
+    <Card className="shadow-md border border-border/40">
+      <CardHeader>
+        <CardTitle>Visualizações e Insights</CardTitle>
+        <CardDescription>
+          Visualize padrões e tendências em seus dados
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-6">
+          <Tabs 
+            value={selectedAnalysis || analyses[0]?.id || ''} 
+            onValueChange={setSelectedAnalysis}
+          >
+            <TabsList className="mb-4 w-full flex overflow-x-auto">
+              {analyses.map(analysis => (
+                <TabsTrigger 
+                  key={analysis.id} 
+                  value={analysis.id}
+                  className="flex-shrink-0"
+                >
+                  {analysis.analysis_type === 'time_series' ? (
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                  ) : analysis.analysis_type === 'distribution' ? (
+                    <BarChart2 className="h-4 w-4 mr-2" />
+                  ) : (
+                    <PieChartIcon className="h-4 w-4 mr-2" />
                   )}
+                  {analysis.analysis_type.charAt(0).toUpperCase() + analysis.analysis_type.slice(1).replace('_', ' ')}
                 </TabsTrigger>
-                <TabsTrigger value="bar" className="gap-1">
-                  <BarChart className="h-4 w-4" />
-                  <span>Barras</span>
-                </TabsTrigger>
-                <TabsTrigger value="line" className="gap-1">
-                  <LineChart className="h-4 w-4" />
-                  <span>Linhas</span>
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="suggested" className="space-y-4 mt-2">
-                {visualizations.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center border rounded-md p-10 gap-2">
-                    <LayoutDashboard className="h-8 w-8 text-muted-foreground" />
-                    <p className="text-muted-foreground">
-                      Nenhuma visualização disponível
-                    </p>
-                    <p className="text-xs text-muted-foreground text-center">
-                      Clique em "Gerar Visualizações com IA" para criar visualizações automáticas baseadas nos seus dados
-                    </p>
+              ))}
+            </TabsList>
+            
+            {analyses.map(analysis => (
+              <TabsContent key={analysis.id} value={analysis.id}>
+                <div className="mb-4">
+                  <Card>
+                    <CardContent className="pt-4">
+                      <h3 className="text-lg font-semibold">
+                        {analysis.configuration && typeof analysis.configuration === 'object' 
+                          ? (analysis.configuration as any).description || 'Análise dos Dados'
+                          : 'Análise dos Dados'}
+                      </h3>
+                      
+                      <div className="flex gap-2 mt-2">
+                        {analysis.analysis_type === 'time_series' ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            Série Temporal
+                          </span>
+                        ) : analysis.analysis_type === 'distribution' ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Distribuição
+                          </span>
+                        ) : analysis.analysis_type === 'correlation' ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            Correlação
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            {analysis.analysis_type.charAt(0).toUpperCase() + analysis.analysis_type.slice(1).replace('_', ' ')}
+                          </span>
+                        )}
+                      </div>
+                      
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        {analysis.results && typeof analysis.results === 'object' 
+                          ? (analysis.results as any).description || 'Análise detalhada dos dados com base em algoritmos estatísticos.'
+                          : 'Análise detalhada dos dados com base em algoritmos estatísticos.'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+                
+                {visualizationsForSelectedAnalysis.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {visualizationsForSelectedAnalysis.map(vis => (
+                      <Card key={vis.id}>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base font-medium">
+                            {vis.configuration && typeof vis.configuration === 'object' 
+                              ? (vis.configuration as any).title || 'Visualização'
+                              : 'Visualização'}
+                          </CardTitle>
+                          {vis.configuration && typeof vis.configuration === 'object' && (vis.configuration as any).description && (
+                            <CardDescription>
+                              {(vis.configuration as any).description}
+                            </CardDescription>
+                          )}
+                        </CardHeader>
+                        <CardContent>
+                          {renderVisualization(vis)}
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {visualizations.map(visualization => (
-                      <Card key={visualization.id} className="overflow-hidden">
-                        <CardContent className="p-0">
-                          {renderVisualization(visualization)}
-                        </CardContent>
-                        <CardFooter className="p-3 flex justify-between items-center">
-                          <p className="text-xs font-medium">
-                            {visualization.configuration?.description || visualization.type}
-                          </p>
-                          <Button variant="ghost" size="icon">
-                            <Share className="h-4 w-4" />
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ))}
-                  </div>
+                  <Card>
+                    <CardContent className="pt-4 flex flex-col items-center justify-center py-8">
+                      <AlertTriangle className="h-8 w-8 text-yellow-500 mb-2" />
+                      <p className="text-center">
+                        Nenhuma visualização disponível para esta análise.
+                      </p>
+                      <Button onClick={generateVisualizations} className="mt-4">
+                        Gerar Visualizações
+                      </Button>
+                    </CardContent>
+                  </Card>
                 )}
               </TabsContent>
-
-              <TabsContent value="bar" className="space-y-4 mt-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {visualizations
-                    .filter(v => v.configuration?.type === 'bar')
-                    .map(visualization => (
-                      <Card key={visualization.id} className="overflow-hidden">
-                        <CardContent className="p-0">
-                          {renderVisualization(visualization)}
-                        </CardContent>
-                        <CardFooter className="p-3 flex justify-between items-center">
-                          <p className="text-xs font-medium">
-                            {visualization.configuration?.description || visualization.type}
-                          </p>
-                          <Button variant="ghost" size="icon">
-                            <Share className="h-4 w-4" />
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ))}
-                  
-                  {visualizations.filter(v => v.configuration?.type === 'bar').length === 0 && (
-                    <div className="flex flex-col items-center justify-center border rounded-md p-10 gap-2 col-span-2">
-                      <BarChart className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">
-                        Nenhum gráfico de barras disponível
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="line" className="space-y-4 mt-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {visualizations
-                    .filter(v => v.configuration?.type === 'line')
-                    .map(visualization => (
-                      <Card key={visualization.id} className="overflow-hidden">
-                        <CardContent className="p-0">
-                          {renderVisualization(visualization)}
-                        </CardContent>
-                        <CardFooter className="p-3 flex justify-between items-center">
-                          <p className="text-xs font-medium">
-                            {visualization.configuration?.description || visualization.type}
-                          </p>
-                          <Button variant="ghost" size="icon">
-                            <Share className="h-4 w-4" />
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ))}
-                  
-                  {visualizations.filter(v => v.configuration?.type === 'line').length === 0 && (
-                    <div className="flex flex-col items-center justify-center border rounded-md p-10 gap-2 col-span-2">
-                      <LineChart className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">
-                        Nenhum gráfico de linha disponível
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
-          </>
-        )}
-      </CardContent>
-      <CardFooter className="flex justify-between p-6 pt-0">
-        <div>
-          {fileInfo && (
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium">Tabela:</span> {fileInfo.table_name}
-            </p>
-          )}
+            ))}
+          </Tabs>
         </div>
-        <Button 
-          onClick={onComplete} 
-          disabled={loading}
-          className="gap-1"
-        >
-          Concluir Importação
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </CardFooter>
+        
+        <div className="flex justify-between mt-4 pt-4 border-t">
+          <div>
+            {analyses.length > 0 && visualizations.length > 0 && (
+              <div className="flex items-center text-sm text-green-600">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                {visualizations.length} visualizações geradas
+              </div>
+            )}
+          </div>
+          <Button onClick={onComplete}>
+            Concluir
+          </Button>
+        </div>
+      </CardContent>
     </Card>
   )
 }

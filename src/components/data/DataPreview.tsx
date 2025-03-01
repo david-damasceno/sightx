@@ -77,16 +77,13 @@ export function DataPreview({ fileId, onNext }: DataPreviewProps) {
 
     const loadTableData = async (tableName: string) => {
       try {
-        // Buscar primeiras 100 linhas da tabela
-        const { data: tableData, error: tableError } = await supabase
-          .from(tableName)
-          .select('*')
-          .limit(100)
+        // Aqui não usamos .from(tableName) diretamente, mas sim a função rpc para executar consulta dinâmica
+        const { data, error } = await supabase.rpc('get_table_data', { table_name: tableName, row_limit: 100 })
 
-        if (tableError) throw tableError
+        if (error) throw error
 
-        if (tableData && tableData.length > 0) {
-          const firstRow = tableData[0]
+        if (data && data.length > 0) {
+          const firstRow = data[0]
           const gridColumns = Object.keys(firstRow)
             .filter(key => key !== 'id' && key !== 'organization_id' && key !== 'created_at')
             .map(key => ({
@@ -97,7 +94,7 @@ export function DataPreview({ fileId, onNext }: DataPreviewProps) {
             }))
 
           setColumns(gridColumns)
-          setPreviewData(tableData)
+          setPreviewData(data)
         }
       } catch (error: any) {
         console.error('Erro ao carregar dados da tabela:', error)

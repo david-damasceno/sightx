@@ -11,6 +11,6 @@ export function adaptColumnMetadata(metadata: ColumnMetadata): Column {
   return {
     name: metadata.original_name,
     type: metadata.data_type || 'text',
-    sample: metadata.sample_data
+    sample: metadata.sample_values
   }
 }
