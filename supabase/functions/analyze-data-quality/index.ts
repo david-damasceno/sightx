@@ -1,178 +1,201 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.32.0'
+import { corsHeaders } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+interface AnalyzeDataQualityRequest {
+  fileId: string;
+  tableName: string;
+  organizationId: string;
 }
 
 serve(async (req) => {
+  // Lidar com opções de CORS
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
-
+  
   try {
-    const { fileId, tableName } = await req.json()
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    if (!fileId || !tableName) {
-      return new Response(
-        JSON.stringify({ error: 'Parâmetros inválidos' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      )
+    const { fileId, tableName, organizationId } = await req.json() as AnalyzeDataQualityRequest
+    
+    // Verificar existência da tabela e do arquivo
+    const { data: fileData, error: fileError } = await supabase
+      .from('data_imports')
+      .select('*')
+      .eq('id', fileId)
+      .eq('organization_id', organizationId)
+      .single()
+    
+    if (fileError || !fileData) {
+      throw new Error(fileError?.message || 'Arquivo não encontrado')
     }
     
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') || '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-    )
-    
     // Buscar metadados das colunas
-    const { data: columns, error: columnsError } = await supabase
+    const { data: columnsData, error: columnsError } = await supabase
       .from('column_metadata')
       .select('*')
       .eq('import_id', fileId)
     
     if (columnsError) {
-      console.error('Erro ao buscar metadados:', columnsError)
-      return new Response(
-        JSON.stringify({ error: 'Erro ao buscar metadados de colunas' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      )
+      throw new Error(columnsError.message)
     }
     
-    // Obter contagem total de linhas
-    const { data: countData, error: countError } = await supabase
+    if (!columnsData || columnsData.length === 0) {
+      throw new Error('Nenhuma coluna encontrada para análise')
+    }
+    
+    // Total de registros na tabela
+    const { count, error: countError } = await supabase
       .from(tableName)
-      .select('id', { count: 'exact', head: true })
+      .select('*', { count: 'exact', head: true })
     
     if (countError) {
-      console.error('Erro ao contar linhas:', countError)
-      return new Response(
-        JSON.stringify({ error: 'Erro ao contar linhas' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      )
+      throw new Error(countError.message)
     }
     
-    const totalRows = countData.count || 0
+    const totalRows = count || 0
     
     // Analisar qualidade de cada coluna
-    const qualityResults = []
+    const columnQualities = []
+    const issues = []
     
-    for (const column of columns) {
-      const columnName = column.original_name
-      
-      // Analisar valores nulos
-      const { data: nullCount, error: nullError } = await supabase.rpc(
-        'count_null_values',
-        { table_name: tableName, column_name: columnName }
-      )
+    for (const column of columnsData) {
+      // Verificar valores nulos/vazios
+      const { count: nullCount, error: nullError } = await supabase
+        .from(tableName)
+        .select('*', { count: 'exact', head: true })
+        .or(`${column.original_name}.is.null,${column.original_name}.eq.''`)
       
       if (nullError) {
-        console.error(`Erro ao contar valores nulos para ${columnName}:`, nullError)
+        console.error(`Erro ao verificar nulos em ${column.original_name}:`, nullError)
         continue
       }
       
-      // Analisar valores duplicados
-      const { data: duplicateCount, error: dupError } = await supabase.rpc(
-        'count_duplicate_values',
-        { table_name: tableName, column_name: columnName }
-      )
+      // Verificar valores únicos
+      const { data: uniqueData, error: uniqueError } = await supabase
+        .rpc('count_distinct_values', { 
+          table_name: tableName,
+          column_name: column.original_name
+        })
       
-      if (dupError) {
-        console.error(`Erro ao contar valores duplicados para ${columnName}:`, dupError)
-        continue
+      const uniqueCount = uniqueData || 0
+      
+      if (uniqueError) {
+        console.error(`Erro ao verificar valores únicos em ${column.original_name}:`, uniqueError)
       }
       
-      // Analisar estatísticas básicas para colunas numéricas
-      let statistics = {}
+      // Calcular métricas
+      const nullRatio = totalRows > 0 ? (nullCount || 0) / totalRows : 0
+      const completeness = 1 - nullRatio
+      const uniqueness = totalRows > 0 ? uniqueCount / totalRows : 0
       
-      if (column.data_type === 'integer' || column.data_type === 'numeric') {
-        const { data: stats, error: statsError } = await supabase.rpc(
-          'calculate_numeric_statistics',
-          { table_name: tableName, column_name: columnName }
-        )
-        
-        if (!statsError && stats) {
-          statistics = stats
-        }
-      }
-      
-      // Calcular completude e unicidade
-      const completeness = totalRows > 0 ? ((totalRows - nullCount) / totalRows) * 100 : 0
-      const uniqueness = totalRows > 0 ? ((totalRows - duplicateCount) / totalRows) * 100 : 0
-      
-      // Adicionar resultado de qualidade
-      qualityResults.push({
-        column_name: columnName,
-        display_name: column.display_name || columnName,
-        data_type: column.data_type,
-        quality_metrics: {
-          completeness,
-          uniqueness,
-          null_count: nullCount,
-          duplicate_count: duplicateCount
-        },
-        statistics
-      })
-      
-      // Atualizar estatísticas na tabela de metadados
+      // Atualizar estatísticas da coluna
       await supabase
         .from('column_metadata')
         .update({
           statistics: {
             completeness,
             uniqueness,
-            null_count: nullCount,
-            duplicate_count: duplicateCount,
-            ...statistics
+            nullCount: nullCount || 0,
+            uniqueCount
           }
         })
         .eq('id', column.id)
+      
+      // Registrar problemas de qualidade
+      if (completeness < 0.95) {
+        issues.push({
+          columnName: column.original_name,
+          displayName: column.display_name,
+          issueType: 'completeness',
+          severity: completeness < 0.8 ? 'high' : 'medium',
+          description: `A coluna tem ${Math.round((1-completeness) * 100)}% de valores vazios ou nulos.`
+        })
+      }
+      
+      columnQualities.push({
+        columnId: column.id,
+        originalName: column.original_name,
+        displayName: column.display_name,
+        dataType: column.data_type,
+        completeness,
+        uniqueness,
+        issues: completeness < 0.95 ? 1 : 0
+      })
     }
     
-    // Salvar resultados completos da análise
-    await supabase
+    // Calcular métricas gerais
+    const overallCompleteness = columnQualities.reduce((sum, col) => sum + col.completeness, 0) / columnQualities.length
+    const overallQuality = columnQualities.reduce((sum, col) => sum + (col.completeness * 0.7 + col.uniqueness * 0.3), 0) / columnQualities.length
+    
+    // Registrar análise
+    const { data: analysisData, error: analysisError } = await supabase
       .from('data_analyses')
       .insert({
         import_id: fileId,
         analysis_type: 'quality',
-        results: { columns: qualityResults, total_rows: totalRows }
+        configuration: {},
+        results: {
+          columnQualities,
+          overallCompleteness,
+          overallQuality,
+          issues,
+          issuesCount: issues.length,
+          totalRows
+        }
       })
+      .select()
+      .single()
     
-    // Atualizar qualidade geral na tabela de imports
-    const overallCompleteness = qualityResults.reduce((sum, col) => sum + col.quality_metrics.completeness, 0) / qualityResults.length
-    const overallUniqueness = qualityResults.reduce((sum, col) => sum + col.quality_metrics.uniqueness, 0) / qualityResults.length
+    if (analysisError) {
+      throw new Error(analysisError.message)
+    }
     
+    // Atualizar metadata do arquivo
     await supabase
       .from('data_imports')
       .update({
         data_quality: {
-          completeness: overallCompleteness,
-          uniqueness: overallUniqueness,
-          analyzed_at: new Date().toISOString()
+          lastAnalysisId: analysisData.id,
+          overallQuality,
+          issuesCount: issues.length
         }
       })
       .eq('id', fileId)
     
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        quality: {
-          columns: qualityResults,
-          overall: {
-            completeness: overallCompleteness,
-            uniqueness: overallUniqueness
-          }
-        }
+      JSON.stringify({
+        success: true,
+        message: 'Análise de qualidade concluída com sucesso',
+        analysis: analysisData
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
+        status: 200
+      }
     )
+    
   } catch (error) {
-    console.error('Erro na análise de qualidade:', error)
+    console.error(error)
     return new Response(
-      JSON.stringify({ error: 'Erro interno no servidor', details: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({
+        success: false,
+        error: error.message
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
+        status: 400
+      }
     )
   }
 })

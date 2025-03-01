@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      column_metadata: {
+        Row: {
+          created_at: string | null
+          data_type: string
+          description: string | null
+          display_name: string | null
+          id: string
+          import_id: string
+          original_name: string
+          sample_values: Json | null
+          statistics: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_type: string
+          description?: string | null
+          display_name?: string | null
+          id?: string
+          import_id: string
+          original_name: string
+          sample_values?: Json | null
+          statistics?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          data_type?: string
+          description?: string | null
+          display_name?: string | null
+          id?: string
+          import_id?: string
+          original_name?: string
+          sample_values?: Json | null
+          statistics?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "column_metadata_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "data_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       column_suggestions: {
         Row: {
           created_at: string | null
@@ -112,6 +156,44 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_analyses: {
+        Row: {
+          analysis_type: string
+          configuration: Json | null
+          created_at: string | null
+          id: string
+          import_id: string
+          results: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          analysis_type: string
+          configuration?: Json | null
+          created_at?: string | null
+          id?: string
+          import_id: string
+          results?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          analysis_type?: string
+          configuration?: Json | null
+          created_at?: string | null
+          id?: string
+          import_id?: string
+          results?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_analyses_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "data_imports"
             referencedColumns: ["id"]
           },
         ]
@@ -276,9 +358,11 @@ export type Database = {
           created_by: string | null
           data_quality: Json | null
           data_validation: Json | null
+          description: string | null
           error_message: string | null
           file_type: string | null
           id: string
+          metadata: Json | null
           name: string
           organization_id: string
           original_filename: string
@@ -297,9 +381,11 @@ export type Database = {
           created_by?: string | null
           data_quality?: Json | null
           data_validation?: Json | null
+          description?: string | null
           error_message?: string | null
           file_type?: string | null
           id?: string
+          metadata?: Json | null
           name: string
           organization_id: string
           original_filename: string
@@ -318,9 +404,11 @@ export type Database = {
           created_by?: string | null
           data_quality?: Json | null
           data_validation?: Json | null
+          description?: string | null
           error_message?: string | null
           file_type?: string | null
           id?: string
+          metadata?: Json | null
           name?: string
           organization_id?: string
           original_filename?: string
@@ -450,6 +538,41 @@ export type Database = {
             columns: ["file_id"]
             isOneToOne: false
             referencedRelation: "data_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_visualizations: {
+        Row: {
+          analysis_id: string
+          configuration: Json | null
+          created_at: string | null
+          id: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          analysis_id: string
+          configuration?: Json | null
+          created_at?: string | null
+          id?: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          analysis_id?: string
+          configuration?: Json | null
+          created_at?: string | null
+          id?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_visualizations_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "data_analyses"
             referencedColumns: ["id"]
           },
         ]
@@ -880,6 +1003,14 @@ export type Database = {
           survey_id: string
         }
         Returns: Json
+      }
+      create_dynamic_table: {
+        Args: {
+          p_table_name: string
+          p_columns: Json
+          p_organization_id: string
+        }
+        Returns: string
       }
       create_organization_with_owner: {
         Args: {

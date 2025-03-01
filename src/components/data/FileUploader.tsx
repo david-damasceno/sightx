@@ -50,6 +50,8 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
           file_type: file.type,
           status: 'uploading',
           context: '',
+          description: '',
+          metadata: {},
           columns_metadata: {},
           column_analysis: {},
           data_quality: {},
@@ -80,7 +82,7 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
 
       if (updateError) throw updateError
 
-      // Iniciar processamento do arquivo para criar tabela
+      // Iniciar processamento do arquivo para criar tabela automaticamente
       const { error: processingError } = await supabase.functions.invoke('process-file-upload', {
         body: { 
           fileId: importData.id,
@@ -92,7 +94,7 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
 
       toast({
         title: "Sucesso",
-        description: "Arquivo enviado e processamento iniciado",
+        description: "Arquivo enviado e processamento iniciado. A tabela está sendo criada automaticamente.",
       })
 
       onUploadComplete(importData.id)

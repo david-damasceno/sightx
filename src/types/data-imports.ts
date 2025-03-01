@@ -3,14 +3,13 @@ import { Json } from "@/integrations/supabase/types"
 
 export interface ColumnMetadata {
   id: string
-  file_id: string
+  import_id: string
   original_name: string
-  mapped_name: string | null
-  data_type: string | null
-  sample_data: string | null
-  status: string
-  validation_rules: Json
-  organization_id: string
+  display_name: string | null
+  description: string | null
+  data_type: string
+  sample_values: Json
+  statistics: Json
   created_at: string
 }
 
@@ -41,6 +40,8 @@ export interface DataImport {
   organization_id: string
   name: string
   table_name: string
+  description: string | null
+  metadata: Json
   original_filename: string
   storage_path: string | null
   file_type: string | null
@@ -53,4 +54,34 @@ export interface DataImport {
   data_validation: Json
   columns_metadata: Json
   column_analysis: Json
+  context: string | null
+  context_vector: any
 }
+
+export interface DataAnalysis {
+  id: string
+  import_id: string
+  analysis_type: string
+  configuration: Json
+  results: Json
+  created_at: string
+  updated_at: string
+}
+
+export interface DataVisualization {
+  id: string
+  analysis_id: string
+  type: string
+  configuration: Json
+  created_at: string
+  updated_at: string
+}
+
+export interface ImportStepData {
+  fileId: string | null
+  tableName: string | null
+  columns: ColumnMetadata[]
+  analyses: DataAnalysis[]
+  visualizations: DataVisualization[]
+}
+

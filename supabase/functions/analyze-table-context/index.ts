@@ -1,222 +1,190 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.32.0'
+import { corsHeaders } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+interface AnalyzeTableContextRequest {
+  fileId: string;
+  organizationId: string;
 }
 
 serve(async (req) => {
+  // Lidar com opções de CORS
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
-
+  
   try {
-    const { fileId, tableName, description } = await req.json()
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
-    if (!fileId || !tableName) {
-      return new Response(
-        JSON.stringify({ error: 'Parâmetros inválidos' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      )
+    const { fileId, organizationId } = await req.json() as AnalyzeTableContextRequest
+    
+    // Buscar informações do arquivo
+    const { data: fileData, error: fileError } = await supabase
+      .from('data_imports')
+      .select('*')
+      .eq('id', fileId)
+      .eq('organization_id', organizationId)
+      .single()
+    
+    if (fileError || !fileData) {
+      throw new Error(fileError?.message || 'Arquivo não encontrado')
     }
     
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') || '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-    )
-    
     // Buscar metadados das colunas
-    const { data: columns, error: columnsError } = await supabase
+    const { data: columnsData, error: columnsError } = await supabase
       .from('column_metadata')
       .select('*')
       .eq('import_id', fileId)
     
     if (columnsError) {
-      console.error('Erro ao buscar metadados:', columnsError)
-      return new Response(
-        JSON.stringify({ error: 'Erro ao buscar metadados de colunas' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      )
+      throw new Error(columnsError.message)
     }
     
     // Buscar amostra de dados da tabela
     const { data: sampleData, error: sampleError } = await supabase
-      .from(tableName)
+      .from(fileData.table_name)
       .select('*')
       .limit(10)
     
     if (sampleError) {
-      console.error('Erro ao buscar amostra de dados:', sampleError)
-      return new Response(
-        JSON.stringify({ error: 'Erro ao buscar amostra de dados' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      )
+      throw new Error(sampleError.message)
     }
     
-    // Preparar dados para análise pela Azure OpenAI
-    const contextData = {
-      tableName,
-      description: description || 'Tabela de dados importados',
-      columns: columns,
-      sampleData: sampleData
+    // Preparar dados para análise com Azure OpenAI
+    const azureApiKey = Deno.env.get('AZURE_OPENAI_API_KEY') || ''
+    const azureEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT') || ''
+    const azureDeploymentName = Deno.env.get('AZURE_OPENAI_DEPLOYMENT') || ''
+    
+    if (!azureApiKey || !azureEndpoint || !azureDeploymentName) {
+      throw new Error('Configurações do Azure OpenAI não encontradas')
     }
     
-    // Chamar Azure OpenAI para análise
-    const openaiEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')
-    const openaiKey = Deno.env.get('AZURE_OPENAI_API_KEY')
-    const openaiDeployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT')
-    
-    if (!openaiEndpoint || !openaiKey || !openaiDeployment) {
-      console.error('Credenciais da Azure OpenAI não configuradas')
-      return new Response(
-        JSON.stringify({ error: 'Serviço de IA não configurado' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      )
-    }
+    // Montar prompt para o Azure OpenAI
+    const columnsList = columnsData.map(col => ({
+      name: col.original_name,
+      data_type: col.data_type,
+      sample_values: col.sample_values
+    }))
     
     const prompt = `
-    Analise esta tabela de dados:
-    
-    Nome da tabela: ${tableName}
-    Descrição: ${description || 'Tabela de dados importados'}
-    
-    Colunas:
-    ${columns.map(col => `- ${col.original_name} (${col.data_type}): ${JSON.stringify(col.sample_values)}`).join('\n')}
-    
-    Amostra de dados:
-    ${JSON.stringify(sampleData, null, 2)}
-    
-    Por favor, forneça:
-    1. Nomes mais adequados para as colunas (em português, termos técnicos claros)
-    2. Descrição curta para cada coluna
-    3. Tipos de análises recomendadas para estes dados
-    4. Possíveis visualizações relevantes
-    5. Possíveis melhorias na qualidade dos dados
-    
-    Responda em formato JSON com a seguinte estrutura:
-    {
-      "columns": [
-        {
-          "original_name": "nome_original",
-          "suggested_name": "nome_sugerido",
-          "description": "descrição da coluna",
-          "recommendations": "recomendações específicas para esta coluna"
-        }
-      ],
-      "analyses": [
-        {
-          "type": "tipo_de_analise",
-          "description": "descrição da análise",
-          "relevance": "relevância (alta, média, baixa)"
-        }
-      ],
-      "visualizations": [
-        {
-          "type": "tipo_de_visualizacao",
-          "description": "descrição da visualização",
-          "columns": ["colunas_envolvidas"]
-        }
-      ],
-      "quality_improvements": [
-        {
-          "issue": "problema identificado",
-          "suggestion": "sugestão de melhoria"
-        }
-      ]
-    }
+      Analise esta tabela de dados e gere:
+      1. Uma descrição clara do que representa esta tabela (em português)
+      2. Nomes formatados e descrições para cada coluna
+
+      Informações da tabela:
+      - Nome da tabela: ${fileData.table_name}
+      - Número de registros: ${fileData.row_count}
+      
+      Colunas:
+      ${JSON.stringify(columnsList, null, 2)}
+      
+      Amostra de dados:
+      ${JSON.stringify(sampleData, null, 2)}
+      
+      Formate a resposta como JSON com as seguintes propriedades:
+      {
+        "tableDescription": "...",
+        "columns": [
+          {
+            "originalName": "...",
+            "displayName": "...",
+            "description": "..."
+          }
+        ]
+      }
     `
     
-    const openaiResponse = await fetch(
-      `${openaiEndpoint}/openai/deployments/${openaiDeployment}/chat/completions?api-version=2023-05-15`,
+    // Chamar a API do Azure OpenAI
+    const azureResponse = await fetch(
+      `${azureEndpoint}/openai/deployments/${azureDeploymentName}/chat/completions?api-version=2023-05-15`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'api-key': openaiKey
+          'api-key': azureApiKey
         },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: 'Você é um analista de dados especialista que ajuda a entender e contextualizar dados.' },
-            { role: 'user', content: prompt }
+            {
+              role: 'system',
+              content: 'Você é um especialista em análise de dados que está ajudando a contextualizar e descrever conjuntos de dados para facilitar seu entendimento e uso.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
           ],
-          temperature: 0.3,
-          max_tokens: 2000
+          temperature: 0.7,
+          max_tokens: 1500
         })
       }
     )
     
-    if (!openaiResponse.ok) {
-      const errorText = await openaiResponse.text()
-      console.error('Erro na chamada da OpenAI:', errorText)
-      return new Response(
-        JSON.stringify({ error: 'Erro na análise de IA', details: errorText }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      )
-    }
+    const azureResponseData = await azureResponse.json()
+    const analysisContent = azureResponseData.choices[0].message.content
     
-    const openaiResult = await openaiResponse.json()
     let analysisResult
-    
     try {
-      // Extrair o JSON da resposta
-      const content = openaiResult.choices[0].message.content
-      analysisResult = JSON.parse(content)
+      analysisResult = JSON.parse(analysisContent)
     } catch (e) {
-      console.error('Erro ao processar resposta da OpenAI:', e)
-      return new Response(
-        JSON.stringify({ error: 'Erro ao processar resposta da IA' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      )
+      throw new Error('Erro ao interpretar resposta da IA: ' + e.message)
     }
     
-    // Salvar as sugestões de análise
-    await supabase
-      .from('data_analyses')
-      .insert({
-        import_id: fileId,
-        analysis_type: 'context',
-        results: analysisResult
-      })
-    
-    // Atualizar metadados de colunas com as sugestões
-    for (const col of analysisResult.columns) {
-      await supabase
-        .from('column_metadata')
-        .update({
-          display_name: col.suggested_name,
-          description: col.description
-        })
-        .eq('import_id', fileId)
-        .eq('original_name', col.original_name)
-    }
-    
-    // Atualizar descrição da tabela importada
+    // Atualizar a descrição da tabela
     await supabase
       .from('data_imports')
       .update({
-        description: description || 'Tabela de dados importados',
-        metadata: { 
-          analyses: analysisResult.analyses,
-          visualizations: analysisResult.visualizations,
-          quality_improvements: analysisResult.quality_improvements
-        }
+        context: analysisResult.tableDescription
       })
       .eq('id', fileId)
     
+    // Atualizar metadados das colunas
+    for (const column of analysisResult.columns) {
+      const columnData = columnsData.find(c => c.original_name === column.originalName)
+      
+      if (columnData) {
+        await supabase
+          .from('column_metadata')
+          .update({
+            display_name: column.displayName,
+            description: column.description
+          })
+          .eq('id', columnData.id)
+      }
+    }
+    
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        result: analysisResult
+      JSON.stringify({
+        success: true,
+        message: 'Contexto da tabela analisado com sucesso',
+        analysis: analysisResult
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
+        status: 200
+      }
     )
+    
   } catch (error) {
-    console.error('Erro na análise de contexto:', error)
+    console.error(error)
     return new Response(
-      JSON.stringify({ error: 'Erro interno no servidor', details: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({
+        success: false,
+        error: error.message
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
+        status: 400
+      }
     )
   }
 })
