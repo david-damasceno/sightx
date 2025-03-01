@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import DataGrid from "react-data-grid"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Sheet,
   SheetContent,
@@ -144,26 +142,24 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-hidden h-[800px]">
-        <ScrollArea className="h-full">
-          <DataGrid
-            columns={gridColumns}
-            rows={data}
-            className="h-full rdg-light"
-            rowHeight={35}
-            onRowsChange={setData}
-            onScroll={async (event) => {
-              const { scrollTop, clientHeight, scrollHeight } = event.currentTarget
-              if (
-                scrollHeight - scrollTop - clientHeight < 100 &&
-                !loading &&
-                data.length === currentPage * pageSize
-              ) {
-                await loadData(currentPage + 1)
-              }
-            }}
-          />
-        </ScrollArea>
+      <div className="border rounded-lg h-[800px]">
+        <DataGrid
+          columns={gridColumns}
+          rows={data}
+          className="h-full rdg-light"
+          rowHeight={35}
+          onRowsChange={setData}
+          onScroll={async (event) => {
+            const { scrollTop, clientHeight, scrollHeight } = event.currentTarget
+            if (
+              scrollHeight - scrollTop - clientHeight < 100 &&
+              !loading &&
+              data.length === currentPage * pageSize
+            ) {
+              await loadData(currentPage + 1)
+            }
+          }}
+        />
       </div>
 
       <Sheet open={isFullscreen} onOpenChange={setIsFullscreen}>
@@ -191,25 +187,23 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
               </div>
             </div>
             <div className="flex-1 overflow-auto px-4">
-              <ScrollArea className="h-full">
-                <DataGrid
-                  columns={gridColumns}
-                  rows={data}
-                  className="h-full rdg-light"
-                  rowHeight={35}
-                  onRowsChange={setData}
-                  onScroll={async (event) => {
-                    const { scrollTop, clientHeight, scrollHeight } = event.currentTarget
-                    if (
-                      scrollHeight - scrollTop - clientHeight < 100 &&
-                      !loading &&
-                      data.length === currentPage * pageSize
-                    ) {
-                      await loadData(currentPage + 1)
-                    }
-                  }}
-                />
-              </ScrollArea>
+              <DataGrid
+                columns={gridColumns}
+                rows={data}
+                className="h-full rdg-light"
+                rowHeight={35}
+                onRowsChange={setData}
+                onScroll={async (event) => {
+                  const { scrollTop, clientHeight, scrollHeight } = event.currentTarget
+                  if (
+                    scrollHeight - scrollTop - clientHeight < 100 &&
+                    !loading &&
+                    data.length === currentPage * pageSize
+                  ) {
+                    await loadData(currentPage + 1)
+                  }
+                }}
+              />
             </div>
           </div>
         </SheetContent>
