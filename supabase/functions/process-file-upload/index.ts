@@ -29,6 +29,8 @@ serve(async (req) => {
     
     const { fileId, organizationId } = await req.json() as ProcessFileUploadRequest
     
+    console.log(`Processando arquivo: ${fileId} para organização: ${organizationId}`)
+    
     // Buscar informações do arquivo
     const { data: fileData, error: fileError } = await supabase
       .from('data_imports')
@@ -38,6 +40,7 @@ serve(async (req) => {
       .single()
     
     if (fileError || !fileData) {
+      console.error('Erro ao buscar arquivo:', fileError)
       throw new Error(fileError?.message || 'Arquivo não encontrado')
     }
     
@@ -48,8 +51,11 @@ serve(async (req) => {
       .download(fileData.storage_path)
     
     if (downloadError || !fileContent) {
+      console.error('Erro ao baixar arquivo:', downloadError)
       throw new Error(downloadError?.message || 'Não foi possível baixar o arquivo')
     }
+    
+    console.log('Arquivo baixado com sucesso, processando...')
     
     // Processar o arquivo baseado no tipo
     const fileType = fileData.file_type
@@ -62,6 +68,8 @@ serve(async (req) => {
     if (jsonData.length < 2) {
       throw new Error('Arquivo vazio ou sem dados suficientes')
     }
+
+    console.log(`Processando ${jsonData.length} linhas de dados`)
 
     // Identificar cabeçalhos e tipos de dados
     const headers = jsonData[0] as string[]
@@ -105,6 +113,8 @@ serve(async (req) => {
       })
     }
     
+    console.log('Definições de colunas geradas:', columnDefinitions)
+    
     // Preparar a definição de tabela para o Supabase
     const columnDefinitionsJson = JSON.stringify(columnDefinitions)
     
@@ -119,8 +129,11 @@ serve(async (req) => {
     )
     
     if (tableError) {
+      console.error('Erro ao criar tabela:', tableError)
       throw new Error(`Erro ao criar tabela: ${tableError.message}`)
     }
+    
+    console.log('Tabela criada com sucesso:', fileData.table_name)
     
     // Inserir os dados na nova tabela
     const dataInserts = []
@@ -137,6 +150,8 @@ serve(async (req) => {
       dataInserts.push(rowData)
     }
     
+    console.log(`Preparando para inserir ${dataInserts.length} registros`)
+    
     // Inserir em lotes de 1000 registros
     const batchSize = 1000
     for (let i = 0; i < dataInserts.length; i += batchSize) {
@@ -146,8 +161,11 @@ serve(async (req) => {
         .insert(batch)
       
       if (insertError) {
+        console.error('Erro ao inserir dados:', insertError)
         throw new Error(`Erro ao inserir dados: ${insertError.message}`)
       }
+      
+      console.log(`Inseridos ${Math.min(i + batchSize, dataInserts.length)} de ${dataInserts.length} registros`)
     }
     
     // Criar metadados de colunas
@@ -162,6 +180,8 @@ serve(async (req) => {
           organization_id: organizationId
         })
     }
+    
+    console.log('Metadados de colunas criados')
     
     // Atualizar status do import
     await supabase
@@ -178,6 +198,8 @@ serve(async (req) => {
         }
       })
       .eq('id', fileId)
+    
+    console.log('Processamento concluído com sucesso')
     
     return new Response(
       JSON.stringify({
@@ -196,7 +218,7 @@ serve(async (req) => {
     )
     
   } catch (error) {
-    console.error(error)
+    console.error('Erro durante processamento:', error)
     return new Response(
       JSON.stringify({
         success: false,
