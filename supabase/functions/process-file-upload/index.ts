@@ -27,6 +27,8 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     
+    console.log('Edge Function process-file-upload iniciada')
+    
     const { fileId, organizationId } = await req.json() as ProcessFileUploadRequest
     
     console.log(`Processando arquivo: ${fileId} para organização: ${organizationId}`)
@@ -43,6 +45,13 @@ serve(async (req) => {
       console.error('Erro ao buscar arquivo:', fileError)
       throw new Error(fileError?.message || 'Arquivo não encontrado')
     }
+    
+    console.log('Dados do arquivo recuperados:', JSON.stringify({
+      id: fileData.id,
+      name: fileData.name,
+      storage_path: fileData.storage_path,
+      table_name: fileData.table_name
+    }))
     
     // Baixar o arquivo do storage
     const { data: fileContent, error: downloadError } = await supabase
@@ -113,7 +122,7 @@ serve(async (req) => {
       })
     }
     
-    console.log('Definições de colunas geradas:', columnDefinitions)
+    console.log('Definições de colunas geradas:', JSON.stringify(columnDefinitions))
     
     // Preparar a definição de tabela para o Supabase
     const columnDefinitionsJson = JSON.stringify(columnDefinitions)

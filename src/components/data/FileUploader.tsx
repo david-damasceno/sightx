@@ -33,12 +33,16 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
     setUploading(true)
 
     try {
+      console.log('Iniciando upload do arquivo:', file.name)
+      
       // Gerar nome de tabela único baseado no nome do arquivo
       const tableName = `data_${file.name
         .replace(/\.[^/.]+$/, "")
         .toLowerCase()
         .replace(/[^a-z0-9_]/g, "_")}_${Date.now().toString().slice(-6)}`
 
+      console.log('Nome da tabela gerado:', tableName)
+      
       // Criar registro do import
       const { data: importData, error: importError } = await supabase
         .from('data_imports')
@@ -61,16 +65,28 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
         .select()
         .single()
 
-      if (importError) throw importError
+      if (importError) {
+        console.error('Erro ao criar registro de importação:', importError)
+        throw importError
+      }
 
+      console.log('Registro de importação criado:', importData.id)
+      
       // Upload do arquivo
       const filePath = `${currentOrganization.id}/${importData.id}/${file.name}`
-      const { error: uploadError } = await supabase.storage
+      console.log('Caminho do arquivo para upload:', filePath)
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('data_files')
         .upload(filePath, file)
 
-      if (uploadError) throw uploadError
+      if (uploadError) {
+        console.error('Erro no upload do arquivo:', uploadError)
+        throw uploadError
+      }
 
+      console.log('Arquivo enviado com sucesso, atualizando status')
+      
       // Atualizar storage_path e status
       const { error: updateError } = await supabase
         .from('data_imports')
@@ -80,18 +96,33 @@ export function FileUploader({ onUploadComplete }: FileUploaderProps) {
         })
         .eq('id', importData.id)
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Erro ao atualizar registro:', updateError)
+        throw updateError
+      }
 
+      console.log('Registro atualizado, iniciando processamento')
+      
       // Iniciar processamento do arquivo para criar tabela automaticamente
-      const { error: processingError } = await supabase.functions.invoke('process-file-upload', {
+      console.log('Chamando edge function com:', { 
+        fileId: importData.id, 
+        organizationId: currentOrganization.id 
+      })
+      
+      const { data: processData, error: processingError } = await supabase.functions.invoke('process-file-upload', {
         body: { 
           fileId: importData.id,
           organizationId: currentOrganization.id 
         }
       })
 
-      if (processingError) throw processingError
+      if (processingError) {
+        console.error('Erro ao chamar função de processamento:', processingError)
+        throw processingError
+      }
 
+      console.log('Processamento iniciado com sucesso:', processData)
+      
       toast({
         title: "Sucesso",
         description: "Arquivo enviado e processamento iniciado. A tabela está sendo criada automaticamente.",
