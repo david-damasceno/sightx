@@ -230,13 +230,13 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
         fileId={fileId}
       />
 
-      <Card className="border flex-1">
-        <CardContent className="p-0 h-full flex flex-col">
-          <div className="flex-1 relative min-h-[400px]">
+      <Card className="border flex-1 flex flex-col">
+        <CardContent className="p-0 h-full flex-1 flex flex-col">
+          <div className="flex-1 relative" style={{ height: "100%" }}>
             <DataGrid
               columns={filteredColumns}
               rows={data}
-              className="rdg-light h-full"
+              className="rdg-light"
               rowHeight={35}
               onRowsChange={setData}
               onScroll={async (event) => {
@@ -293,7 +293,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
                 <DataGrid
                   columns={filteredColumns}
                   rows={data}
-                  className="h-full rdg-light"
+                  className="rdg-light"
                   rowHeight={35}
                   onRowsChange={setData}
                   onScroll={async (event) => {
