@@ -8,11 +8,7 @@
   -webkit-user-select: none;
   user-select: none;
   background-color: var(--background);
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  border-radius: 0.5rem;
 }
 
 .rdg *,
@@ -24,6 +20,7 @@
 .rdg-row {
   background-color: var(--background);
   border-block-end: 1px solid var(--border);
+  transition: background-color 0.2s ease;
 }
 
 .rdg-row:hover {
@@ -48,7 +45,11 @@
 
 .rdg-header-row {
   background-color: var(--header-background-color);
-  font-weight: bold;
+  font-weight: 600;
+  color: var(--header-text-color);
+  position: sticky;
+  top: 0;
+  z-index: 3;
 }
 
 .rdg-header-row .rdg-cell {
@@ -78,16 +79,60 @@
   font-size: 12px;
 }
 
+.row-odd {
+  background-color: var(--row-odd-background);
+}
+
+.row-even {
+  background-color: var(--row-even-background);
+}
+
+.data-grid-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.data-grid-status {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  background-color: var(--status-bar-background);
+  color: var(--status-bar-text);
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  z-index: 2;
+}
+
 :root {
-  --row-hover-bg-color: rgba(0, 0, 0, 0.05);
-  --header-background-color: rgba(0, 0, 0, 0.02);
+  --row-hover-bg-color: rgba(59, 130, 246, 0.05);
+  --header-background-color: rgba(59, 130, 246, 0.08);
+  --header-text-color: #4b5563;
   --tooltip-background-color: #333;
   --tooltip-text-color: #fff;
+  --row-odd-background: rgba(0, 0, 0, 0.01);
+  --row-even-background: rgba(0, 0, 0, 0);
+  --status-bar-background: #f9fafb;
+  --status-bar-text: #6b7280;
 }
 
 .dark {
-  --row-hover-bg-color: rgba(255, 255, 255, 0.1);
-  --header-background-color: rgba(255, 255, 255, 0.05);
+  --row-hover-bg-color: rgba(59, 130, 246, 0.1);
+  --header-background-color: rgba(59, 130, 246, 0.15);
+  --header-text-color: #e5e7eb;
   --tooltip-background-color: #222;
   --tooltip-text-color: #ddd;
+  --row-odd-background: rgba(255, 255, 255, 0.03);
+  --row-even-background: rgba(255, 255, 255, 0);
+  --status-bar-background: #1f2937;
+  --status-bar-text: #9ca3af;
 }
