@@ -9,6 +9,8 @@
   -webkit-user-select: none;
   user-select: none;
   background-color: var(--background);
+  position: absolute; /* Posicionamento absoluto para ocupar todo o container pai */
+  inset: 0; /* Expandir para preencher todo o container pai */
 }
 
 .rdg *,

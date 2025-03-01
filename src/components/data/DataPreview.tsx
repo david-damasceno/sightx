@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import DataGrid from "react-data-grid"
@@ -143,27 +142,24 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
         </div>
       </div>
 
-      {/* Container modificado para usar flexbox e garantir que o DataGrid ocupe toda a altura */}
-      <div className="border rounded-lg flex flex-col h-[800px]">
-        <div className="flex-1 min-h-0">
-          <DataGrid
-            columns={gridColumns}
-            rows={data}
-            className="h-full w-full rdg-light"
-            rowHeight={35}
-            onRowsChange={setData}
-            onScroll={async (event) => {
-              const { scrollTop, clientHeight, scrollHeight } = event.currentTarget
-              if (
-                scrollHeight - scrollTop - clientHeight < 100 &&
-                !loading &&
-                data.length === currentPage * pageSize
-              ) {
-                await loadData(currentPage + 1)
-              }
-            }}
-          />
-        </div>
+      <div className="border rounded-lg relative" style={{ height: '800px' }}>
+        <DataGrid
+          columns={gridColumns}
+          rows={data}
+          className="rdg-light"
+          rowHeight={35}
+          onRowsChange={setData}
+          onScroll={async (event) => {
+            const { scrollTop, clientHeight, scrollHeight } = event.currentTarget
+            if (
+              scrollHeight - scrollTop - clientHeight < 100 &&
+              !loading &&
+              data.length === currentPage * pageSize
+            ) {
+              await loadData(currentPage + 1)
+            }
+          }}
+        />
       </div>
 
       <Sheet open={isFullscreen} onOpenChange={setIsFullscreen}>
@@ -190,7 +186,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
                 />
               </div>
             </div>
-            <div className="flex-1 overflow-auto px-4">
+            <div className="flex-1 overflow-auto px-4 relative">
               <DataGrid
                 columns={gridColumns}
                 rows={data}
