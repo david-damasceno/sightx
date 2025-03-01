@@ -182,7 +182,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
 
         <Card className="border">
           <CardContent className="p-0">
-            <div className="h-[600px] flex flex-col items-center justify-center space-y-4">
+            <div className="h-80 flex flex-col items-center justify-center space-y-4">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">
                 Carregando dados...
@@ -195,7 +195,7 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-full space-y-6">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h3 className="text-lg font-medium">Visualização dos Dados</h3>
@@ -230,13 +230,13 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
         fileId={fileId}
       />
 
-      <Card className="border">
-        <CardContent className="p-0">
-          <div className="h-[600px] relative">
+      <Card className="border flex-1">
+        <CardContent className="p-0 h-full flex flex-col">
+          <div className="flex-1 relative min-h-[400px]">
             <DataGrid
               columns={filteredColumns}
               rows={data}
-              className="rdg-light"
+              className="rdg-light h-full"
               rowHeight={35}
               onRowsChange={setData}
               onScroll={async (event) => {

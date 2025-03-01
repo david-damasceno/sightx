@@ -152,10 +152,10 @@ export default function DataContext() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background via-accent/5">
-      <div className="container max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-8">
-        <Tabs defaultValue="upload" className="space-y-8">
-          <div className="flex justify-center">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-background to-background via-accent/5">
+      <div className="container max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex-1 flex flex-col">
+        <Tabs defaultValue="upload" className="flex-1 flex flex-col">
+          <div className="flex justify-center mb-6">
             <TabsList className="grid w-full max-w-md grid-cols-2 p-1 bg-white/50 backdrop-blur-sm">
               <TabsTrigger value="upload" className="space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Upload className="w-4 h-4" />
@@ -168,8 +168,8 @@ export default function DataContext() {
             </TabsList>
           </div>
 
-          <TabsContent value="upload" className="space-y-8 animate-fade-in">
-            <Card className="border-none shadow-lg bg-white/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+          <TabsContent value="upload" className="flex-1 flex flex-col animate-fade-in">
+            <Card className="border-none shadow-lg bg-white/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 flex-1 flex flex-col">
               <CardHeader className="space-y-2">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-primary/10 rounded-xl">
@@ -183,7 +183,8 @@ export default function DataContext() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-8">
+              
+              <CardContent className="flex-1 flex flex-col">
                 <ProcessSteps
                   currentStep={currentStep}
                   onStepClick={handleStepChange}
@@ -199,11 +200,11 @@ export default function DataContext() {
                 )}
 
                 <div className={cn(
-                  "transition-all duration-500 transform",
-                  currentStep === 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 h-0 overflow-hidden"
+                  "transition-all duration-500 transform mt-6",
+                  currentStep === 1 ? "flex-1 flex flex-col" : "hidden"
                 )}>
-                  <Card className="border border-dashed bg-white/50 hover:border-primary/50 transition-colors">
-                    <CardContent className="pt-6">
+                  <Card className="border border-dashed bg-white/50 hover:border-primary/50 transition-colors flex-1 flex flex-col">
+                    <CardContent className="pt-6 flex-1 flex items-center justify-center">
                       <FileUploader onUploadComplete={handleUploadComplete} />
                     </CardContent>
                   </Card>
@@ -212,20 +213,22 @@ export default function DataContext() {
                 {fileData && (
                   <>
                     <div className={cn(
-                      "transition-all duration-500 transform",
-                      currentStep === 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 h-0 overflow-hidden"
+                      "transition-all duration-500 transform mt-6",
+                      currentStep === 2 ? "flex-1 flex flex-col" : "hidden"
                     )}>
-                      <DataPreview 
-                        columns={fileData.columns}
-                        previewData={fileData.previewData}
-                        fileId={fileData.id}
-                        onNext={handlePreviewComplete}
-                      />
+                      <div className="flex-1 flex flex-col">
+                        <DataPreview 
+                          columns={fileData.columns}
+                          previewData={fileData.previewData}
+                          fileId={fileData.id}
+                          onNext={handlePreviewComplete}
+                        />
+                      </div>
                     </div>
 
                     <div className={cn(
-                      "transition-all duration-500 transform",
-                      currentStep === 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 h-0 overflow-hidden"
+                      "transition-all duration-500 transform mt-6",
+                      currentStep === 3 ? "flex-1 flex flex-col" : "hidden"
                     )}>
                       <ColumnMapper
                         fileId={fileData.id}
@@ -243,8 +246,8 @@ export default function DataContext() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="files" className="animate-fade-in">
-            <Card className="border-none shadow-lg bg-white/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+          <TabsContent value="files" className="flex-1 flex flex-col animate-fade-in">
+            <Card className="border-none shadow-lg bg-white/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 flex-1 flex flex-col">
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-primary/10 rounded-xl">
@@ -258,7 +261,7 @@ export default function DataContext() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-1">
                 <UploadedFilesList />
               </CardContent>
             </Card>
