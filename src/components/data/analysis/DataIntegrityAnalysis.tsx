@@ -8,6 +8,7 @@ import { AlertTriangle, CheckCircle, Info, Loader2 } from "lucide-react"
 import { FixesCard } from "./FixesCard"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
+import { Json } from "@/integrations/supabase/types"
 
 interface IntegrityMetrics {
   overall: number
@@ -25,6 +26,18 @@ interface IntegrityMetrics {
 interface DataIntegrityAnalysisProps {
   fileId: string
   tableName?: string
+}
+
+// Função auxiliar para validar e converter o tipo Json para IntegrityMetrics
+function isIntegrityMetrics(obj: Json): obj is IntegrityMetrics {
+  return (
+    typeof obj === 'object' && 
+    obj !== null && 
+    'overall' in obj && 
+    'completeness' in obj && 
+    'uniqueness' in obj && 
+    'consistency' in obj
+  );
 }
 
 export function DataIntegrityAnalysis({ fileId, tableName }: DataIntegrityAnalysisProps) {
@@ -53,7 +66,15 @@ export function DataIntegrityAnalysis({ fileId, tableName }: DataIntegrityAnalys
       // Se existir, usar os dados existentes
       if (!fetchError && existingAnalysis && existingAnalysis.length > 0) {
         console.log('Usando análise existente:', existingAnalysis[0].results)
-        setMetrics(existingAnalysis[0].results as IntegrityMetrics)
+        
+        // Verificar e converter o tipo antes de atribuir
+        const resultData = existingAnalysis[0].results
+        if (isIntegrityMetrics(resultData)) {
+          setMetrics(resultData)
+        } else {
+          console.error('Formato de dados inválido:', resultData)
+          throw new Error('Os dados de integridade estão em um formato inválido')
+        }
       } else {
         // Senão, chamar a função Edge para analisar
         console.log('Executando nova análise...')
@@ -68,7 +89,13 @@ export function DataIntegrityAnalysis({ fileId, tableName }: DataIntegrityAnalys
         if (error) throw error
         
         if (data && data.metrics) {
-          setMetrics(data.metrics)
+          // Verificar e converter o tipo antes de atribuir
+          if (isIntegrityMetrics(data.metrics)) {
+            setMetrics(data.metrics)
+          } else {
+            console.error('Formato de métricas inválido retornado pela função:', data.metrics)
+            throw new Error('As métricas retornadas estão em um formato inválido')
+          }
         }
       }
     } catch (error: any) {
