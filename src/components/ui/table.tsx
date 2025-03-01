@@ -101,9 +101,10 @@ const TableCell = React.forwardRef<
   HTMLTableCellElement,
   React.TdHTMLAttributes<HTMLTableCellElement> & { 
     isEditing?: boolean;
-    status?: 'error' | 'warning' | 'success' | 'modified';
+    status?: 'error' | 'warning' | 'success' | 'modified' | 'validated';
+    scoreValue?: number;
   }
->(({ className, isEditing, status, ...props }, ref) => (
+>(({ className, isEditing, status, scoreValue, ...props }, ref) => (
   <td
     ref={ref}
     className={cn(
@@ -113,10 +114,37 @@ const TableCell = React.forwardRef<
       status === 'warning' && "bg-yellow-50 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300",
       status === 'success' && "bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300",
       status === 'modified' && "bg-blue-50 dark:bg-blue-900/20 animate-pulse",
+      status === 'validated' && "bg-emerald-50 dark:bg-emerald-900/20",
       className
     )}
     {...props}
-  />
+  >
+    {scoreValue !== undefined ? (
+      <div className="flex items-center">
+        <div 
+          className={cn(
+            "h-2 w-full rounded-full bg-muted overflow-hidden mr-2",
+            scoreValue >= 80 ? "bg-green-100" : 
+            scoreValue >= 60 ? "bg-yellow-100" : 
+            "bg-red-100"
+          )}
+        >
+          <div 
+            className={cn(
+              "h-full",
+              scoreValue >= 80 ? "bg-green-500" : 
+              scoreValue >= 60 ? "bg-yellow-500" : 
+              "bg-red-500"
+            )}
+            style={{ width: `${scoreValue}%` }}
+          />
+        </div>
+        <span className="text-xs font-medium">{scoreValue}%</span>
+      </div>
+    ) : (
+      props.children
+    )}
+  </td>
 ))
 TableCell.displayName = "TableCell"
 

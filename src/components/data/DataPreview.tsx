@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import DataGrid from "react-data-grid"
@@ -20,7 +21,10 @@ import {
   ChevronRight,
   BarChart4,
   FileSpreadsheet,
-  Info
+  Info,
+  Shield,
+  CheckCircle2,
+  AlertTriangle
 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
@@ -47,6 +51,15 @@ import { DataQualityCard } from "./analysis/DataQualityCard"
 import { StatisticsCard } from "./analysis/StatisticsCard"
 import "./data-grid.css"
 import { DataIntegrityAnalysis } from "./analysis/DataIntegrityAnalysis"
+import {
+  Table as TableComponent,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table"
+import { Progress } from "@/components/ui/progress"
 
 interface DataPreviewProps {
   columns: { name: string; type: string; sample: any }[]
@@ -71,6 +84,17 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
   const [activeView, setActiveView] = useState<'table' | 'analysis'>('table')
   const [totalRows, setTotalRows] = useState<number | null>(null)
   const [pageSize, setPageSize] = useState(100)
+  const [qualityScore, setQualityScore] = useState<{
+    overall: number;
+    completeness: number;
+    uniqueness: number;
+    consistency: number;
+  }>({
+    overall: 87,
+    completeness: 95,
+    uniqueness: 88,
+    consistency: 92
+  })
   
   const { currentOrganization } = useAuth()
   const { toast } = useToast()
@@ -194,6 +218,18 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
     }
   }
 
+  const getQualityStatusColor = (value: number) => {
+    if (value >= 90) return "text-green-600 dark:text-green-400"
+    if (value >= 70) return "text-yellow-600 dark:text-yellow-400"
+    return "text-red-600 dark:text-red-400"
+  }
+
+  const getQualityStatusIcon = (value: number) => {
+    if (value >= 90) return <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+    if (value >= 70) return <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+    return <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+  }
+
   const filteredColumns = useMemo(() => 
     columns
       .filter(col => visibleColumns.includes(col.name))
@@ -280,25 +316,92 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
           <Button onClick={onNext}>
             Prosseguir
           </Button>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsFullscreen(true)}
-                  className="gap-2"
-                >
-                  <PencilLine className="h-4 w-4" />
-                  <span className="hidden sm:inline">Editar dados</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                Abrir editor de dados em tela cheia
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
       </div>
+
+      {/* Score Geral */}
+      <Card className="border shadow-sm">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              Score de Qualidade dos Dados
+            </CardTitle>
+            <Badge variant="outline" className="flex items-center gap-1.5 text-primary">
+              {qualityScore.overall}%
+            </Badge>
+          </div>
+          <CardDescription>
+            Avaliação geral da qualidade dos dados importados
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex flex-col space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Completude</span>
+                <div className="flex items-center gap-1">
+                  {getQualityStatusIcon(qualityScore.completeness)}
+                  <span className={`text-sm font-medium ${getQualityStatusColor(qualityScore.completeness)}`}>
+                    {qualityScore.completeness}%
+                  </span>
+                </div>
+              </div>
+              <Progress 
+                value={qualityScore.completeness} 
+                className="h-2"
+                indicatorClassName={
+                  qualityScore.completeness >= 90 ? "bg-green-500" :
+                  qualityScore.completeness >= 70 ? "bg-yellow-500" :
+                  "bg-red-500"
+                }
+              />
+            </div>
+            
+            <div className="flex flex-col space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Unicidade</span>
+                <div className="flex items-center gap-1">
+                  {getQualityStatusIcon(qualityScore.uniqueness)}
+                  <span className={`text-sm font-medium ${getQualityStatusColor(qualityScore.uniqueness)}`}>
+                    {qualityScore.uniqueness}%
+                  </span>
+                </div>
+              </div>
+              <Progress 
+                value={qualityScore.uniqueness} 
+                className="h-2"
+                indicatorClassName={
+                  qualityScore.uniqueness >= 90 ? "bg-green-500" :
+                  qualityScore.uniqueness >= 70 ? "bg-yellow-500" :
+                  "bg-red-500"
+                }
+              />
+            </div>
+            
+            <div className="flex flex-col space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Consistência</span>
+                <div className="flex items-center gap-1">
+                  {getQualityStatusIcon(qualityScore.consistency)}
+                  <span className={`text-sm font-medium ${getQualityStatusColor(qualityScore.consistency)}`}>
+                    {qualityScore.consistency}%
+                  </span>
+                </div>
+              </div>
+              <Progress 
+                value={qualityScore.consistency} 
+                className="h-2"
+                indicatorClassName={
+                  qualityScore.consistency >= 90 ? "bg-green-500" :
+                  qualityScore.consistency >= 70 ? "bg-yellow-500" :
+                  "bg-red-500"
+                }
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Tabs 
         defaultValue="table" 
@@ -426,9 +529,9 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
                   {data.length > 0 ? (
                     <DataQualityCard
                       metrics={{
-                        completeness: 0.95,
-                        uniqueness: 0.88,
-                        consistency: 0.92,
+                        completeness: qualityScore.completeness / 100,
+                        uniqueness: qualityScore.uniqueness / 100,
+                        consistency: qualityScore.consistency / 100,
                         issues: [
                           { 
                             type: "missing_values", 
@@ -457,24 +560,45 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
 
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium">Estatísticas por Coluna</h3>
-                  {columns.length > 0 && data.length > 0 ? (
-                    <StatisticsCard
-                      columnName={columns[0].name}
-                      statistics={{
-                        count: data.length,
-                        distinctCount: new Set(data.map(row => row[columns[0].name])).size,
-                        nullCount: data.filter(row => row[columns[0].name] == null).length,
-                        distribution: {},
-                        mean: 42.5,
-                        median: 38,
-                        quartiles: [25, 38, 42, 60]
-                      }}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-40 border rounded-md bg-muted/20">
-                      <p className="text-muted-foreground">Sem dados para análise</p>
+                  <div className="bg-card border rounded-lg p-4">
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-sm mb-2">Visão Geral das Colunas</h4>
+                      <div className="max-h-[300px] overflow-y-auto">
+                        <TableComponent>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Coluna</TableHead>
+                              <TableHead>Tipo</TableHead>
+                              <TableHead>Completude</TableHead>
+                              <TableHead>Status</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {columns.map((col, index) => {
+                              // Simulando valores de qualidade - em uma implementação real, estes viriam da análise
+                              const score = [95, 87, 76, 92, 65, 98, 89][index % 7];
+                              return (
+                                <TableRow key={col.name}>
+                                  <TableCell>{col.name}</TableCell>
+                                  <TableCell>{col.type}</TableCell>
+                                  <TableCell scoreValue={score}></TableCell>
+                                  <TableCell status={
+                                    score >= 90 ? 'success' : 
+                                    score >= 70 ? 'warning' : 
+                                    'error'
+                                  }>
+                                    {score >= 90 ? 'Excelente' : 
+                                     score >= 70 ? 'Boa' : 
+                                     'Insuficiente'}
+                                  </TableCell>
+                                </TableRow>
+                              )
+                            })}
+                          </TableBody>
+                        </TableComponent>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </CardContent>
