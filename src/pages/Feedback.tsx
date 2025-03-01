@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { MessageSquare, PlusCircle, BarChart2, Send, Loader2, Mail, Copy, Link2, ArrowUpRight, Users, CheckCircle, Clock, Settings2, ExternalLink, Filter, Eye, Trash2, Edit, HelpCircle } from "lucide-react"
@@ -778,4 +779,257 @@ export default function Feedback() {
               
               <Tabs defaultValue="perguntas">
                 <TabsList className="w-full">
-                  <TabsT
+                  <TabsTrigger value="perguntas">Perguntas</TabsTrigger>
+                  <TabsTrigger value="estatisticas" disabled={viewSurvey?.status !== 'active'}>
+                    Estatísticas
+                  </TabsTrigger>
+                  <TabsTrigger value="configuracoes">Configurações</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="perguntas" className="mt-4">
+                  {viewSurvey && (viewSurvey.settings as unknown as SurveySettings).questions && (viewSurvey.settings as unknown as SurveySettings).questions?.length > 0 ? (
+                    <div className="space-y-4">
+                      {(viewSurvey.settings as unknown as SurveySettings).questions?.map((question, index) => (
+                        <div key={index} className="border rounded-md p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-medium text-lg">{question.texto}</h3>
+                              <Badge variant="outline" className="mt-1">
+                                {question.tipo === 'nps' ? 'Escala NPS (0-10)' : 
+                                 question.tipo === 'text' ? 'Texto livre' : 
+                                 question.tipo === 'opcoes' ? 'Múltipla escolha' : 
+                                 'Avaliação'}
+                              </Badge>
+                            </div>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="sm" variant="ghost">
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Editar pergunta</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                          
+                          {question.tipo === 'nps' && (
+                            <div className="flex justify-between mt-4 text-sm">
+                              <div>0</div>
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                                <div key={num}>{num}</div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {question.tipo === 'opcoes' && question.opcoes && (
+                            <div className="mt-3 space-y-2">
+                              {question.opcoes.map((opcao, idx) => (
+                                <div key={idx} className="flex items-center">
+                                  <div className="h-4 w-4 border rounded-full mr-2"></div>
+                                  {opcao}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {question.tipo === 'text' && (
+                            <div className="mt-3">
+                              <div className="h-24 border rounded-md bg-muted/30 flex items-center justify-center text-muted-foreground">
+                                Campo de texto
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <HelpCircle className="h-12 w-12 text-muted-foreground mb-3" />
+                      <p className="text-muted-foreground text-center">
+                        Nenhuma pergunta encontrada para esta pesquisa.
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="estatisticas">
+                  {statsLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : !surveyStats ? (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <BarChart2 className="h-12 w-12 text-muted-foreground mb-3" />
+                      <p className="text-muted-foreground text-center">
+                        Nenhuma estatística disponível para esta pesquisa.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Card className="p-4">
+                          <div className="text-sm text-muted-foreground mb-1">Pontuação NPS</div>
+                          <div className="text-2xl font-bold">{surveyStats.nps_score || 0}</div>
+                          <Progress 
+                            value={50} 
+                            className="h-2 mt-2" 
+                            indicatorClassName="bg-green-500" 
+                          />
+                        </Card>
+                        <Card className="p-4">
+                          <div className="text-sm text-muted-foreground mb-1">Total de Respostas</div>
+                          <div className="text-2xl font-bold">{surveyStats.total_responses || 0}</div>
+                        </Card>
+                        <Card className="p-4">
+                          <div className="text-sm text-muted-foreground mb-1">Taxa de Resposta</div>
+                          <div className="text-2xl font-bold">{surveyStats.response_rate || '0%'}</div>
+                        </Card>
+                      </div>
+                      
+                      <Card className="p-6">
+                        <h3 className="font-medium text-lg mb-4">Distribuição de Respostas</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <div className="flex justify-between mb-2">
+                              <span className="text-sm">Promotores (9-10)</span>
+                              <span className="text-sm font-medium">{surveyStats.promoters_percentage || '0%'}</span>
+                            </div>
+                            <Progress 
+                              value={surveyStats.promoters_percentage?.replace('%', '') || 0} 
+                              className="h-2" 
+                              indicatorClassName="bg-green-500" 
+                            />
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-2">
+                              <span className="text-sm">Neutros (7-8)</span>
+                              <span className="text-sm font-medium">{surveyStats.passives_percentage || '0%'}</span>
+                            </div>
+                            <Progress 
+                              value={surveyStats.passives_percentage?.replace('%', '') || 0} 
+                              className="h-2" 
+                              indicatorClassName="bg-blue-500" 
+                            />
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-2">
+                              <span className="text-sm">Detratores (0-6)</span>
+                              <span className="text-sm font-medium">{surveyStats.detractors_percentage || '0%'}</span>
+                            </div>
+                            <Progress 
+                              value={surveyStats.detractors_percentage?.replace('%', '') || 0} 
+                              className="h-2" 
+                              indicatorClassName="bg-red-500" 
+                            />
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="configuracoes">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-medium">Configurações da Pesquisa</h3>
+                      <Button size="sm" variant="outline">
+                        <Settings2 className="h-4 w-4 mr-2" />
+                        Editar
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium">Status</h4>
+                        <div className="flex items-center">
+                          {getStatusBadge(viewSurvey?.status || 'draft')}
+                          <Button 
+                            size="xs" 
+                            variant="link" 
+                            className="ml-2 h-auto p-0"
+                            onClick={() => viewSurvey && updateSurveyStatus(
+                              viewSurvey.id, 
+                              viewSurvey.status === 'active' ? 'inactive' : 'active'
+                            )}
+                          >
+                            {viewSurvey?.status === 'active' ? 'Desativar' : 'Ativar'}
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium">ID da Pesquisa</h4>
+                        <div className="text-sm">{viewSurvey?.id}</div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium">Data de Criação</h4>
+                        <div className="text-sm">
+                          {viewSurvey && new Date(viewSurvey.created_at).toLocaleDateString()} às {viewSurvey && new Date(viewSurvey.created_at).toLocaleTimeString()}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium">Tipo</h4>
+                        <div className="text-sm capitalize">{viewSurvey?.type}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="border-t pt-4 mt-4">
+                      <h3 className="font-medium mb-3">Ações Avançadas</h3>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm">
+                          <Link2 className="h-4 w-4 mr-2" />
+                          Compartilhar
+                        </Button>
+                        
+                        <Button variant="outline" size="sm">
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          Exportar Dados
+                        </Button>
+                        
+                        <Button variant="outline" size="sm" onClick={() => viewSurvey && updateSurveyStatus(viewSurvey.id, 'archived')}>
+                          <Clock className="h-4 w-4 mr-2" />
+                          Arquivar
+                        </Button>
+                        
+                        <Button variant="destructive" size="sm" onClick={() => viewSurvey && setConfirmDeleteId(viewSurvey.id)}>
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Excluir
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </DialogContent>
+        </Dialog>
+        
+        <AlertDialog open={!!confirmDeleteId} onOpenChange={(open) => !open && setConfirmDeleteId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Pesquisa</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir esta pesquisa? Esta ação não pode ser desfeita e todos os dados coletados serão perdidos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => confirmDeleteId && deleteSurvey(confirmDeleteId)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </main>
+    </div>
+  )
+}
+
