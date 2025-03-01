@@ -1,3 +1,19 @@
 
+# This file lists Edge Functions that should be built along with the database.
+# When this file is present, the CLI will look for each Edge Function's entrypoint in 
+# the ./functions/<name>/index.ts or ./functions/<name>/index.js file.
+
+[config]
+# Base directory containing edge functions
+base_dir = "functions"
+
+# Run these after creating or updating any edge function
+# post_build = ["npx", "supabase", "functions", "deploy", "--no-verify-jwt"]
+
+# List of functions to include when building
+[functions]
+# Functions will be deployed to Supabase Edge Functions
+
+# Function configuration
 [functions.port]
-port = 54321
+verify_jwt = false

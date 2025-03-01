@@ -1,116 +1,119 @@
 
-import { ProcessSteps } from "@/components/data/ProcessSteps"
-import { FileUploader } from "@/components/data/FileUploader"
-import { DataPreview } from "@/components/data/DataPreview"
-import { ColumnMapper } from "@/components/data/ColumnMapper"
-import { cn } from "@/lib/utils"
-import { DataImportProvider, useDataImport } from "@/contexts/DataImportContext"
 import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { FileUploader } from "@/components/data-import/FileUploader"
+import { DataPreview } from "@/components/data/DataPreview"
+import { ColumnMapper } from "@/components/data-import/ColumnMapper"
 import { supabase } from "@/integrations/supabase/client"
+import { useAuth } from "@/contexts/AuthContext"
 import { ColumnMetadata } from "@/types/data-imports"
-import { adaptColumnMetadata } from "@/utils/columnAdapter"
-
-function DataImportContent() {
-  const { currentImport, analyzeFile } = useDataImport()
-  const [columns, setColumns] = useState<ColumnMetadata[]>([])
-
-  useEffect(() => {
-    if (currentImport?.id) {
-      // Carregar colunas
-      supabase
-        .from('data_file_columns')
-        .select('*')
-        .eq('file_id', currentImport.id)
-        .order('original_name')
-        .then(({ data, error }) => {
-          if (!error && data) {
-            setColumns(data)
-          }
-        })
-    }
-  }, [currentImport?.id])
-
-  const currentStep = currentImport ? (
-    currentImport.status === 'pending' || currentImport.status === 'uploading' || currentImport.status === 'uploaded' ? 1 :
-    currentImport.status === 'analyzing' || currentImport.status === 'editing' || currentImport.status === 'processing' ? 2 :
-    currentImport.status === 'completed' ? 3 :
-    1
-  ) : 1
-
-  const handleUploadComplete = async (fileId: string) => {
-    await analyzeFile(fileId)
-  }
-
-  const handlePreviewNext = async () => {
-    if (currentImport) {
-      await supabase
-        .from('data_imports')
-        .update({ status: 'processing' })
-        .eq('id', currentImport.id)
-    }
-  }
-
-  const handleMappingComplete = async () => {
-    if (currentImport) {
-      await supabase
-        .from('data_imports')
-        .update({ status: 'completed' })
-        .eq('id', currentImport.id)
-    }
-  }
-
-  return (
-    <div className="container max-w-7xl mx-auto py-8 space-y-8">
-      <div className="space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight">Importação de Dados</h1>
-        <p className="text-muted-foreground">
-          Importe seus dados para começar a análise
-        </p>
-      </div>
-
-      <ProcessSteps currentStep={currentStep} />
-
-      <div className={cn(
-        "transition-all duration-300",
-        currentStep === 1 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
-      )}>
-        <FileUploader onUploadComplete={handleUploadComplete} />
-      </div>
-
-      {currentImport && (
-        <>
-          <div className={cn(
-            "transition-all duration-300",
-            currentStep === 2 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
-          )}>
-            <DataPreview 
-              fileId={currentImport.id}
-              columns={columns.map(adaptColumnMetadata)}
-              previewData={[]}
-              onNext={handlePreviewNext}
-            />
-          </div>
-
-          <div className={cn(
-            "transition-all duration-300",
-            currentStep === 3 ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
-          )}>
-            <ColumnMapper
-              fileId={currentImport.id}
-              columns={columns.map(adaptColumnMetadata)}
-              onMappingComplete={handleMappingComplete}
-            />
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
 
 export default function DataImport() {
+  const [fileId, setFileId] = useState<string | null>(null)
+  const [tableName, setTableName] = useState<string | null>(null)
+  const [columns, setColumns] = useState<ColumnMetadata[]>([])
+  const [step, setStep] = useState(1)
+  const { currentOrganization } = useAuth()
+  
+  useEffect(() => {
+    if (fileId && currentOrganization) {
+      fetchFileColumns()
+    }
+  }, [fileId, currentOrganization])
+  
+  const fetchFileColumns = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('column_metadata')
+        .select('*')
+        .eq('import_id', fileId)
+        .order('created_at', { ascending: true })
+      
+      if (error) throw error
+      
+      // Adaptamos os dados para corresponder ao tipo ColumnMetadata
+      const adaptedColumns: ColumnMetadata[] = data.map(col => ({
+        id: col.id,
+        import_id: col.import_id || fileId || '',
+        original_name: col.original_name,
+        display_name: col.mapped_name || null,
+        description: null,
+        data_type: col.data_type,
+        sample_values: col.sample_data || [],
+        statistics: col.validation_rules || {},
+        created_at: col.created_at
+      }));
+      
+      setColumns(adaptedColumns)
+    } catch (error) {
+      console.error('Error fetching columns:', error)
+    }
+  }
+  
+  const handleUploadComplete = (id: string) => {
+    setFileId(id)
+    setStep(2)
+  }
+  
+  const handlePreviewComplete = async () => {
+    setStep(3)
+  }
+
+  const handleMappingComplete = async (mappedColumns: ColumnMetadata[]) => {
+    try {
+      // Update column mappings
+      for (const col of mappedColumns) {
+        await supabase
+          .from('column_metadata')
+          .update({
+            mapped_name: col.display_name,
+            description: col.description
+          })
+          .eq('id', col.id)
+      }
+      
+      // Continue to next step (e.g., create table)
+      setStep(4)
+    } catch (error) {
+      console.error('Error saving column mappings:', error)
+    }
+  }
+  
   return (
-    <DataImportProvider>
-      <DataImportContent />
-    </DataImportProvider>
+    <div className="container mx-auto py-8">
+      <Card className="bg-white shadow-md">
+        <CardHeader>
+          <CardTitle>Importação de Dados</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {step === 1 && (
+            <FileUploader onUploadComplete={handleUploadComplete} />
+          )}
+          
+          {step === 2 && fileId && (
+            <DataPreview 
+              fileId={fileId}
+              onNext={handlePreviewComplete}
+            />
+          )}
+          
+          {step === 3 && fileId && columns.length > 0 && (
+            <ColumnMapper 
+              columns={columns} 
+              onMappingComplete={handleMappingComplete}
+            />
+          )}
+          
+          {step === 4 && (
+            <div>
+              <h3 className="text-lg font-medium">Importação Concluída</h3>
+              <p className="text-muted-foreground mt-2">
+                Seus dados foram importados com sucesso.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   )
 }
