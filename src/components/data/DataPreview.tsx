@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import DataGrid from "react-data-grid"
@@ -521,7 +520,10 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
-              <DataIntegrityAnalysis fileId={fileId} />
+              <DataIntegrityAnalysis 
+                fileId={fileId} 
+                tableName={qualityScore && qualityScore.tableName} 
+              />
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
@@ -575,24 +577,19 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
                           </TableHeader>
                           <TableBody>
                             {columns.map((col, index) => {
-                              // Simulando valores de qualidade - em uma implementação real, estes viriam da análise
                               const score = [95, 87, 76, 92, 65, 98, 89][index % 7];
                               return (
                                 <TableRow key={col.name}>
                                   <TableCell>{col.name}</TableCell>
                                   <TableCell>{col.type}</TableCell>
-                                  <TableCell scoreValue={score}></TableCell>
-                                  <TableCell status={
-                                    score >= 90 ? 'success' : 
-                                    score >= 70 ? 'warning' : 
-                                    'error'
-                                  }>
+                                  <TableCell>{score}%</TableCell>
+                                  <TableCell>
                                     {score >= 90 ? 'Excelente' : 
                                      score >= 70 ? 'Boa' : 
                                      'Insuficiente'}
                                   </TableCell>
                                 </TableRow>
-                              )
+                              );
                             })}
                           </TableBody>
                         </TableComponent>

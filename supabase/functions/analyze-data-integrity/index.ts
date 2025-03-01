@@ -1,356 +1,284 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
+// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.2'
 import { corsHeaders } from '../_shared/cors.ts'
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-
-const supabase = createClient(supabaseUrl, supabaseKey)
-
-// Define tipos para as métricas de integridade
-interface IntegrityMetrics {
-  overall: number;
-  completeness: number; 
-  uniqueness: number;
-  consistency: number;
-  recommendations?: {
-    type: string;
-    description: string;
-    impact: string;
-    column?: string;
-  }[];
-}
-
-interface ColumnStatistics {
-  nullCount: number;
-  totalRows: number;
-  duplicateCount: number;
-  distinctValues: Set<string>;
-  patterns: Record<string, number>;
-}
+console.log("analyze-data-integrity function started")
 
 Deno.serve(async (req) => {
-  // Handle CORS
+  // Tratamento de CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
-  
+
   try {
     const { fileId, tableName, organizationId } = await req.json()
-    
+
     if (!fileId || !organizationId) {
       throw new Error('fileId e organizationId são obrigatórios')
     }
-    
-    console.log(`Analisando integridade dos dados para arquivo: ${fileId}, organização: ${organizationId}`)
-    
-    // Buscar informações sobre o arquivo e tabela associada
-    const { data: fileData, error: fileError } = await supabase
+
+    // Cria o cliente do Supabase usando as variáveis de ambiente
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    console.log(`Analisando integridade para o arquivo ${fileId}, tabela ${tableName || 'não especificada'}`)
+
+    // Buscar os dados importados
+    const { data: importData, error: importError } = await supabase
       .from('data_imports')
-      .select('table_name, row_count')
+      .select('*')
       .eq('id', fileId)
       .eq('organization_id', organizationId)
       .single()
-    
-    if (fileError) {
-      throw new Error(`Erro ao buscar dados do arquivo: ${fileError.message}`)
+
+    if (importError || !importData) {
+      throw new Error(`Falha ao buscar dados do arquivo: ${importError?.message || "Arquivo não encontrado"}`)
     }
-    
-    if (!fileData.table_name) {
-      throw new Error('Tabela não encontrada para este arquivo')
+
+    const actualTableName = tableName || importData.table_name
+
+    if (!actualTableName) {
+      throw new Error('Nome da tabela não especificado e não encontrado nos dados importados')
     }
-    
-    // Buscar metadados das colunas
-    const { data: columnsData, error: columnsError } = await supabase
-      .from('data_file_columns')
-      .select('original_name, data_type')
-      .eq('file_id', fileId)
-      .eq('organization_id', organizationId)
-    
-    if (columnsError) {
-      throw new Error(`Erro ao buscar colunas: ${columnsError.message}`)
+
+    console.log(`Usando tabela: ${actualTableName}`)
+
+    // Buscar os dados da tabela
+    const { data: tableData, error: tableError } = await supabase
+      .from(actualTableName)
+      .select('*')
+      .limit(1000) // Limitar para não sobrecarregar a análise
+
+    if (tableError) {
+      throw new Error(`Falha ao buscar dados da tabela: ${tableError.message}`)
     }
-    
-    // Analisar cada coluna
-    const columnStats: Record<string, ColumnStatistics> = {}
-    const totalRows = fileData.row_count || 0
-    
-    // Para cada coluna, vamos analisar o conteúdo
-    for (const column of columnsData) {
-      // Contar valores nulos
-      const { count: nullCount, error: nullError } = await supabase.rpc(
-        'count_null_values',
-        { 
-          table_name: fileData.table_name, 
-          column_name: column.original_name 
-        }
-      )
-      
-      if (nullError) {
-        console.error(`Erro ao contar nulos em ${column.original_name}: ${nullError.message}`)
-        continue
-      }
-      
-      // Contar valores duplicados
-      const { count: duplicateCount, error: duplicateError } = await supabase.rpc(
-        'count_duplicate_values',
-        { 
-          table_name: fileData.table_name, 
-          column_name: column.original_name 
-        }
-      )
-      
-      if (duplicateError) {
-        console.error(`Erro ao contar duplicados em ${column.original_name}: ${duplicateError.message}`)
-        continue
-      }
-      
-      // Buscar amostra de dados para análise de padrões
-      const { data: sampleData, error: sampleError } = await supabase
-        .from(fileData.table_name)
-        .select(column.original_name)
-        .limit(100)
-      
-      if (sampleError) {
-        console.error(`Erro ao buscar amostra para ${column.original_name}: ${sampleError.message}`)
-        continue
-      }
-      
-      // Analisar padrões nos dados
-      const patterns: Record<string, number> = {}
-      const distinctValues = new Set<string>()
-      
-      for (const row of sampleData) {
-        const value = row[column.original_name]
-        if (value !== null) {
-          distinctValues.add(String(value))
-          
-          // Identificar padrão do valor
-          const pattern = inferPattern(value, column.data_type)
-          patterns[pattern] = (patterns[pattern] || 0) + 1
-        }
-      }
-      
-      // Salvar estatísticas da coluna
-      columnStats[column.original_name] = {
-        nullCount: nullCount || 0,
-        totalRows,
-        duplicateCount: duplicateCount || 0,
-        distinctValues,
-        patterns
-      }
+
+    if (!tableData || tableData.length === 0) {
+      throw new Error('Nenhum dado encontrado na tabela para análise')
     }
+
+    console.log(`Analisando ${tableData.length} registros`)
+
+    // Extrair colunas da tabela
+    const columns = Object.keys(tableData[0])
     
-    // Calcular métricas gerais
-    const metrics = calculateMetrics(columnStats, totalRows)
-    
-    // Gerar recomendações
-    const recommendations = generateRecommendations(columnStats, metrics)
-    metrics.recommendations = recommendations
-    
-    // Salvar os resultados na tabela data_analysis_results
-    const { error: saveError } = await supabase
-      .from('data_analysis_results')
-      .insert({
-        file_id: fileId,
-        organization_id: organizationId,
-        analysis_type: 'integrity',
-        column_name: 'all',
-        results: metrics
-      })
-    
-    if (saveError) {
-      console.error(`Erro ao salvar resultados: ${saveError.message}`)
-    }
-    
+    // Calcular métricas de integridade
+    const metrics = analyzeDataIntegrity(tableData, columns)
+
     return new Response(
-      JSON.stringify({ metrics }),
-      { 
+      JSON.stringify({
+        status: 'success',
+        metrics,
+      }),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        status: 200,
       }
     )
-  } 
-  catch (error) {
-    console.error(`Erro na análise de integridade: ${error.message}`)
+  } catch (error) {
+    console.error('Erro:', error.message)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
+      JSON.stringify({
+        status: 'error',
+        error: error.message,
+      }),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500
+        status: 400,
       }
     )
   }
 })
 
-// Função para inferir o padrão de um valor
-function inferPattern(value: any, dataType: string): string {
-  if (value === null || value === undefined) return 'null'
-  
-  const strValue = String(value)
-  
-  // Verificar tipo de dados
-  if (dataType?.includes('int') || dataType?.includes('numeric') || dataType?.includes('float')) {
-    return 'numeric'
+function analyzeDataIntegrity(data: any[], columns: string[]) {
+  const totalRows = data.length
+  const metrics = {
+    completeness: 0,
+    uniqueness: 0,
+    consistency: 0,
+    overall: 0,
+    recommendations: [] as Array<{
+      type: string,
+      description: string,
+      impact: string,
+      column?: string
+    }>
   }
-  
-  if (dataType?.includes('date') || dataType?.includes('time')) {
-    return 'date'
-  }
-  
-  if (dataType?.includes('bool')) {
-    return 'boolean'
-  }
-  
-  // Para strings, verificar formatos comuns
-  if (/^\d+$/.test(strValue)) return 'digits'
-  if (/^[A-Za-z\s]+$/.test(strValue)) return 'text'
-  if (/^[A-Za-z0-9\s]+$/.test(strValue)) return 'alphanumeric'
-  if (/^\S+@\S+\.\S+$/.test(strValue)) return 'email'
-  if (/^\+?[\d\s-()]+$/.test(strValue)) return 'phone'
-  
-  return 'mixed'
-}
 
-// Função para calcular métricas de integridade
-function calculateMetrics(
-  columnStats: Record<string, ColumnStatistics>, 
-  totalRows: number
-): IntegrityMetrics {
-  const columns = Object.keys(columnStats)
-  
-  // Evitar divisão por zero
-  if (columns.length === 0 || totalRows === 0) {
-    return {
-      overall: 0,
-      completeness: 0,
-      uniqueness: 0,
-      consistency: 0
-    }
-  }
-  
-  // Calcular completude (porcentagem de valores não nulos)
-  let totalCompleteness = 0
-  for (const colName of columns) {
-    const stats = columnStats[colName]
-    const colCompleteness = (stats.totalRows - stats.nullCount) / stats.totalRows
-    totalCompleteness += colCompleteness
-  }
-  const completeness = totalCompleteness / columns.length
-  
-  // Calcular unicidade (ausência de duplicações)
-  let totalUniqueness = 0
-  for (const colName of columns) {
-    const stats = columnStats[colName]
-    // Calcular unicidade considerando apenas valores não nulos
-    const uniqueRatio = 1 - (stats.duplicateCount / (stats.totalRows - stats.nullCount || 1))
-    totalUniqueness += uniqueRatio
-  }
-  const uniqueness = totalUniqueness / columns.length
-  
-  // Calcular consistência (uniformidade de padrões)
-  let totalConsistency = 0
-  for (const colName of columns) {
-    const stats = columnStats[colName]
+  // 1. Calcular Completude
+  const completenessScores: Record<string, number> = {}
+  let totalCompletenessScore = 0
+
+  columns.forEach(column => {
+    let nonNullCount = 0
+    data.forEach(row => {
+      if (row[column] !== null && row[column] !== undefined && row[column] !== '') {
+        nonNullCount++
+      }
+    })
     
-    // Se temos padrões, calcular consistência
-    if (Object.keys(stats.patterns).length > 0) {
-      // Encontrar o padrão dominante
-      let dominantPattern = ''
-      let dominantCount = 0
-      
-      for (const [pattern, count] of Object.entries(stats.patterns)) {
-        if (count > dominantCount) {
-          dominantPattern = pattern
-          dominantCount = count
-        }
+    const columnCompleteness = nonNullCount / totalRows
+    completenessScores[column] = columnCompleteness
+    totalCompletenessScore += columnCompleteness
+  })
+
+  metrics.completeness = totalCompletenessScore / columns.length
+
+  // 2. Calcular Unicidade
+  const uniquenessScores: Record<string, number> = {}
+  let totalUniquenessScore = 0
+
+  columns.forEach(column => {
+    const valueSet = new Set()
+    let uniqueCount = 0
+    
+    data.forEach(row => {
+      const value = row[column]
+      if (!valueSet.has(value)) {
+        valueSet.add(value)
+        uniqueCount++
       }
-      
-      // Calcular proporção do padrão dominante
-      const totalPatternValues = Object.values(stats.patterns).reduce((sum, count) => sum + count, 0)
-      const consistency = dominantCount / totalPatternValues
-      totalConsistency += consistency
-    } else {
-      // Se não há padrões (todos nulos), considerar consistência baixa
-      totalConsistency += 0.5
+    })
+    
+    const columnUniqueness = uniqueCount / totalRows
+    uniquenessScores[column] = columnUniqueness
+    totalUniquenessScore += columnUniqueness
+  })
+
+  metrics.uniqueness = totalUniquenessScore / columns.length
+
+  // 3. Analisar Consistência (formato, padrões)
+  const consistencyScores: Record<string, number> = {}
+  let totalConsistencyScore = 0
+
+  columns.forEach(column => {
+    // Inferir tipo de dado mais comum na coluna
+    const typeStats = inferColumnType(data, column)
+    const dominantType = typeStats.dominantType
+    const typesCount = typeStats.typesCount
+    
+    // Calcular consistência como proporção do tipo dominante
+    const consistencyScore = typesCount[dominantType] / totalRows
+    consistencyScores[column] = consistencyScore
+    totalConsistencyScore += consistencyScore
+    
+    // Adicionar recomendações para colunas com baixa consistência
+    if (consistencyScore < 0.8) {
+      metrics.recommendations.push({
+        type: 'format_standardization',
+        column,
+        description: `Padronização de formato na coluna '${column}'`,
+        impact: `Melhorar consistência de ${Math.round(consistencyScore * 100)}% para próximo de 100%`
+      })
     }
-  }
-  const consistency = totalConsistency / columns.length
-  
-  // Calcular pontuação geral (média ponderada)
-  const overall = (
-    completeness * 0.4 + 
-    uniqueness * 0.3 + 
-    consistency * 0.3
-  )
-  
-  return {
-    overall,
-    completeness,
-    uniqueness,
-    consistency
-  }
+  })
+
+  metrics.consistency = totalConsistencyScore / columns.length
+
+  // 4. Calcular pontuação geral
+  metrics.overall = (metrics.completeness * 0.4 + metrics.uniqueness * 0.3 + metrics.consistency * 0.3)
+
+  // 5. Adicionar recomendações para colunas com dados incompletos
+  columns.forEach(column => {
+    if (completenessScores[column] < 0.9) {
+      const missingCount = Math.round((1 - completenessScores[column]) * totalRows)
+      metrics.recommendations.push({
+        type: 'fill_missing_values',
+        column,
+        description: `Preenchimento de dados ausentes na coluna '${column}'`,
+        impact: `${missingCount} valor(es) ausente(s) detectado(s)`
+      })
+    }
+  })
+
+  // 6. Adicionar recomendações para duplicatas
+  columns.forEach(column => {
+    if (uniquenessScores[column] < 0.9 && uniquenessScores[column] > 0.5) {
+      const duplicatesCount = Math.round((1 - uniquenessScores[column]) * totalRows)
+      metrics.recommendations.push({
+        type: 'remove_duplicates',
+        column,
+        description: `Remoção de valores duplicados na coluna '${column}'`,
+        impact: `${duplicatesCount} valor(es) duplicado(s) detectado(s)`
+      })
+    }
+  })
+
+  // Limitar recomendações às mais relevantes
+  metrics.recommendations.sort((a, b) => {
+    const getImpactScore = (rec: any) => {
+      if (rec.type === 'fill_missing_values') return 3
+      if (rec.type === 'remove_duplicates') return 2
+      return 1
+    }
+    return getImpactScore(b) - getImpactScore(a)
+  })
+
+  // Limitar a 5 recomendações mais importantes
+  metrics.recommendations = metrics.recommendations.slice(0, 5)
+
+  return metrics
 }
 
-// Função para gerar recomendações
-function generateRecommendations(
-  columnStats: Record<string, ColumnStatistics>,
-  metrics: IntegrityMetrics
-): { type: string; description: string; impact: string; column?: string }[] {
-  const recommendations = []
-  
-  // Verificar completude e fazer recomendações para valores nulos
-  for (const [colName, stats] of Object.entries(columnStats)) {
-    if (stats.nullCount / stats.totalRows > 0.1) {
-      recommendations.push({
-        type: 'fill_nulls',
-        description: `Preencher valores ausentes na coluna ${colName}`,
-        impact: 'Melhorará a completude dos dados',
-        column: colName
-      })
-    }
+function inferColumnType(data: any[], column: string) {
+  const types = {
+    'number': 0,
+    'string': 0,
+    'date': 0,
+    'boolean': 0,
+    'null': 0
   }
   
-  // Verificar duplicações
-  for (const [colName, stats] of Object.entries(columnStats)) {
-    if (stats.duplicateCount > stats.totalRows * 0.2) {
-      recommendations.push({
-        type: 'handle_duplicates',
-        description: `Tratar valores duplicados na coluna ${colName}`,
-        impact: 'Melhorará a unicidade dos dados',
-        column: colName
-      })
-    }
-  }
+  const totalRows = data.length
+  const typesCount: Record<string, number> = {}
   
-  // Verificar consistência
-  for (const [colName, stats] of Object.entries(columnStats)) {
-    // Se temos múltiplos padrões
-    if (Object.keys(stats.patterns).length > 1) {
-      // Verificar se há inconsistência significativa
-      let mainPattern = ''
-      let mainCount = 0
-      
-      for (const [pattern, count] of Object.entries(stats.patterns)) {
-        if (count > mainCount) {
-          mainPattern = pattern
-          mainCount = count
-        }
-      }
-      
-      const totalValues = Object.values(stats.patterns).reduce((sum, count) => sum + count, 0)
-      
-      // Se o padrão principal não representa ao menos 80% dos valores
-      if (mainCount / totalValues < 0.8) {
-        recommendations.push({
-          type: 'standardize_format',
-          description: `Padronizar o formato na coluna ${colName}`,
-          impact: 'Melhorará a consistência dos dados',
-          column: colName
-        })
-      }
+  // Identificar tipos
+  data.forEach(row => {
+    const value = row[column]
+    let type = 'string'
+    
+    if (value === null || value === undefined || value === '') {
+      type = 'null'
+    } else if (!isNaN(Number(value)) && value !== '') {
+      type = 'number'
+    } else if (isDate(value)) {
+      type = 'date'
+    } else if (value === 'true' || value === 'false' || value === true || value === false) {
+      type = 'boolean'
     }
-  }
+    
+    types[type]++
+  })
   
-  return recommendations
+  // Determinar tipo dominante
+  let dominantType = 'string'
+  let maxCount = 0
+  
+  Object.keys(types).forEach(type => {
+    if (types[type] > maxCount && type !== 'null') {
+      maxCount = types[type]
+      dominantType = type
+    }
+    typesCount[type] = types[type] / (totalRows - types['null'])
+  })
+  
+  return { dominantType, typesCount }
+}
+
+function isDate(value: any) {
+  if (typeof value !== 'string') return false
+  
+  // Tentar alguns formatos de data comuns
+  const dateFormats = [
+    /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
+    /^\d{2}\/\d{2}\/\d{4}$/, // DD/MM/YYYY
+    /^\d{2}-\d{2}-\d{4}$/ // DD-MM-YYYY
+  ]
+  
+  return dateFormats.some(format => format.test(value))
 }

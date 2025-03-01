@@ -16,12 +16,12 @@ interface IntegrityMetrics extends Record<string, Json> {
   completeness: number
   uniqueness: number
   consistency: number
-  recommendations?: {
+  recommendations?: Array<{
     type: string
     description: string
     impact: string
     column?: string
-  }[]
+  }>
 }
 
 interface DataIntegrityAnalysisProps {
@@ -30,14 +30,15 @@ interface DataIntegrityAnalysisProps {
 }
 
 // Função auxiliar para validar e converter o tipo Json para IntegrityMetrics
-function isIntegrityMetrics(obj: Json): obj is IntegrityMetrics {
+function isIntegrityMetrics(obj: unknown): obj is IntegrityMetrics {
+  if (typeof obj !== 'object' || obj === null) return false;
+  
+  const metrics = obj as Record<string, unknown>;
   return (
-    typeof obj === 'object' && 
-    obj !== null && 
-    'overall' in obj && 
-    'completeness' in obj && 
-    'uniqueness' in obj && 
-    'consistency' in obj
+    'overall' in metrics && typeof metrics.overall === 'number' &&
+    'completeness' in metrics && typeof metrics.completeness === 'number' &&
+    'uniqueness' in metrics && typeof metrics.uniqueness === 'number' &&
+    'consistency' in metrics && typeof metrics.consistency === 'number'
   );
 }
 
@@ -93,10 +94,21 @@ export function DataIntegrityAnalysis({ fileId, tableName }: DataIntegrityAnalys
           // Verificar e converter o tipo antes de atribuir
           if (isIntegrityMetrics(data.metrics)) {
             setMetrics(data.metrics)
+            
+            // Salvar a análise no banco para uso futuro
+            await supabase.from('data_analysis_results').insert({
+              file_id: fileId,
+              organization_id: currentOrganization.id,
+              analysis_type: 'integrity',
+              column_name: 'all',
+              results: data.metrics
+            })
           } else {
             console.error('Formato de métricas inválido retornado pela função:', data.metrics)
             throw new Error('As métricas retornadas estão em um formato inválido')
           }
+        } else {
+          throw new Error('Não foi possível obter métricas de integridade')
         }
       }
     } catch (error: any) {
@@ -121,6 +133,7 @@ export function DataIntegrityAnalysis({ fileId, tableName }: DataIntegrityAnalys
           fileId,
           fixType,
           column,
+          tableName,
           organizationId: currentOrganization.id 
         }
       })
@@ -198,6 +211,7 @@ export function DataIntegrityAnalysis({ fileId, tableName }: DataIntegrityAnalys
                 </div>
                 <Progress 
                   value={metrics.overall * 100} 
+                  className="h-2"
                   indicatorClassName={getProgressColor(metrics.overall)} 
                 />
               </div>
