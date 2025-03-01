@@ -103,12 +103,12 @@
 
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-transparent dark:bg-transparent;
+  @apply bg-transparent dark:bg-transparent rounded-full;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -176,4 +176,183 @@
   animation-delay: -0.16s;
 }
 
+/* Novas classes para a interface de dados */
+.data-grid-wrapper {
+  @apply bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm 
+         rounded-lg border border-gray-200 dark:border-gray-800
+         shadow-sm hover:shadow-md transition-all duration-300;
+}
 
+.data-card {
+  @apply bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700
+         rounded-lg shadow-sm hover:shadow-md transition-all duration-300
+         backdrop-filter backdrop-blur-sm;
+}
+
+.data-editor-controls {
+  @apply flex items-center gap-2 p-2 rounded-md
+         bg-gray-50 dark:bg-gray-800/50
+         border border-gray-100 dark:border-gray-700;
+}
+
+.stat-card {
+  @apply bg-gradient-to-br from-white to-gray-50 
+         dark:from-gray-800 dark:to-gray-900
+         border border-gray-100 dark:border-gray-700
+         rounded-lg shadow-sm p-4 transition-all duration-300;
+}
+
+.data-pill {
+  @apply inline-flex items-center justify-center 
+         px-2.5 py-0.5 rounded-full text-xs font-medium
+         bg-primary/10 dark:bg-primary/20 
+         text-primary-foreground;
+}
+
+/* Efeitos de destaque para células editáveis */
+.editable-cell-highlight {
+  @apply outline outline-2 outline-primary/30 
+         dark:outline-primary/40 outline-offset-1
+         transition-all duration-300;
+}
+
+/* Efeitos de transição para painéis */
+.panel-transition {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+/* Background sutis para áreas de conteúdo */
+.content-bg {
+  @apply bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm;
+}
+
+/* Melhorias para foco de elementos interativos */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary/40 
+         focus:ring-offset-2 focus:ring-offset-background
+         dark:focus:ring-primary/60 dark:focus:ring-offset-1;
+}
+
+/* Estilização para caixas de busca e filtros */
+.search-field {
+  @apply bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm
+         border border-gray-200 dark:border-gray-700
+         rounded-md px-3 py-2 text-sm
+         focus:outline-none focus:ring-2 focus:ring-primary/30
+         transition-all duration-200;
+}
+
+.tooltip-styled {
+  @apply bg-gray-900 dark:bg-gray-800 text-white 
+         px-2 py-1 text-xs rounded shadow-lg
+         border border-gray-800 dark:border-gray-700
+         z-50;
+}
+
+/* Controles para filtro e ordenação */
+.filter-controls {
+  @apply flex flex-wrap items-center gap-2 p-2
+         bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm
+         rounded-md border border-gray-200 dark:border-gray-700;
+}
+
+/* Status e badges para informações */
+.status-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.status-active {
+  @apply bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300;
+}
+
+.status-pending {
+  @apply bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300;
+}
+
+.status-inactive {
+  @apply bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300;
+}
+
+/* Melhorias para botões de ação */
+.action-button {
+  @apply inline-flex items-center justify-center rounded-md
+         text-sm font-medium transition-colors
+         focus-visible:outline-none focus-visible:ring-2
+         focus-visible:ring-offset-2 disabled:opacity-50
+         disabled:pointer-events-none;
+}
+
+.action-primary {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
+.action-secondary {
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+}
+
+.action-ghost {
+  @apply hover:bg-accent hover:text-accent-foreground;
+}
+
+/* Indicadores visuais para várias funcionalidades */
+.indicator-dot {
+  @apply h-2 w-2 rounded-full;
+}
+
+.indicator-success {
+  @apply bg-green-500;
+}
+
+.indicator-warning {
+  @apply bg-yellow-500;
+}
+
+.indicator-error {
+  @apply bg-red-500;
+}
+
+/* Contêineres com visuais aprimorados */
+.enhanced-container {
+  @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-md
+         border border-gray-200 dark:border-gray-800
+         rounded-xl shadow-lg overflow-hidden
+         transition-all duration-300;
+}
+
+/* Animações de transição rápidas para elementos interativos */
+.quick-transition {
+  @apply transition-all duration-150 ease-in-out;
+}
+
+/* Estilos em camadas para áreas com níveis visuais */
+.layered-section {
+  @apply relative z-10 rounded-xl overflow-hidden
+         bg-gradient-to-b from-white/60 to-white/40
+         dark:from-gray-900/60 dark:to-gray-900/40
+         backdrop-blur-lg border border-gray-200/50 dark:border-gray-800/50
+         shadow-md;
+}
+
+.layered-section::before {
+  @apply content-[''] absolute inset-0 -z-10
+         bg-gradient-to-br from-primary/10 to-accent/10
+         dark:from-primary/5 dark:to-accent/5
+         opacity-80 dark:opacity-30;
+}
+
+/* Melhorias para cartões de dados interativos */
+.interactive-card {
+  @apply relative overflow-hidden rounded-xl
+         bg-white dark:bg-gray-800
+         border border-gray-200 dark:border-gray-700
+         shadow-sm hover:shadow-md
+         transition-all duration-300;
+}
+
+.interactive-card::after {
+  @apply content-[''] absolute inset-0
+         bg-gradient-to-br from-primary/5 to-accent/5
+         dark:from-primary/10 dark:to-accent/10
+         opacity-0 hover:opacity-100
+         transition-opacity duration-300;
+}

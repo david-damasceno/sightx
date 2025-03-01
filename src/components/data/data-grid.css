@@ -9,6 +9,8 @@
   user-select: none;
   background-color: var(--background);
   border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
 }
 
 .rdg *,
@@ -37,6 +39,8 @@
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
+  height: 100%;
+  position: relative;
 }
 
 .rdg-cell:focus {
@@ -50,6 +54,7 @@
   position: sticky;
   top: 0;
   z-index: 3;
+  box-shadow: 0 1px 0 var(--border);
 }
 
 .rdg-header-row .rdg-cell {
@@ -70,13 +75,19 @@
   position: absolute;
   background-color: var(--tooltip-background-color);
   color: var(--tooltip-text-color);
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 6px 10px;
+  border-radius: 6px;
   z-index: 10;
   max-width: 300px;
   white-space: normal;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-size: 12px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .row-odd {
@@ -96,6 +107,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: all 0.2s ease;
 }
 
 .data-grid-status {
@@ -103,7 +115,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 0.5rem;
+  padding: 0.5rem 1rem;
   font-size: 0.75rem;
   background-color: var(--status-bar-background);
   color: var(--status-bar-text);
@@ -111,6 +123,57 @@
   justify-content: space-between;
   border-top: 1px solid var(--border);
   z-index: 2;
+  backdrop-filter: blur(8px);
+}
+
+.data-grid-status .badge {
+  background-color: var(--badge-background);
+  color: var(--badge-text);
+  transition: all 0.2s ease;
+}
+
+.data-grid-toolbar {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--toolbar-background);
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.data-grid-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--editor-background);
+}
+
+.data-grid-editor-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--editor-header-background);
+  backdrop-filter: blur(8px);
+}
+
+.analysis-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+
+.analysis-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container {
+  border-radius: 0.5rem;
+  padding: 1rem;
+  transition: all 0.2s ease;
 }
 
 :root {
@@ -121,8 +184,13 @@
   --tooltip-text-color: #fff;
   --row-odd-background: rgba(0, 0, 0, 0.01);
   --row-even-background: rgba(0, 0, 0, 0);
-  --status-bar-background: #f9fafb;
+  --status-bar-background: rgba(249, 250, 251, 0.85);
   --status-bar-text: #6b7280;
+  --badge-background: rgba(59, 130, 246, 0.1);
+  --badge-text: #3b82f6;
+  --toolbar-background: #ffffff;
+  --editor-background: #ffffff;
+  --editor-header-background: rgba(255, 255, 255, 0.9);
 }
 
 .dark {
@@ -133,6 +201,92 @@
   --tooltip-text-color: #ddd;
   --row-odd-background: rgba(255, 255, 255, 0.03);
   --row-even-background: rgba(255, 255, 255, 0);
-  --status-bar-background: #1f2937;
+  --status-bar-background: rgba(31, 41, 55, 0.85);
   --status-bar-text: #9ca3af;
+  --badge-background: rgba(59, 130, 246, 0.2);
+  --badge-text: #60a5fa;
+  --toolbar-background: #1f2937;
+  --editor-background: #111827;
+  --editor-header-background: rgba(17, 24, 39, 0.9);
+}
+
+/* Melhorias para tooltip e análise */
+.rdg-cell-tooltip {
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+
+.stat-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+.data-grid-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  background-color: var(--background);
+  padding: 1rem;
+}
+
+/* Animações para feedback do usuário */
+.pulse-animation {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Estilização avançada para células de edição */
+.editable-cell {
+  position: relative;
+}
+
+.editable-cell::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 8px 8px;
+  border-color: transparent transparent var(--primary) transparent;
+  opacity: 0.6;
+}
+
+/* Efeitos de transição para elementos de interface */
+.card-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-transition:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Melhorias para visualização em tela cheia */
+.fullscreen-editor {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+}
+
+.fullscreen-editor .data-grid-container {
+  flex: 1;
+  min-height: 0;
 }
