@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import DataGrid from "react-data-grid"
@@ -236,7 +235,6 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
     return value
   }
 
-  // Classes para as linhas alternadas
   const rowClass = (rowIdx: number) => {
     return rowIdx % 2 === 0 ? 'row-even' : 'row-odd'
   }
@@ -429,7 +427,11 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
                         uniqueness: 0.88,
                         consistency: 0.92,
                         issues: [
-                          { description: "Valores em branco na coluna 'Razão Social'", rowCount: 3 }
+                          { 
+                            type: "missing_values", 
+                            description: "Valores em branco na coluna 'Razão Social'", 
+                            rowCount: 3 
+                          }
                         ]
                       }}
                     />
