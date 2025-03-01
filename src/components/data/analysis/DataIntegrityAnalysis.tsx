@@ -10,7 +10,8 @@ import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { Json } from "@/integrations/supabase/types"
 
-interface IntegrityMetrics {
+// Definindo a interface como extensão de Record<string, Json>
+interface IntegrityMetrics extends Record<string, Json> {
   overall: number
   completeness: number
   uniqueness: number
