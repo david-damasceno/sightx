@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { MessageSquare, PlusCircle, BarChart2, Send, Loader2, Mail, Copy, Link2, ArrowUpRight, Users, CheckCircle, Clock, Settings2, ExternalLink, Filter, Eye, Trash2, Edit, HelpCircle } from "lucide-react"
@@ -18,6 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Json } from "@/integrations/supabase/types"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 type NPSSurvey = {
   id: string
@@ -348,10 +350,8 @@ export default function Feedback() {
         return <Badge className="bg-green-100 text-green-800">Ativo</Badge>
       case 'draft':
         return <Badge variant="outline">Rascunho</Badge>
-      case 'completed':
-        return <Badge className="bg-blue-100 text-blue-800">Concluído</Badge>
       case 'inactive':
-        return <Badge variant="secondary">Inativo</Badge>
+        return <Badge className="bg-blue-100 text-blue-800">Inativo</Badge>
       case 'archived':
         return <Badge variant="destructive">Arquivado</Badge>
       default:
@@ -610,7 +610,7 @@ export default function Feedback() {
                                     size="sm"
                                     onClick={() => {
                                       setViewSurvey(survey)
-                                      if (survey.status === 'active' || survey.status === 'completed') {
+                                      if (survey.status === 'active') {
                                         fetchSurveyStats(survey.id)
                                       }
                                     }}
@@ -861,7 +861,7 @@ export default function Feedback() {
                 </TabsContent>
                 
                 <TabsContent value="resultados">
-                  {(viewSurvey?.status === 'active' || viewSurvey?.status === 'completed') ? (
+                  {viewSurvey?.status === 'active' ? (
                     statsLoading ? (
                       <div className="flex items-center justify-center h-[200px]">
                         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -903,3 +903,291 @@ export default function Feedback() {
                         <Card className="p-6">
                           <h3 className="text-lg font-medium mb-4">Distribuição de Respostas</h3>
                           <div className="space-y-6">
+                            <div>
+                              <h4 className="text-sm font-medium mb-2">Promotores (9-10)</h4>
+                              <div className="relative pt-1">
+                                <div className="flex mb-2 items-center justify-between">
+                                  <div>
+                                    <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-green-600 bg-green-100">
+                                      {surveyStats.promoters_percentage}%
+                                    </span>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className="text-xs font-semibold inline-block text-muted-foreground">
+                                      {surveyStats.promoters}/{surveyStats.total_responses}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-muted/50">
+                                  <div style={{ width: `${surveyStats.promoters_percentage}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"></div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <h4 className="text-sm font-medium mb-2">Neutros (7-8)</h4>
+                              <div className="relative pt-1">
+                                <div className="flex mb-2 items-center justify-between">
+                                  <div>
+                                    <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-100">
+                                      {surveyStats.passives_percentage}%
+                                    </span>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className="text-xs font-semibold inline-block text-muted-foreground">
+                                      {surveyStats.passives}/{surveyStats.total_responses}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-muted/50">
+                                  <div style={{ width: `${surveyStats.passives_percentage}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"></div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <h4 className="text-sm font-medium mb-2">Detratores (0-6)</h4>
+                              <div className="relative pt-1">
+                                <div className="flex mb-2 items-center justify-between">
+                                  <div>
+                                    <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-red-600 bg-red-100">
+                                      {surveyStats.detractors_percentage}%
+                                    </span>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className="text-xs font-semibold inline-block text-muted-foreground">
+                                      {surveyStats.detractors}/{surveyStats.total_responses}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-muted/50">
+                                  <div style={{ width: `${surveyStats.detractors_percentage}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-500"></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                        
+                        <div className="p-6 border rounded-lg">
+                          <h3 className="text-lg font-medium mb-4">Interpretação do NPS</h3>
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-4">
+                              <div className="w-32 h-4 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded"></div>
+                              <div className="flex justify-between w-full text-xs">
+                                <span>-100</span>
+                                <span>0</span>
+                                <span>+100</span>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                              <div className="border p-3 rounded">
+                                <h4 className="font-medium text-red-600">Crítico</h4>
+                                <p className="text-muted-foreground">NPS de -100 a 0</p>
+                              </div>
+                              <div className="border p-3 rounded">
+                                <h4 className="font-medium text-yellow-600">Aperfeiçoamento</h4>
+                                <p className="text-muted-foreground">NPS de 1 a 50</p>
+                              </div>
+                              <div className="border p-3 rounded">
+                                <h4 className="font-medium text-green-600">Excelência</h4>
+                                <p className="text-muted-foreground">NPS de 51 a 100</p>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-muted/20 p-3 rounded text-sm">
+                              <p>O Net Promoter Score (NPS) de <span className="font-bold">{surveyStats.nps_score}</span> indica 
+                              {surveyStats.nps_score <= 0 ? " um estado crítico, onde a maioria dos clientes são detratores. Ações corretivas são necessárias para melhorar a experiência do cliente." : 
+                              surveyStats.nps_score <= 50 ? " uma situação de aperfeiçoamento, onde há um equilíbrio entre promotores e detratores. Busque melhorar a experiência para transformar neutros em promotores." : 
+                              " excelência no atendimento, com alta proporção de promotores. Continue mantendo o bom trabalho e identifique oportunidades para superar as expectativas."}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-10 space-y-4 text-center">
+                        <BarChart2 className="h-12 w-12 text-muted-foreground" />
+                        <div>
+                          <p className="text-muted-foreground">
+                            Ainda não há respostas para esta pesquisa.
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Compartilhe o link da pesquisa com seus clientes para começar a coletar feedback.
+                          </p>
+                        </div>
+                        <Button 
+                          onClick={() => {
+                            setSelectedSurveyId(viewSurvey?.id || null)
+                            setShareDialogOpen(true)
+                            setViewSurvey(null)
+                          }}
+                        >
+                          <Link2 className="mr-2 h-4 w-4" />
+                          Compartilhar Pesquisa
+                        </Button>
+                      </div>
+                    )
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-10 space-y-4 text-center">
+                      <Clock className="h-12 w-12 text-muted-foreground" />
+                      <div>
+                        <p className="text-muted-foreground">
+                          Esta pesquisa ainda não está ativa.
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Ative a pesquisa para começar a coletar respostas e visualizar os resultados.
+                        </p>
+                      </div>
+                      {viewSurvey?.status === 'draft' && (
+                        <Button 
+                          onClick={() => {
+                            updateSurveyStatus(viewSurvey.id, 'active')
+                            setViewSurvey({...viewSurvey, status: 'active'})
+                          }}
+                        >
+                          <ArrowUpRight className="mr-2 h-4 w-4" />
+                          Ativar Pesquisa
+                        </Button>
+                      )}
+                      {viewSurvey?.status === 'inactive' && (
+                        <Button 
+                          onClick={() => {
+                            updateSurveyStatus(viewSurvey.id, 'active')
+                            setViewSurvey({...viewSurvey, status: 'active'})
+                          }}
+                        >
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Reativar Pesquisa
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="configuracoes">
+                  <div className="space-y-6 py-4">
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-title">Título</Label>
+                        <div className="flex gap-2">
+                          <Input 
+                            id="edit-title" 
+                            defaultValue={viewSurvey?.title} 
+                            disabled
+                          />
+                          <Button variant="outline" size="icon" disabled>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-description">Descrição</Label>
+                        <div className="flex gap-2">
+                          <Textarea 
+                            id="edit-description" 
+                            defaultValue={viewSurvey?.description || ""} 
+                            disabled 
+                          />
+                          <Button variant="outline" size="icon" disabled>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="border rounded-lg p-4 space-y-4">
+                        <h3 className="font-medium">Opções avançadas</h3>
+                        
+                        <div className="grid gap-2">
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="toggle-required" className="cursor-pointer">Respostas obrigatórias</Label>
+                            <input type="checkbox" id="toggle-required" className="toggle" disabled />
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="toggle-anonymous" className="cursor-pointer">Respostas anônimas</Label>
+                            <input type="checkbox" id="toggle-anonymous" className="toggle" checked disabled />
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="toggle-single" className="cursor-pointer">Permitir apenas uma resposta por usuário</Label>
+                            <input type="checkbox" id="toggle-single" className="toggle" checked disabled />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="border rounded-lg p-4 space-y-4 bg-red-50 dark:bg-red-950/20">
+                        <h3 className="font-medium text-red-700 dark:text-red-400">Zona de Perigo</h3>
+                        
+                        <div className="space-y-4">
+                          <div>
+                            <Button 
+                              variant="outline" 
+                              className="w-full border-red-300 text-red-700 hover:bg-red-100 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/50"
+                              onClick={() => {
+                                updateSurveyStatus(viewSurvey?.id || "", 'archived')
+                                setViewSurvey(null)
+                              }}
+                            >
+                              Arquivar Pesquisa
+                            </Button>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              A pesquisa será arquivada e não poderá mais receber respostas, mas os dados serão mantidos.
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <Button 
+                              variant="destructive" 
+                              className="w-full"
+                              onClick={() => {
+                                setConfirmDeleteId(viewSurvey?.id || null)
+                                setViewSurvey(null)
+                              }}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir Pesquisa
+                            </Button>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Esta ação não pode ser desfeita. Todos os dados da pesquisa serão permanentemente excluídos.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de confirmação de exclusão */}
+        <AlertDialog 
+          open={!!confirmDeleteId} 
+          onOpenChange={(open) => !open && setConfirmDeleteId(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação não pode ser desfeita. A pesquisa será excluída permanentemente do sistema
+                e todos os dados relacionados serão perdidos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => confirmDeleteId && deleteSurvey(confirmDeleteId)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </main>
+    </div>
+  )
+}
