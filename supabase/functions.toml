@@ -13,7 +13,7 @@ base_dir = "functions"
 # List of functions to include when building
 [[functions]]
 # Functions will be deployed to Supabase Edge Functions
-name = "port"
+name = "port-data"
 verify_jwt = false
 
 [[functions]]
