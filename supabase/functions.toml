@@ -19,3 +19,7 @@ verify_jwt = false
 [[functions]]
 name = "process-file-upload"
 verify_jwt = false
+
+[[functions]]
+name = "hello-world"
+verify_jwt = false
