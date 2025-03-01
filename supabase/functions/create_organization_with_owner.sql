@@ -1,3 +1,4 @@
+
 CREATE OR REPLACE FUNCTION create_organization_with_owner(
   p_name TEXT,
   p_slug TEXT,
