@@ -1,41 +1,20 @@
-
 import { useState, useEffect } from "react"
 import { ProcessSteps } from "@/components/data/ProcessSteps"
 import { FileUploader } from "@/components/data/FileUploader"
 import { DataPreview } from "@/components/data/DataPreview"
-import { ColumnMapper } from "@/components/data-import/ColumnMapper"
 import { UploadedFilesList } from "@/components/data/UploadedFilesList"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
-import { Separator } from "@/components/ui/separator"
-import { ColumnMetadata, ProcessingResult, ImportStatus } from "@/types/data-imports"
-import { adaptColumnMetadata } from "@/utils/columnAdapter"
+import { ImportStatus } from "@/types/data-imports"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FileUp, Upload, Database } from "lucide-react"
 
-interface Column {
-  name: string
-  type: string
-  sample: any
-}
-
-interface FileData {
-  id: string
-  columns: Column[]
-  previewData: any[]
-  processingResult?: ProcessingResult
-}
-
-function isProcessingResult(data: any): data is ProcessingResult {
-  return data && typeof data.status === 'string' && ['pending', 'processing', 'completed', 'error'].includes(data.status)
-}
-
 export default function DataContext() {
   const [currentStep, setCurrentStep] = useState(1)
-  const [fileData, setFileData] = useState<FileData | null>(null)
+  const [fileData, setFileData] = useState<{id: string, previewData: any[]}>({id: '', previewData: []})
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
@@ -72,7 +51,6 @@ export default function DataContext() {
 
       setFileData({
         id: fileId,
-        columns: inferredColumns,
         previewData: []
       })
 
@@ -92,7 +70,8 @@ export default function DataContext() {
 
   const handleUploadComplete = (fileId: string) => {
     console.log('Upload completo, ID:', fileId)
-    fetchFileData(fileId)
+    setFileData({id: fileId, previewData: []})
+    setCurrentStep(2)
   }
 
   const handleStepChange = (step: number) => {
@@ -102,7 +81,7 @@ export default function DataContext() {
   }
 
   const handlePreviewComplete = async () => {
-    if (!fileData || !currentOrganization) return
+    if (!fileData.id || !currentOrganization) return
 
     try {
       setLoading(true)
@@ -129,7 +108,7 @@ export default function DataContext() {
           ...processingResult,
           status: 'processing'
         }
-      } : null)
+      } : {id: '', previewData: []})
 
       setCurrentStep(3)
     } catch (error: any) {
@@ -210,7 +189,7 @@ export default function DataContext() {
                   </Card>
                 </div>
 
-                {fileData && (
+                {fileData.id && (
                   <>
                     <div className={cn(
                       "transition-all duration-500 transform mt-6",
@@ -218,8 +197,6 @@ export default function DataContext() {
                     )}>
                       <div className="flex-1 flex flex-col">
                         <DataPreview 
-                          columns={fileData.columns}
-                          previewData={fileData.previewData}
                           fileId={fileData.id}
                           onNext={handlePreviewComplete}
                         />
@@ -230,15 +207,7 @@ export default function DataContext() {
                       "transition-all duration-500 transform mt-6",
                       currentStep === 3 ? "flex-1 flex flex-col" : "hidden"
                     )}>
-                      <ColumnMapper
-                        fileId={fileData.id}
-                        columns={fileData.columns}
-                        previewData={fileData.previewData}
-                        onMappingComplete={handleMappingComplete}
-                        processingStatus={fileData.processingResult?.status}
-                        tableName={fileData.processingResult?.table_name}
-                        errorMessage={fileData.processingResult?.error_message}
-                      />
+                      {/* Passo 3 */}
                     </div>
                   </>
                 )}

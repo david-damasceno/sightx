@@ -1020,6 +1020,13 @@ export type Database = {
         }
         Returns: Json
       }
+      get_table_data: {
+        Args: {
+          table_name: string
+          row_limit?: number
+        }
+        Returns: Json
+      }
       infer_column_type: {
         Args: {
           sample_value: string

@@ -1,444 +1,561 @@
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
-import { supabase } from "@/integrations/supabase/client"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ChartConfig, DataAnalysis, DataVisualization } from "@/types/data-imports"
-import { LineChart, BarChart, PieChart, AreaChart, Line, Bar, Area, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts"
-import { AlertTriangle, BarChart2, CheckCircle, Loader2, PieChart as PieChartIcon, TrendingUp } from "lucide-react"
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { LineChart, Line, BarChart, Bar, AreaChart, Area, PieChart, Pie, ResponsiveContainer, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Cell } from 'recharts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from '@/hooks/use-toast';
+import { ArrowRight, LineChart as LineChartIcon, BarChart as BarChartIcon, AreaChart as AreaChartIcon, PieChart as PieChartIcon, Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { supabase } from '@/integrations/supabase/client';
+import { ChartConfig, DataVisualization } from '@/types/data-imports';
 
 interface VisualizationBuilderProps {
-  fileId: string
-  onComplete: () => void
+  fileId: string;
+  tableName: string;
+  onComplete: () => void;
 }
 
-export function VisualizationBuilder({ fileId, onComplete }: VisualizationBuilderProps) {
-  const [loading, setLoading] = useState(true)
-  const [generating, setGenerating] = useState(false)
-  const [analyses, setAnalyses] = useState<DataAnalysis[]>([])
-  const [visualizations, setVisualizations] = useState<DataVisualization[]>([])
-  const { toast } = useToast()
-  const [selectedAnalysis, setSelectedAnalysis] = useState<string | null>(null)
+const CHART_COLORS = [
+  "#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6",
+  "#ec4899", "#06b6d4", "#f97316", "#14b8a6", "#84cc16"
+];
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A259FF', '#4CAF50', '#F44336', '#3F51B5']
+export function VisualizationBuilder({ fileId, tableName, onComplete }: VisualizationBuilderProps) {
+  const [loading, setLoading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [visualizations, setVisualizations] = useState<DataVisualization[]>([]);
+  const [tableColumns, setTableColumns] = useState<string[]>([]);
+  const [tableData, setTableData] = useState<any[]>([]);
+  const [selectedChart, setSelectedChart] = useState<string>('line');
+  const [newChartConfig, setNewChartConfig] = useState<ChartConfig>({
+    type: 'line',
+    title: '',
+    data: [],
+    dataKey: '',
+    name: '',
+    color: CHART_COLORS[0],
+  });
+  const { toast } = useToast();
 
   useEffect(() => {
-    const loadVisualizations = async () => {
+    const fetchVisualizations = async () => {
       try {
-        setLoading(true)
-        
-        // Buscar análises
-        const { data: analysesData, error: analysesError } = await supabase
+        setLoading(true);
+        // Buscar visualizações existentes
+        const { data: analysisData, error: analysisError } = await supabase
           .from('data_analyses')
-          .select('*')
+          .select('id')
           .eq('import_id', fileId)
-        
-        if (analysesError) throw analysesError
-        
-        if (analysesData && analysesData.length > 0) {
-          setAnalyses(analysesData as unknown as DataAnalysis[])
-          
-          // Definir a primeira análise como selecionada
-          setSelectedAnalysis(analysesData[0].id)
-          
-          // Buscar visualizações associadas
+          .eq('analysis_type', 'data_visualization')
+          .single();
+
+        if (!analysisError && analysisData) {
           const { data: visData, error: visError } = await supabase
             .from('data_visualizations')
             .select('*')
-            .in('analysis_id', analysesData.map(a => a.id))
-          
-          if (visError) throw visError
-          
-          if (visData) {
-            setVisualizations(visData as unknown as DataVisualization[])
-          } else {
-            // Se não tem visualizações, gerar
-            await generateVisualizations()
+            .eq('analysis_id', analysisData.id);
+
+          if (!visError && visData) {
+            setVisualizations(visData);
           }
-        } else {
-          // Se não tem análises, gerar
-          await generateAnalyses()
+        }
+
+        // Buscar dados da tabela
+        const { data: tableResult, error: tableError } = await supabase
+          .rpc('get_table_data', { 
+            table_name: tableName,
+            row_limit: 100
+          });
+
+        if (tableError) throw tableError;
+
+        // Converter o resultado JSONB para array
+        const dataArray = Array.isArray(tableResult) ? tableResult : 
+                          typeof tableResult === 'object' ? Object.values(tableResult) : [];
+                          
+        if (dataArray && dataArray.length > 0) {
+          setTableData(dataArray);
+          
+          // Extrair colunas
+          const columns = Object.keys(dataArray[0])
+            .filter(key => key !== 'id' && key !== 'organization_id' && key !== 'created_at');
+          setTableColumns(columns);
+          
+          // Definir valores iniciais para o novo gráfico
+          if (columns.length > 0) {
+            setNewChartConfig(prev => ({
+              ...prev,
+              dataKey: columns[0]
+            }));
+          }
         }
       } catch (error: any) {
-        console.error('Erro ao carregar visualizações:', error)
+        console.error('Erro ao carregar visualizações:', error);
         toast({
           title: "Erro",
           description: error.message || "Não foi possível carregar as visualizações",
           variant: "destructive"
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
+    };
+
+    if (fileId && tableName) {
+      fetchVisualizations();
     }
-    
-    loadVisualizations()
-  }, [fileId, toast])
-  
-  const generateAnalyses = async () => {
+  }, [fileId, tableName, toast]);
+
+  const generateVisualizations = async () => {
     try {
-      setGenerating(true)
-      
+      setGenerating(true);
       toast({
-        title: "Analisando dados",
-        description: "Gerando análises de dados...",
-      })
-      
-      const { data, error } = await supabase.functions.invoke('analyze-table-context', {
-        body: { fileId }
-      })
-      
-      if (error) throw error
-      
-      if (data && Array.isArray(data)) {
-        // Atualizar lista de análises
-        setAnalyses(data as unknown as DataAnalysis[])
+        title: "Gerando visualizações...",
+        description: "Isso pode levar alguns segundos",
+      });
+
+      const { data, error } = await supabase.functions.invoke('generate-visualizations', {
+        body: { 
+          fileId,
+          tableName
+        }
+      });
+
+      if (error) throw error;
+
+      if (data && data.visualizations) {
+        toast({
+          title: "Visualizações geradas com sucesso!",
+          description: `${data.visualizations.length} visualizações foram criadas`,
+        });
         
-        if (data.length > 0) {
-          setSelectedAnalysis(data[0].id)
-          await generateVisualizations()
+        // Buscar visualizações atualizadas
+        const { data: analysisData } = await supabase
+          .from('data_analyses')
+          .select('id')
+          .eq('import_id', fileId)
+          .eq('analysis_type', 'data_visualization')
+          .single();
+
+        if (analysisData) {
+          const { data: visData } = await supabase
+            .from('data_visualizations')
+            .select('*')
+            .eq('analysis_id', analysisData.id);
+
+          if (visData) {
+            setVisualizations(visData);
+          }
         }
       }
     } catch (error: any) {
-      console.error('Erro ao gerar análises:', error)
+      console.error('Erro ao gerar visualizações:', error);
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível gerar análises",
+        description: error.message || "Não foi possível gerar as visualizações",
         variant: "destructive"
-      })
+      });
     } finally {
-      setGenerating(false)
+      setGenerating(false);
     }
-  }
-  
-  const generateVisualizations = async () => {
+  };
+
+  const addCustomVisualization = async () => {
     try {
-      setGenerating(true)
-      
-      toast({
-        title: "Gerando visualizações",
-        description: "Criando visualizações para os dados...",
-      })
-      
-      const { data, error } = await supabase.functions.invoke('generate-visualizations', {
-        body: { fileId, analysisIds: analyses.map(a => a.id) }
-      })
-      
-      if (error) throw error
-      
-      if (data && Array.isArray(data)) {
-        setVisualizations(data as unknown as DataVisualization[])
-        
+      if (!newChartConfig.title || !newChartConfig.dataKey) {
         toast({
-          title: "Sucesso",
-          description: "Visualizações geradas com sucesso!",
-        })
+          title: "Campos obrigatórios",
+          description: "Preencha o título e selecione uma coluna de dados",
+          variant: "destructive"
+        });
+        return;
       }
+
+      let analysisId: string;
+      
+      // Verificar se já existe uma análise do tipo data_visualization
+      const { data: existingAnalysis, error: analysisError } = await supabase
+        .from('data_analyses')
+        .select('id')
+        .eq('import_id', fileId)
+        .eq('analysis_type', 'data_visualization')
+        .single();
+
+      if (analysisError && analysisError.code === 'PGRST116') {
+        // Criar nova análise se não existir
+        const { data: newAnalysis, error: newAnalysisError } = await supabase
+          .from('data_analyses')
+          .insert({
+            import_id: fileId,
+            analysis_type: 'data_visualization',
+            configuration: {},
+            results: {}
+          })
+          .select('id')
+          .single();
+
+        if (newAnalysisError) throw newAnalysisError;
+        analysisId = newAnalysis.id;
+      } else if (analysisError) {
+        throw analysisError;
+      } else {
+        analysisId = existingAnalysis.id;
+      }
+
+      // Criar nova visualização
+      const chartConfig: ChartConfig = {
+        ...newChartConfig,
+        type: selectedChart,
+        data: tableData
+      };
+
+      const { data: newVis, error: visError } = await supabase
+        .from('data_visualizations')
+        .insert({
+          analysis_id: analysisId,
+          type: selectedChart,
+          configuration: chartConfig
+        })
+        .select('*')
+        .single();
+
+      if (visError) throw visError;
+
+      setVisualizations(prev => [...prev, newVis]);
+      
+      // Resetar formulário
+      setNewChartConfig({
+        type: selectedChart,
+        title: '',
+        data: [],
+        dataKey: tableColumns.length > 0 ? tableColumns[0] : '',
+        color: CHART_COLORS[Math.floor(Math.random() * CHART_COLORS.length)],
+        name: ''
+      });
+
+      toast({
+        title: "Visualização adicionada",
+        description: "Nova visualização criada com sucesso!"
+      });
     } catch (error: any) {
-      console.error('Erro ao gerar visualizações:', error)
+      console.error('Erro ao adicionar visualização:', error);
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível gerar visualizações",
+        description: error.message || "Não foi possível adicionar a visualização",
         variant: "destructive"
-      })
-    } finally {
-      setGenerating(false)
+      });
     }
-  }
-  
-  const renderVisualization = (visualization: DataVisualization) => {
-    if (!visualization.configuration || typeof visualization.configuration !== 'object') {
-      return (
-        <div className="flex items-center justify-center h-[300px]">
-          <AlertTriangle className="h-8 w-8 text-yellow-500 mr-2" />
-          <span>Configuração de visualização inválida</span>
-        </div>
-      )
-    }
-    
-    const config = visualization.configuration as unknown as ChartConfig
-    
-    if (!config || !config.data || !Array.isArray(config.data) || config.data.length === 0) {
-      return (
-        <div className="flex items-center justify-center h-[300px]">
-          <AlertTriangle className="h-8 w-8 text-yellow-500 mr-2" />
-          <span>Dados insuficientes para visualização</span>
-        </div>
-      )
-    }
+  };
+
+  const renderChart = (config: ChartConfig) => {
+    const formattedData = config.data || tableData;
+    const randomColor = CHART_COLORS[Math.floor(Math.random() * CHART_COLORS.length)];
     
     switch (config.type) {
       case 'line':
         return (
-          <ResponsiveContainer width="100%" height={300} className="mt-4">
-            <LineChart data={config.data}>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={formattedData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={config.dataKey} />
+              <XAxis dataKey={config.nameKey || 'name'} />
               <YAxis />
               <Tooltip />
               <Legend />
               <Line 
                 type="monotone" 
-                dataKey={config.name} 
-                stroke={config.color} 
-                name={config.name} 
-                activeDot={{ r: 8 }} 
+                dataKey={config.dataKey} 
+                stroke={config.color || randomColor} 
+                name={config.name || config.dataKey} 
               />
             </LineChart>
           </ResponsiveContainer>
-        )
-        
+        );
+      
       case 'bar':
         return (
-          <ResponsiveContainer width="100%" height={300} className="mt-4">
-            <BarChart data={config.data}>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={formattedData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={config.dataKey} />
+              <XAxis dataKey={config.nameKey || 'name'} />
               <YAxis />
               <Tooltip />
               <Legend />
               <Bar 
-                dataKey={config.name} 
-                fill={config.color} 
-                name={config.name}
+                dataKey={config.dataKey} 
+                fill={config.color || randomColor} 
+                name={config.name || config.dataKey} 
               />
             </BarChart>
           </ResponsiveContainer>
-        )
-        
+        );
+      
       case 'area':
         return (
-          <ResponsiveContainer width="100%" height={300} className="mt-4">
-            <AreaChart data={config.data}>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={formattedData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={config.dataKey} />
+              <XAxis dataKey={config.nameKey || 'name'} />
               <YAxis />
               <Tooltip />
               <Legend />
               <Area 
                 type="monotone" 
-                dataKey={config.name} 
-                fill={config.color} 
-                stroke={config.color} 
-                name={config.name}
+                dataKey={config.dataKey} 
+                fill={config.color || randomColor} 
+                stroke={config.color || randomColor} 
+                name={config.name || config.dataKey} 
               />
             </AreaChart>
           </ResponsiveContainer>
-        )
-        
+        );
+      
       case 'pie':
         return (
-          <ResponsiveContainer width="100%" height={300} className="mt-4">
-            <PieChart>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <Pie
-                data={config.data}
+                data={formattedData}
+                dataKey={config.dataKey}
+                nameKey={config.nameKey || 'name'}
                 cx="50%"
                 cy="50%"
-                labelLine={true}
                 outerRadius={100}
-                fill="#8884d8"
-                dataKey={config.name}
-                nameKey={config.dataKey}
-                label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                fill={config.color || randomColor}
+                name={config.name || config.dataKey}
+                label
               >
-                {config.data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                {formattedData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
-        )
-        
+        );
+      
       default:
-        return (
-          <div className="flex items-center justify-center h-[300px]">
-            <AlertTriangle className="h-8 w-8 text-yellow-500 mr-2" />
-            <span>Tipo de visualização não suportado: {config.type}</span>
-          </div>
-        )
+        return <div className="p-8 text-center text-muted-foreground">Tipo de gráfico não suportado</div>;
     }
-  }
-  
-  if (loading || generating) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center justify-center py-12 space-y-4">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <div className="text-center">
-              <p className="text-lg font-medium">
-                {generating ? "Gerando Visualizações" : "Carregando Visualizações"}
-              </p>
-              <p className="text-muted-foreground">
-                {generating 
-                  ? "Analisando padrões nos dados e criando gráficos..."
-                  : "Buscando visualizações existentes..."}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-  
-  if (analyses.length === 0) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center justify-center py-12 space-y-4">
-            <AlertTriangle className="h-12 w-12 text-yellow-500" />
-            <div className="text-center">
-              <p className="text-lg font-medium">Nenhuma Análise Disponível</p>
-              <p className="text-muted-foreground">
-                Não foi possível encontrar ou gerar análises para este conjunto de dados.
-              </p>
-            </div>
-            <Button onClick={generateAnalyses}>
-              Tentar Novamente
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-  
-  // Filtrar visualizações para a análise selecionada
-  const visualizationsForSelectedAnalysis = visualizations.filter(
-    v => v.analysis_id === selectedAnalysis
-  )
-  
-  const selectedAnalysisData = analyses.find(a => a.id === selectedAnalysis)
-  
+  };
+
   return (
-    <Card className="shadow-md border border-border/40">
-      <CardHeader>
-        <CardTitle>Visualizações e Insights</CardTitle>
-        <CardDescription>
-          Visualize padrões e tendências em seus dados
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-6">
-          <Tabs 
-            value={selectedAnalysis || analyses[0]?.id || ''} 
-            onValueChange={setSelectedAnalysis}
-          >
-            <TabsList className="mb-4 w-full flex overflow-x-auto">
-              {analyses.map(analysis => (
-                <TabsTrigger 
-                  key={analysis.id} 
-                  value={analysis.id}
-                  className="flex-shrink-0"
-                >
-                  {analysis.analysis_type === 'time_series' ? (
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                  ) : analysis.analysis_type === 'distribution' ? (
-                    <BarChart2 className="h-4 w-4 mr-2" />
-                  ) : (
-                    <PieChartIcon className="h-4 w-4 mr-2" />
-                  )}
-                  {analysis.analysis_type.charAt(0).toUpperCase() + analysis.analysis_type.slice(1).replace('_', ' ')}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            
-            {analyses.map(analysis => (
-              <TabsContent key={analysis.id} value={analysis.id}>
-                <div className="mb-4">
-                  <Card>
-                    <CardContent className="pt-4">
-                      <h3 className="text-lg font-semibold">
-                        {analysis.configuration && typeof analysis.configuration === 'object' 
-                          ? (analysis.configuration as any).description || 'Análise dos Dados'
-                          : 'Análise dos Dados'}
-                      </h3>
-                      
-                      <div className="flex gap-2 mt-2">
-                        {analysis.analysis_type === 'time_series' ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            Série Temporal
-                          </span>
-                        ) : analysis.analysis_type === 'distribution' ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Distribuição
-                          </span>
-                        ) : analysis.analysis_type === 'correlation' ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                            Correlação
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            {analysis.analysis_type.charAt(0).toUpperCase() + analysis.analysis_type.slice(1).replace('_', ' ')}
-                          </span>
-                        )}
-                      </div>
-                      
-                      <p className="mt-3 text-sm text-muted-foreground">
-                        {analysis.results && typeof analysis.results === 'object' 
-                          ? (analysis.results as any).description || 'Análise detalhada dos dados com base em algoritmos estatísticos.'
-                          : 'Análise detalhada dos dados com base em algoritmos estatísticos.'}
-                      </p>
-                    </CardContent>
-                  </Card>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Visualizações</CardTitle>
+          <CardDescription>
+            Crie visualizações para explorar seus dados de forma eficiente
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="p-8 text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="mt-4 text-muted-foreground">Carregando visualizações...</p>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {visualizations.length === 0 ? (
+                <div className="p-8 text-center">
+                  <p className="text-muted-foreground mb-4">
+                    Nenhuma visualização foi criada ainda. Você pode gerar visualizações automaticamente ou criar manualmente.
+                  </p>
+                  <Button 
+                    onClick={generateVisualizations} 
+                    disabled={generating}
+                    className="space-x-2"
+                  >
+                    {generating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                        <span>Gerando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <LineChartIcon className="h-4 w-4" />
+                        <span>Gerar Visualizações</span>
+                      </>
+                    )}
+                  </Button>
                 </div>
-                
-                {visualizationsForSelectedAnalysis.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {visualizationsForSelectedAnalysis.map(vis => (
-                      <Card key={vis.id}>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-base font-medium">
-                            {vis.configuration && typeof vis.configuration === 'object' 
-                              ? (vis.configuration as any).title || 'Visualização'
-                              : 'Visualização'}
-                          </CardTitle>
-                          {vis.configuration && typeof vis.configuration === 'object' && (vis.configuration as any).description && (
-                            <CardDescription>
-                              {(vis.configuration as any).description}
-                            </CardDescription>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {visualizations.map((vis) => {
+                    const config = vis.configuration as unknown as ChartConfig;
+                    return (
+                      <Card key={vis.id} className="overflow-hidden">
+                        <CardHeader className="pb-0">
+                          <CardTitle className="text-lg">{config.title}</CardTitle>
+                          {config.description && (
+                            <CardDescription>{config.description}</CardDescription>
                           )}
                         </CardHeader>
                         <CardContent>
-                          {renderVisualization(vis)}
+                          <div className="p-2">
+                            {renderChart(config)}
+                          </div>
+                          <div className="mt-2 text-xs text-muted-foreground">
+                            <div className="flex items-center">
+                              <span className="font-medium">Tipo:</span>
+                              <span className="ml-1 capitalize">{config.type}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="font-medium">Dados:</span>
+                              <span className="ml-1">{config.dataKey}</span>
+                            </div>
+                          </div>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <Card>
-                    <CardContent className="pt-4 flex flex-col items-center justify-center py-8">
-                      <AlertTriangle className="h-8 w-8 text-yellow-500 mb-2" />
-                      <p className="text-center">
-                        Nenhuma visualização disponível para esta análise.
-                      </p>
-                      <Button onClick={generateVisualizations} className="mt-4">
-                        Gerar Visualizações
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-            ))}
-          </Tabs>
-        </div>
-        
-        <div className="flex justify-between mt-4 pt-4 border-t">
-          <div>
-            {analyses.length > 0 && visualizations.length > 0 && (
-              <div className="flex items-center text-sm text-green-600">
-                <CheckCircle className="h-4 w-4 mr-1" />
-                {visualizations.length} visualizações geradas
-              </div>
-            )}
-          </div>
-          <Button onClick={onComplete}>
-            Concluir
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Separador */}
+              <Separator className="my-8" />
+
+              {/* Formulário para criar nova visualização */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Criar Nova Visualização</CardTitle>
+                  <CardDescription>
+                    Configure os parâmetros para criar uma visualização personalizada
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Tabs
+                    defaultValue="line"
+                    className="w-full"
+                    value={selectedChart}
+                    onValueChange={setSelectedChart}
+                  >
+                    <TabsList className="grid grid-cols-4 mb-6">
+                      <TabsTrigger value="line" className="flex items-center">
+                        <LineChartIcon className="h-4 w-4 mr-2" />
+                        <span>Linha</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="bar" className="flex items-center">
+                        <BarChartIcon className="h-4 w-4 mr-2" />
+                        <span>Barra</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="area" className="flex items-center">
+                        <AreaChartIcon className="h-4 w-4 mr-2" />
+                        <span>Área</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="pie" className="flex items-center">
+                        <PieChartIcon className="h-4 w-4 mr-2" />
+                        <span>Pizza</span>
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Título */}
+                        <div className="space-y-2">
+                          <Label htmlFor="chart-title">Título</Label>
+                          <Input
+                            id="chart-title"
+                            placeholder="Ex: Vendas por Mês"
+                            value={newChartConfig.title}
+                            onChange={(e) => setNewChartConfig(prev => ({ ...prev, title: e.target.value }))}
+                          />
+                        </div>
+
+                        {/* Coluna de Dados */}
+                        <div className="space-y-2">
+                          <Label htmlFor="data-column">Coluna de Dados</Label>
+                          <Select 
+                            value={newChartConfig.dataKey} 
+                            onValueChange={(value) => setNewChartConfig(prev => ({ ...prev, dataKey: value }))}
+                          >
+                            <SelectTrigger id="data-column">
+                              <SelectValue placeholder="Selecione uma coluna" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {tableColumns.map(column => (
+                                <SelectItem key={column} value={column}>
+                                  {column}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Nome da Série */}
+                        <div className="space-y-2">
+                          <Label htmlFor="series-name">Nome da Série</Label>
+                          <Input
+                            id="series-name"
+                            placeholder="Ex: Total Vendas"
+                            value={newChartConfig.name}
+                            onChange={(e) => setNewChartConfig(prev => ({ ...prev, name: e.target.value }))}
+                          />
+                        </div>
+
+                        {/* Cor */}
+                        <div className="space-y-2">
+                          <Label htmlFor="chart-color">Cor</Label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="color"
+                              id="chart-color"
+                              value={newChartConfig.color}
+                              onChange={(e) => setNewChartConfig(prev => ({ ...prev, color: e.target.value }))}
+                              className="h-9 w-9 border rounded cursor-pointer"
+                            />
+                            <Input
+                              value={newChartConfig.color}
+                              onChange={(e) => setNewChartConfig(prev => ({ ...prev, color: e.target.value }))}
+                              className="font-mono"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Prévia */}
+                      <div className="bg-white/30 p-4 border rounded-md mt-6">
+                        <h4 className="text-sm font-medium mb-4">Prévia:</h4>
+                        {renderChart({
+                          ...newChartConfig,
+                          type: selectedChart,
+                          data: tableData
+                        })}
+                      </div>
+                    </div>
+                  </Tabs>
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    onClick={addCustomVisualization}
+                    className="ml-auto gap-1"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Adicionar Visualização</span>
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          )}
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button 
+            variant="outline" 
+            onClick={generateVisualizations} 
+            disabled={generating}
+          >
+            {generating ? "Gerando..." : "Gerar Automaticamente"}
           </Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
+          <Button onClick={onComplete} className="space-x-1">
+            <span>Concluir</span>
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
 }

@@ -86,14 +86,16 @@ export interface ImportStepData {
 }
 
 // Tipos para análise de qualidade
+export interface ColumnQuality {
+  completeness: number;
+  uniqueness: number;
+  validFormat: number;
+  issues: string[];
+}
+
 export interface DataQuality {
   columnQuality: {
-    [columnName: string]: {
-      completeness: number;
-      uniqueness: number;
-      validFormat: number;
-      issues: string[];
-    }
+    [columnName: string]: ColumnQuality;
   };
   overallCompleteness: number;
   overallQuality: number;

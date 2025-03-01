@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client"
 import "./data-grid.css"
 import { useAuth } from "@/contexts/AuthContext"
 import { DataImport } from "@/types/data-imports"
+import { Json } from "@/integrations/supabase/types"
 
 interface DataPreviewProps {
   fileId: string | null
@@ -77,13 +78,21 @@ export function DataPreview({ fileId, onNext }: DataPreviewProps) {
 
     const loadTableData = async (tableName: string) => {
       try {
-        // Aqui não usamos .from(tableName) diretamente, mas sim a função rpc para executar consulta dinâmica
-        const { data, error } = await supabase.rpc('get_table_data', { table_name: tableName, row_limit: 100 })
+        // Usar função SQL personalizada em vez de consultar a tabela diretamente
+        const { data, error } = await supabase
+          .rpc('get_table_data', { 
+            table_name: tableName,
+            row_limit: 100
+          })
 
         if (error) throw error
 
-        if (data && data.length > 0) {
-          const firstRow = data[0]
+        // Converter o resultado JSONB para array
+        const tableData = Array.isArray(data) ? data : 
+                          typeof data === 'object' ? Object.values(data) : [];
+
+        if (tableData && tableData.length > 0) {
+          const firstRow = tableData[0]
           const gridColumns = Object.keys(firstRow)
             .filter(key => key !== 'id' && key !== 'organization_id' && key !== 'created_at')
             .map(key => ({
@@ -94,7 +103,7 @@ export function DataPreview({ fileId, onNext }: DataPreviewProps) {
             }))
 
           setColumns(gridColumns)
-          setPreviewData(data)
+          setPreviewData(tableData)
         }
       } catch (error: any) {
         console.error('Erro ao carregar dados da tabela:', error)
