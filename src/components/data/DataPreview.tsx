@@ -522,7 +522,6 @@ export function DataPreview({ columns, previewData, fileId, onNext }: DataPrevie
             <CardContent className="space-y-8">
               <DataIntegrityAnalysis 
                 fileId={fileId} 
-                tableName={qualityScore && qualityScore.tableName} 
               />
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
