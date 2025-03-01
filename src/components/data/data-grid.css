@@ -9,8 +9,8 @@
   -webkit-user-select: none;
   user-select: none;
   background-color: var(--background);
-  position: absolute; /* Posicionamento absoluto para ocupar todo o container pai */
-  inset: 0; /* Expandir para preencher todo o container pai */
+  position: absolute;
+  inset: 0;
 }
 
 .rdg *,
@@ -51,8 +51,41 @@
 
 .rdg-header-row .rdg-cell {
   border-block-end: 1px solid var(--border);
+  padding: 0;
 }
 
 .rdg-cell-editing {
   padding: 0;
+}
+
+.rdg-cell-selected {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.rdg-cell-tooltip {
+  position: absolute;
+  background-color: var(--tooltip-background-color);
+  color: var(--tooltip-text-color);
+  padding: 4px 8px;
+  border-radius: 4px;
+  z-index: 10;
+  max-width: 300px;
+  white-space: normal;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 12px;
+}
+
+:root {
+  --row-hover-bg-color: rgba(0, 0, 0, 0.05);
+  --header-background-color: rgba(0, 0, 0, 0.02);
+  --tooltip-background-color: #333;
+  --tooltip-text-color: #fff;
+}
+
+.dark {
+  --row-hover-bg-color: rgba(255, 255, 255, 0.1);
+  --header-background-color: rgba(255, 255, 255, 0.05);
+  --tooltip-background-color: #222;
+  --tooltip-text-color: #ddd;
 }
