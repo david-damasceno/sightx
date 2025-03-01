@@ -15,4 +15,3 @@ base_dir = "functions"
 # Functions will be deployed to Supabase Edge Functions
 name = "port"
 verify_jwt = false
-
