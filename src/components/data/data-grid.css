@@ -1,6 +1,8 @@
 
 .rdg {
   block-size: 100%;
+  width: 100%;
+  height: 100%;
   border: 1px solid var(--border);
   box-sizing: border-box;
   overflow: auto;
