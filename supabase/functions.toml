@@ -28,3 +28,7 @@ verify_jwt = false
 [[functions]]
 name = "test-function"
 verify_jwt = false
+
+[[functions]]
+name = "hello-world"
+verify_jwt = false
