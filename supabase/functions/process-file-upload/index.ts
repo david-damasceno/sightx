@@ -56,11 +56,7 @@ serve(async (req) => {
 
     console.log('Registro de importação encontrado:', importData.id);
     
-    // Download do arquivo do storage
-    console.log('Baixando arquivo do storage...');
-    console.log('Caminho do arquivo:', importData.storage_path);
-    
-    // Atualize o status antes de começar o download
+    // Atualizar o status antes de começar o processamento
     await supabase
       .from('data_imports')
       .update({
@@ -68,6 +64,10 @@ serve(async (req) => {
         error_message: null
       })
       .eq('id', fileId);
+    
+    // Download do arquivo do storage
+    console.log('Baixando arquivo do storage...');
+    console.log('Caminho do arquivo:', importData.storage_path);
     
     const { data: fileData, error: downloadError } = await supabase
       .storage
@@ -156,52 +156,241 @@ serve(async (req) => {
     data = await Promise.race([processPromise, timeoutPromise]);
 
     // Identificar colunas e tipos
-    const columns = Object.keys(data[0]).map(key => {
-      // Determinar tipo de dados
-      const sampleValue = data[0][key];
-      let type = 'text';
+    console.log('Identificando estrutura e tipos de dados...');
+    const sampleRow = data[0];
+    const columns = Object.keys(sampleRow).map(key => {
+      // Coletar amostras para melhor inferência de tipo
+      const samples = data.slice(0, 10).map(row => row[key]).filter(val => val !== null && val !== undefined);
       
-      if (typeof sampleValue === 'number') {
-        type = Number.isInteger(sampleValue) ? 'integer' : 'numeric';
-      } else if (sampleValue instanceof Date) {
-        type = 'timestamp';
+      // Determinar tipo de dados com base nas amostras
+      let sqlType = 'text';
+      
+      // Verificar se parece número
+      const numberSamples = samples.filter(s => !isNaN(Number(s)));
+      if (numberSamples.length === samples.length && samples.length > 0) {
+        // Verificar se é inteiro ou decimal
+        const hasDecimals = samples.some(s => String(s).includes('.'));
+        sqlType = hasDecimals ? 'numeric(15,2)' : 'integer';
+      }
+      // Verificar se parece data
+      else if (samples.length > 0 && samples.every(s => !isNaN(Date.parse(String(s))))) {
+        sqlType = 'timestamp with time zone';
+      }
+      // Verificar se é booleano
+      else if (samples.length > 0 && samples.every(s => ['true', 'false', 't', 'f', 'yes', 'no', 'sim', 'não', '1', '0'].includes(String(s).toLowerCase()))) {
+        sqlType = 'boolean';
       }
       
       return {
-        name: key,
-        type: type,
-        sample: sampleValue
+        name: key.replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase(), // Normalizar nome para SQL
+        original_name: key,
+        type: sqlType,
+        sample: samples.length > 0 ? samples[0] : null
       };
     });
+    
+    console.log('Estrutura de colunas identificada:', columns);
 
-    // Atualizar o status da importação com sucesso
+    // Criar a tabela dinâmica para armazenar os dados
+    console.log('Criando tabela dinâmica...');
+    const tableName = importData.table_name;
+    
+    // Construir definição SQL para criar a tabela
+    let createTableSQL = `CREATE TABLE IF NOT EXISTS public."${tableName}" (\n`;
+    createTableSQL += columns.map(col => `  "${col.name}" ${col.type}`).join(',\n');
+    createTableSQL += ',\n  "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n';
+    createTableSQL += '  "organization_id" UUID NOT NULL,\n';
+    createTableSQL += '  "created_at" TIMESTAMPTZ DEFAULT now()\n';
+    createTableSQL += ');\n';
+    
+    // Adicionar RLS para segurança
+    createTableSQL += `ALTER TABLE public."${tableName}" ENABLE ROW LEVEL SECURITY;\n`;
+    createTableSQL += `CREATE POLICY "${tableName}_org_isolation" ON public."${tableName}" 
+      USING (organization_id = auth.uid() OR organization_id IN (
+        SELECT organization_id FROM organization_members WHERE user_id = auth.uid()
+      ));\n`;
+    
+    // Executar SQL para criar a tabela
+    console.log('Executando SQL para criar tabela:');
+    console.log(createTableSQL);
+    const { error: createTableError } = await supabase.rpc('create_dynamic_table', {
+      p_table_name: tableName,
+      p_columns: JSON.stringify(columns),
+      p_organization_id: organizationId
+    });
+    
+    if (createTableError) {
+      console.error('Erro ao criar tabela:', createTableError);
+      throw new Error(`Falha ao criar tabela: ${createTableError.message}`);
+    }
+
+    console.log('Tabela criada com sucesso!');
+    
+    // Preparar dados para inserção
+    console.log('Preparando inserção de dados...');
+    const dataToInsert = data.map(row => {
+      const normalizedRow = {};
+      
+      // Normalizar nomes de colunas e valores
+      columns.forEach(col => {
+        normalizedRow[col.name] = row[col.original_name];
+      });
+      
+      // Adicionar dados de controle
+      normalizedRow.organization_id = organizationId;
+      
+      return normalizedRow;
+    });
+    
+    // Inserir dados em lotes
+    console.log(`Inserindo ${dataToInsert.length} registros em lotes de ${BATCH_SIZE}...`);
+    
+    let processedRows = 0;
+    for (let i = 0; i < dataToInsert.length; i += BATCH_SIZE) {
+      const batch = dataToInsert.slice(i, i + BATCH_SIZE);
+      const { error: insertError } = await supabase
+        .from(tableName)
+        .insert(batch);
+      
+      if (insertError) {
+        console.error(`Erro ao inserir lote ${i / BATCH_SIZE + 1}:`, insertError);
+        throw new Error(`Falha ao inserir dados: ${insertError.message}`);
+      }
+      
+      processedRows += batch.length;
+      console.log(`Progresso: ${processedRows}/${dataToInsert.length} registros`);
+      
+      // Atualizar progresso no banco de dados
+      await supabase
+        .from('data_processing_results')
+        .upsert({
+          file_id: fileId,
+          organization_id: organizationId,
+          status: 'processing',
+          progress: Math.round((processedRows / dataToInsert.length) * 100),
+          processed_rows: processedRows,
+          total_rows: dataToInsert.length,
+          processing_metadata: { current_batch: i / BATCH_SIZE + 1, total_batches: Math.ceil(dataToInsert.length / BATCH_SIZE) }
+        }, { onConflict: 'file_id' });
+    }
+    
+    console.log('Todos os dados foram inseridos com sucesso!');
+    
+    // Coletar metadados de colunas para análise
+    const columnsMetadata = columns.map(col => {
+      // Coletar estatísticas básicas para cada coluna
+      const values = data.map(row => row[col.original_name]).filter(v => v !== null && v !== undefined);
+      const uniqueValues = [...new Set(values)];
+      const sampleValues = uniqueValues.slice(0, 20); // Limitar a 20 amostras
+      
+      let statistics = {};
+      
+      // Estatísticas para colunas numéricas
+      if (col.type === 'integer' || col.type === 'numeric(15,2)') {
+        const numericValues = values.map(v => Number(v)).filter(v => !isNaN(v));
+        if (numericValues.length > 0) {
+          statistics = {
+            min: Math.min(...numericValues),
+            max: Math.max(...numericValues),
+            avg: numericValues.reduce((sum, val) => sum + val, 0) / numericValues.length,
+            count: numericValues.length,
+            null_count: data.length - values.length,
+            unique_count: uniqueValues.length
+          };
+        }
+      } else {
+        // Estatísticas para colunas não numéricas
+        statistics = {
+          count: values.length,
+          null_count: data.length - values.length,
+          unique_count: uniqueValues.length,
+          most_common: getMostCommonValues(values, 5)
+        };
+      }
+      
+      return {
+        import_id: fileId,
+        original_name: col.original_name,
+        display_name: col.name,
+        data_type: col.type,
+        sample_values: sampleValues,
+        statistics: statistics
+      };
+    });
+    
+    // Salvar metadados de colunas
+    console.log('Salvando metadados de colunas...');
+    for (const colMeta of columnsMetadata) {
+      const { error: metadataError } = await supabase
+        .from('column_metadata')
+        .insert(colMeta);
+      
+      if (metadataError) {
+        console.warn('Erro ao salvar metadados da coluna:', metadataError);
+        // Não interromper o processo por erro de metadados
+      }
+    }
+    
+    // Atualizar registro de importação com sucesso
+    console.log('Finalizando processo...');
     const { error: updateError } = await supabase
       .from('data_imports')
       .update({
-        status: 'processed',
+        status: 'completed',
         row_count: data.length,
         metadata: {
           ...importData.metadata,
           rowCount: data.length,
           columnCount: columns.length,
-          columns: columns
+          processingTime: new Date().toISOString(),
+          columns: columns.map(c => ({ name: c.name, original_name: c.original_name, type: c.type }))
+        },
+        columns_metadata: {
+          columns: columnsMetadata.map(c => ({
+            name: c.original_name,
+            display_name: c.display_name,
+            type: c.data_type,
+            statistics: c.statistics
+          }))
         }
       })
       .eq('id', fileId);
 
     if (updateError) {
       console.error('Erro ao atualizar status da importação:', updateError);
-      throw new Error(`Erro ao atualizar status: ${updateError.message}`);
+      // Não falhar o processo inteiro por erro de atualização do status
     }
 
-    console.log('Status da importação atualizado com sucesso');
+    // Atualizar registro de processamento
+    await supabase
+      .from('data_processing_results')
+      .upsert({
+        file_id: fileId,
+        organization_id: organizationId,
+        status: 'completed',
+        table_name: tableName,
+        processed_rows: data.length,
+        total_rows: data.length,
+        progress: 100,
+        completed_at: new Date().toISOString(),
+        processing_ended_at: new Date().toISOString(),
+        processing_metadata: { 
+          successful: true, 
+          table: tableName,
+          columns: columns.length,
+          rows: data.length
+        }
+      }, { onConflict: 'file_id' });
+    
+    console.log('Processamento concluído com sucesso!');
     
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: 'Arquivo processado com sucesso',
+        table: tableName,
         rows: data.length,
-        columns: columns
+        columns: columns.length
       }),
       { 
         headers: { 
@@ -228,6 +417,17 @@ serve(async (req) => {
             error_message: error.message || 'Erro desconhecido no processamento'
           })
           .eq('id', fileId);
+          
+        // Também atualizar a tabela de resultados de processamento
+        await supabase
+          .from('data_processing_results')
+          .upsert({
+            file_id: fileId,
+            status: 'error',
+            error_message: error.message || 'Erro desconhecido no processamento',
+            processing_ended_at: new Date().toISOString(),
+            processing_metadata: { error: error.message }
+          }, { onConflict: 'file_id' });
       }
     } catch (updateError) {
       console.error('Erro ao atualizar status para erro:', updateError);
@@ -248,3 +448,16 @@ serve(async (req) => {
     );
   }
 });
+
+// Função auxiliar para obter valores mais comuns
+function getMostCommonValues(values, limit = 5) {
+  const counts = {};
+  values.forEach(val => {
+    counts[val] = (counts[val] || 0) + 1;
+  });
+  
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([value, count]) => ({ value, count }));
+}
