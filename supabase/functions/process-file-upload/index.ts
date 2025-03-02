@@ -1,8 +1,8 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import * as csv from "https://deno.land/std@0.170.0/csv/parse.ts";
-import * as xlsx from "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+import * as csv from "https://deno.land/std@0.177.0/csv/parse.ts";
+import { read, utils } from "https://deno.land/x/excel_js@v0.1.0/mod.ts";
 
 const BATCH_SIZE = 500; // Número de linhas para inserir por vez
 
@@ -94,14 +94,15 @@ serve(async (req) => {
              fileData.original_filename.endsWith('.xls')) {
       console.log("Processando arquivo Excel");
       const arrayBuffer = await fileContent.arrayBuffer();
-      const workbook = xlsx.read(arrayBuffer, { type: 'array' });
+      // Usando a biblioteca excel_js do Deno em vez do xlsx do npm
+      const workbook = read(arrayBuffer, { type: 'array' });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = xlsx.utils.sheet_to_json(firstSheet, { header: 1 });
+      const jsonData = utils.sheet_to_json(firstSheet, { header: 1 });
       
       headers = jsonData[0];
       rowsData = jsonData.slice(1).map(row => {
-        const obj: Record<string, any> = {};
-        headers.forEach((header: string, i: number) => {
+        const obj = {};
+        headers.forEach((header, i) => {
           obj[header] = row[i];
         });
         return obj;
@@ -117,9 +118,9 @@ serve(async (req) => {
 
     // Inferir tipos de dados e preparar metadados
     console.log("Inferindo tipos de dados para colunas:", headers);
-    const columnTypes: Record<string, string> = {};
-    const columnMetadata: Record<string, any> = {};
-    const columnStatistics: Record<string, any> = {};
+    const columnTypes = {};
+    const columnMetadata = {};
+    const columnStatistics = {};
     
     headers.forEach(header => {
       const sampleValues = rowsData.slice(0, Math.min(100, rowsData.length))
@@ -211,7 +212,7 @@ serve(async (req) => {
       
       // Tratar valores especiais e adicionar organization_id
       const preparedBatch = batch.map(row => {
-        const preparedRow: Record<string, any> = { organization_id: organizationId };
+        const preparedRow = { organization_id: organizationId };
         
         // Mapear cada coluna com o nome limpo
         headers.forEach(header => {
