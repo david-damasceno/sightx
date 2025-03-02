@@ -74,11 +74,11 @@ serve(async (req) => {
     // Este é um exemplo simplificado, o processamento real dependeria do tipo do arquivo
     console.log(`Arquivo baixado com sucesso, tamanho: ${fileContent.size} bytes`);
     
-    // Atualizar o status para processado - REMOVIDA a propriedade processed_at
+    // Atualizar o status para completed (valor válido do enum import_status)
     const { error: updateError } = await supabase
       .from('data_imports')
       .update({
-        status: 'processed'
+        status: 'completed'
       })
       .eq('id', fileId);
     
