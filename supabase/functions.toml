@@ -79,3 +79,7 @@ verify_jwt = false
 [[functions]]
 name = "suggest-column-names"
 verify_jwt = false
+
+[[functions]]
+name = "test-function"
+verify_jwt = false
