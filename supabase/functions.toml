@@ -23,3 +23,59 @@ verify_jwt = false
 [[functions]]
 name = "hello-world"
 verify_jwt = false
+
+[[functions]]
+name = "analyze-data-insights"
+verify_jwt = false
+
+[[functions]]
+name = "analyze-data-integrity"
+verify_jwt = false
+
+[[functions]]
+name = "analyze-data-quality"
+verify_jwt = false
+
+[[functions]]
+name = "analyze-data-statistics"
+verify_jwt = false
+
+[[functions]]
+name = "analyze-file"
+verify_jwt = false
+
+[[functions]]
+name = "analyze-table-context"
+verify_jwt = false
+
+[[functions]]
+name = "apply-data-fix"
+verify_jwt = false
+
+[[functions]]
+name = "chat-with-dona"
+verify_jwt = false
+
+[[functions]]
+name = "create-data-table"
+verify_jwt = false
+
+[[functions]]
+name = "generate-visualizations"
+verify_jwt = false
+
+[[functions]]
+name = "get-google-maps-key"
+verify_jwt = false
+
+[[functions]]
+name = "google-business-oauth"
+verify_jwt = false
+
+[[functions]]
+name = "read-file-data"
+verify_jwt = false
+
+[[functions]]
+name = "suggest-column-names"
+verify_jwt = false
