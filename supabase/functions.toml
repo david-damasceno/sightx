@@ -7,9 +7,6 @@
 # Base directory containing edge functions
 base_dir = "functions"
 
-# Run these after creating or updating any edge function
-post_build = ["npx", "supabase", "functions", "deploy", "--no-verify-jwt"]
-
 # List of functions to include when building
 [[functions]]
 # Functions will be deployed to Supabase Edge Functions
