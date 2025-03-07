@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
@@ -59,7 +60,13 @@ export function useOrganization() {
     return slug
   }
 
-  const createOrganization = async (name: string) => {
+  const createOrganization = async (
+    name: string, 
+    sector: string,
+    city: string,
+    state: string,
+    description: string
+  ) => {
     try {
       setLoading(true)
       const { data: { user } } = await supabase.auth.getUser()
@@ -82,7 +89,11 @@ export function useOrganization() {
         {
           p_name: name,
           p_slug: uniqueSlug,
-          p_user_id: user.id
+          p_user_id: user.id,
+          p_sector: sector,
+          p_city: city,
+          p_state: state,
+          p_description: description
         }
       )
 

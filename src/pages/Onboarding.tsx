@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
@@ -6,16 +7,23 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Building, Loader2, Users, Briefcase, ArrowRight, Info } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { Building, Loader2, Users, Briefcase, ArrowRight, Info, MapPin } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { useOrganization } from "@/hooks/useOrganization"
 
+type OnboardingStep = 1 | 2 | 3
+
 export default function Onboarding() {
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState<OnboardingStep>(1)
   const [orgName, setOrgName] = useState("")
+  const [sector, setSector] = useState("")
+  const [city, setCity] = useState("")
+  const [state, setState] = useState("")
+  const [description, setDescription] = useState("")
   const [companySize, setCompanySize] = useState("")
   const { session } = useAuth()
   const navigate = useNavigate()
@@ -77,18 +85,17 @@ export default function Onboarding() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!orgName.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Por favor, insira o nome da organização",
-      })
-      return
-    }
+    if (!validateForm()) return
 
     try {
       setLoading(true)
-      const org = await createOrganization(orgName.trim())
+      const org = await createOrganization(
+        orgName.trim(),
+        sector.trim(),
+        city.trim(),
+        state.trim(),
+        description.trim()
+      )
 
       const { error: profileError } = await supabase
         .from('profiles')
@@ -120,21 +127,58 @@ export default function Onboarding() {
     }
   }
 
-  const handleCancel = async () => {
-    await supabase.auth.signOut()
-    navigate('/login')
-  }
-
-  const nextStep = () => {
+  const validateForm = (): boolean => {
     if (!orgName.trim()) {
       toast({
         variant: "destructive",
         title: "Erro",
         description: "Por favor, insira o nome da organização",
       })
-      return
+      return false
     }
-    setStep(2)
+
+    if (step >= 2 && !sector.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Por favor, selecione o setor de atuação",
+      })
+      return false
+    }
+
+    if (step >= 3 && !city.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Por favor, informe a cidade",
+      })
+      return false
+    }
+
+    if (step >= 3 && !state.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Por favor, informe o estado",
+      })
+      return false
+    }
+
+    return true
+  }
+
+  const handleCancel = async () => {
+    await supabase.auth.signOut()
+    navigate('/login')
+  }
+
+  const nextStep = () => {
+    if (!validateForm()) return
+    setStep(prev => (prev < 3 ? (prev + 1) as OnboardingStep : prev))
+  }
+
+  const previousStep = () => {
+    setStep(prev => (prev > 1 ? (prev - 1) as OnboardingStep : prev))
   }
 
   if (initialLoading) {
@@ -159,7 +203,22 @@ export default function Onboarding() {
             </p>
           </div>
 
-          {step === 1 ? (
+          <div className="flex justify-center space-x-2">
+            {[1, 2, 3].map((s) => (
+              <div
+                key={s}
+                className={`w-3 h-3 rounded-full ${
+                  s === step
+                    ? "bg-primary"
+                    : s < step
+                    ? "bg-gray-400"
+                    : "bg-gray-200 dark:bg-gray-700"
+                }`}
+              />
+            ))}
+          </div>
+
+          {step === 1 && (
             <div className="space-y-6 animate-fade-in">
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
@@ -195,19 +254,115 @@ export default function Onboarding() {
                 </Button>
               </div>
             </div>
-          ) : (
+          )}
+
+          {step === 2 && (
             <div className="space-y-6 animate-fade-in">
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                  <Users className="w-5 h-5 text-primary/80" />
-                  <h2 className="text-lg font-semibold">Tamanho da equipe</h2>
+                  <Building className="w-5 h-5 text-primary/80" />
+                  <h2 className="text-lg font-semibold">Setor e descrição</h2>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Isso nos ajudará a otimizar sua experiência
+                  Conte-nos mais sobre o que sua empresa faz
                 </p>
               </div>
 
               <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sector" className="text-gray-700 dark:text-gray-300">
+                    Setor de atuação
+                  </Label>
+                  <select
+                    id="sector"
+                    className="w-full px-3 py-2 bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-md text-gray-900 dark:text-gray-100"
+                    value={sector}
+                    onChange={(e) => setSector(e.target.value)}
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="technology">Tecnologia</option>
+                    <option value="retail">Varejo</option>
+                    <option value="manufacturing">Indústria</option>
+                    <option value="services">Serviços</option>
+                    <option value="healthcare">Saúde</option>
+                    <option value="education">Educação</option>
+                    <option value="finance">Finanças</option>
+                    <option value="other">Outro</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-gray-700 dark:text-gray-300">
+                    Descrição da empresa
+                  </Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Descreva brevemente o que sua empresa faz..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="bg-white/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 min-h-[100px]"
+                  />
+                </div>
+
+                <div className="flex justify-between">
+                  <Button
+                    variant="outline"
+                    onClick={previousStep}
+                    className="border-gray-200 dark:border-gray-700"
+                  >
+                    Voltar
+                  </Button>
+                  <Button 
+                    onClick={nextStep}
+                    className="gap-2 bg-primary/90 hover:bg-primary"
+                  >
+                    Próximo passo
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <MapPin className="w-5 h-5 text-primary/80" />
+                  <h2 className="text-lg font-semibold">Localização</h2>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Onde sua empresa está localizada?
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city" className="text-gray-700 dark:text-gray-300">
+                    Cidade
+                  </Label>
+                  <Input
+                    id="city"
+                    placeholder="Digite a cidade"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="bg-white/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="state" className="text-gray-700 dark:text-gray-300">
+                    Estado
+                  </Label>
+                  <Input
+                    id="state"
+                    placeholder="Digite o estado"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    className="bg-white/50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="companySize" className="text-gray-700 dark:text-gray-300">
                     Número de funcionários
@@ -248,7 +403,7 @@ export default function Onboarding() {
             >
               Cancelar
             </Button>
-            {step === 2 && (
+            {step === 3 && (
               <Button
                 onClick={handleSubmit}
                 disabled={loading}
