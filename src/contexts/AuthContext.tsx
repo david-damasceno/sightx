@@ -1,7 +1,9 @@
+
 import { createContext, useContext, useEffect, useState } from "react"
 import { Session, User } from "@supabase/supabase-js"
 import { supabase } from "@/integrations/supabase/client"
 import { Database } from "@/integrations/supabase/types"
+import { useToast } from "@/hooks/use-toast"
 
 type Organization = Database['public']['Tables']['organizations']['Row']
 type Profile = Database['public']['Tables']['profiles']['Row']
@@ -36,6 +38,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profileLoading, setProfileLoading] = useState(true)
   const [organizationLoading, setOrganizationLoading] = useState(true)
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     let mounted = true
@@ -52,6 +55,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
           if (mounted) {
+            console.log('Auth state changed:', { event: _event, hasSession: !!session })
             setSession(session)
             setUser(session?.user ?? null)
             setLoading(false)
@@ -91,18 +95,52 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       try {
+        console.log('Loading profile for user:', user.id)
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single()
 
-        if (error) throw error
-        if (mounted) {
-          setProfile(data)
+        if (error) {
+          console.error('Error loading profile:', error)
+          
+          // Se o perfil não existir, criamos automaticamente
+          if (error.code === 'PGRST116') {
+            console.log('Profile not found, creating one')
+            const currentTime = new Date().toISOString()
+            const { data: newProfile, error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: user.id,
+                email: user.email,
+                updated_at: currentTime,
+                onboarded: false,
+                default_organization_id: null
+              })
+              .select()
+              .single()
+
+            if (insertError) {
+              console.error('Error creating profile:', insertError)
+              throw insertError
+            }
+
+            if (mounted) setProfile(newProfile)
+          } else {
+            throw error
+          }
+        } else {
+          console.log('Profile loaded successfully:', data)
+          if (mounted) setProfile(data)
         }
       } catch (error) {
-        console.error('Error loading profile:', error)
+        console.error('Error in profile flow:', error)
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar seu perfil. Tente recarregar a página.",
+          variant: "destructive"
+        })
         if (mounted) setProfile(null)
       } finally {
         if (mounted) setProfileLoading(false)
@@ -114,7 +152,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       mounted = false
     }
-  }, [user])
+  }, [user, toast])
 
   // Load default organization
   useEffect(() => {
@@ -131,6 +169,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       try {
+        console.log('Loading organization for user:', user.id)
         const { data: memberData, error: memberError } = await supabase
           .from('organization_members')
           .select('organization_id')
@@ -147,7 +186,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             .maybeSingle()
 
           if (orgError) throw orgError
+          console.log('Organization loaded:', org)
           if (mounted) setCurrentOrganization(org)
+        } else {
+          console.log('No organization found for user')
+          if (mounted) setCurrentOrganization(null)
         }
       } catch (error) {
         console.error('Error loading default organization:', error)

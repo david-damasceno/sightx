@@ -1,3 +1,4 @@
+
 import { Navigate, useLocation } from "react-router-dom"
 import { useAuth } from "@/contexts/AuthContext"
 import { useEffect, useState } from "react"
@@ -46,11 +47,24 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
     }
   }, [session, checkOnboarding])
 
+  // Adicionando logs para debug
+  console.log('ProtectedRoute state:', { 
+    loading, 
+    profileLoading, 
+    organizationLoading, 
+    checkingOnboarding,
+    session: !!session,
+    isOnboarded,
+    path: location.pathname,
+    hasOrg: !!currentOrganization
+  })
+
   // Mostra loading durante qualquer verificação inicial
-  if (loading || (checkOnboarding && checkingOnboarding) || organizationLoading || profileLoading) {
+  if (loading || (checkOnboarding && checkingOnboarding) || profileLoading || organizationLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="ml-2 text-sm text-gray-500">Carregando...</p>
       </div>
     )
   }

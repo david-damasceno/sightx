@@ -1,29 +1,60 @@
+
 import { Auth } from "@supabase/auth-ui-react"
 import { ThemeSupa } from "@supabase/auth-ui-shared"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function Login() {
   const navigate = useNavigate()
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    const checkSession = async () => {
+      try {
+        setIsLoading(true)
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (session) {
+          console.log("Sessão existente encontrada, redirecionando")
+          navigate("/")
+        }
+      } catch (error) {
+        console.error("Erro ao verificar sessão:", error)
+        toast({
+          title: "Erro",
+          description: "Erro ao verificar sessão. Tente novamente.",
+          variant: "destructive"
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
     checkSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state change:", event, !!session)
+      
       if (event === 'SIGNED_IN' && session) {
-        navigate("/")
+        console.log("Usuário logado, redirecionando")
+        // Pequeno atraso para garantir que os outros componentes tenham tempo de reagir
+        setTimeout(() => navigate("/"), 500)
       }
     })
 
     return () => subscription.unsubscribe()
-  }, [navigate])
+  }, [navigate, toast])
 
-  const checkSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) {
-      navigate("/")
-    }
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="ml-2 text-sm text-gray-500">Verificando sessão...</p>
+      </div>
+    )
   }
 
   return (
