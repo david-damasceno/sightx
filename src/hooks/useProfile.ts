@@ -54,7 +54,7 @@ export function useProfile() {
       if (error) {
         if (error.code === 'PGRST116') {
           const currentTime = new Date().toISOString()
-          const { error: insertError } = await supabase
+          const { data: newProfile, error: insertError } = await supabase
             .from('profiles')
             .insert({
               id: user.id,
@@ -63,21 +63,12 @@ export function useProfile() {
               onboarded: false,
               default_organization_id: null
             })
+            .select()
+            .single()
 
           if (insertError) throw insertError
 
-          data = {
-            id: user.id,
-            email: user.email,
-            full_name: "",
-            avatar_url: "",
-            phone: "",
-            company: "",
-            address: "",
-            updated_at: currentTime,
-            default_organization_id: null,
-            onboarded: false
-          }
+          data = newProfile
         } else {
           throw error
         }
