@@ -81,10 +81,11 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
     return <Navigate to="/login" state={{ from: location.pathname }} replace />
   }
 
-  // IMPORTANTE: Verificação específica para a página de onboarding
+  // Verificação específica para a página de onboarding
   if (location.pathname === '/onboarding') {
     // Se já tiver uma organização, redireciona para home
     if (currentOrganization) {
+      console.log('Usuário já tem organização, redirecionando para home')
       return <Navigate to="/" replace />
     }
     // Se estiver na página de onboarding, permitimos renderizar o conteúdo mesmo sem ter organização
@@ -92,7 +93,8 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
   }
 
   // Se não tiver organização e não estiver na página de onboarding, redireciona para onboarding
-  if (!currentOrganization) {
+  if (!currentOrganization && location.pathname !== '/onboarding') {
+    console.log('Usuário não tem organização, redirecionando para onboarding')
     return <Navigate to="/onboarding" replace />
   }
 

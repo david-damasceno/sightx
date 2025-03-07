@@ -101,12 +101,19 @@ export function useOrganization() {
 
       if (!result) throw new Error('Nenhum resultado retornado da função RPC')
 
+      // Atualiza imediatamente o estado com a nova organização
+      await fetchOrganizations()
+      
+      // Garantir que a nova organização seja definida como atual
+      if (result) {
+        setCurrentOrganization(result as Organization)
+      }
+
       toast({
         title: "Sucesso",
         description: "Organização criada com sucesso.",
       })
 
-      await fetchOrganizations()
       return result as Organization
     } catch (error: any) {
       console.error('Error creating organization:', error)

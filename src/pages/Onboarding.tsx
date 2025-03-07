@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
@@ -24,30 +25,37 @@ export default function Onboarding() {
   const [state, setState] = useState("")
   const [description, setDescription] = useState("")
   const [companySize, setCompanySize] = useState("")
-  const { session, currentOrganization } = useAuth()
+  const { session, currentOrganization, setCurrentOrganization } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
   const { createOrganization } = useOrganization()
 
+  // Verificar se já existe uma organização e redirecionar se necessário
   useEffect(() => {
     let mounted = true
+    
+    // Função para verificar redirecionamento
+    const checkRedirection = () => {
+      if (currentOrganization && mounted) {
+        console.log("Usuário já tem organização, redirecionando para home")
+        navigate('/')
+        return true
+      }
 
-    if (currentOrganization && mounted) {
-      console.log("Usuário já tem organização, redirecionando para home")
-      navigate('/')
-      return
+      if (!session?.user && mounted) {
+        console.log("Usuário não autenticado, redirecionando para login")
+        navigate('/login')
+        return true
+      }
+      
+      return false
     }
-
-    if (!session?.user && mounted) {
-      console.log("Usuário não autenticado, redirecionando para login")
-      navigate('/login')
-      return
-    }
-
-    if (mounted) {
+    
+    // Verifica agora
+    if (!checkRedirection() && mounted) {
       setInitialLoading(false)
     }
-
+    
     return () => {
       mounted = false
     }
@@ -87,14 +95,18 @@ export default function Onboarding() {
 
       if (profileError) throw profileError
 
+      // Atualizar o contexto de autenticação com a nova organização
+      if (setCurrentOrganization) {
+        setCurrentOrganization(org)
+      }
+
       toast({
         title: "Sucesso!",
         description: "Sua organização foi criada com sucesso.",
       })
 
-      setTimeout(() => {
-        navigate('/')
-      }, 500)
+      // Redireciona imediatamente para a página inicial
+      navigate('/', { replace: true })
     } catch (error: any) {
       console.error('Erro ao criar organização:', error)
       toast({
@@ -169,6 +181,7 @@ export default function Onboarding() {
     )
   }
 
+  // Resto do componente permanece o mesmo
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="w-full max-w-lg animate-fade-in">
