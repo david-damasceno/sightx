@@ -10,19 +10,6 @@ export default function Login() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
-  const [isMobile, setIsMobile] = useState(false)
-
-  useEffect(() => {
-    // Detectar se está em dispositivo móvel
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-    
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
 
   useEffect(() => {
     const checkSession = async () => {
@@ -71,16 +58,16 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="min-h-[100dvh] flex items-center justify-center px-4">
-        <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-md'} bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg rounded-2xl shadow-xl`}>
-          <div className="p-6 sm:p-8">
-            <div className="text-center mb-8">
-              <div className="flex items-center justify-center gap-3 mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-full max-w-md bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg rounded-2xl shadow-xl">
+          <div className="p-6">
+            <div className="text-center mb-6">
+              <div className="flex items-center justify-center gap-3 mb-4">
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
-                  width={isMobile ? "100" : "80"} 
-                  height={isMobile ? "62.5" : "50"} 
+                  width="80" 
+                  height="50" 
                   viewBox="0 0 300 187.499995" 
                   preserveAspectRatio="xMidYMid meet" 
                   className="hover:opacity-80 transition-opacity"
@@ -129,14 +116,14 @@ export default function Login() {
                     </g>
                   </g>
                 </svg>
-                <h2 className={`${isMobile ? 'text-5xl' : 'text-4xl'} font-bold text-gray-900 dark:text-gray-100`}>
+                <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-100">
                   SightX
                 </h2>
               </div>
-              <h3 className={`${isMobile ? 'text-2xl' : 'text-xl'} font-semibold text-gray-900 dark:text-gray-100`}>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                 Bem-vindo
               </h3>
-              <p className={`${isMobile ? 'text-base' : 'text-sm'} text-gray-600 dark:text-gray-400 mt-2`}>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Faça login para acessar seu painel de controle
               </p>
             </div>
@@ -162,25 +149,25 @@ export default function Login() {
                       inputBorderRadius: '0.75rem',
                     },
                     space: {
-                      inputPadding: isMobile ? '1rem' : '0.75rem',
-                      buttonPadding: isMobile ? '1rem' : '0.75rem',
+                      inputPadding: '0.75rem',
+                      buttonPadding: '0.75rem',
                     },
                     fonts: {
                       bodyFontFamily: `ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`,
                       buttonFontFamily: `ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`,
                     },
                     fontSizes: {
-                      baseButtonSize: isMobile ? '1rem' : '0.875rem',
-                      baseInputSize: isMobile ? '1rem' : '0.875rem',
+                      baseButtonSize: '0.875rem',
+                      baseInputSize: '0.875rem',
                     },
                   },
                 },
                 className: {
-                  container: 'space-y-4',
-                  button: `w-full px-4 py-${isMobile ? '3' : '2.5'} text-white font-medium rounded-lg shadow-sm hover:opacity-90 transition-opacity duration-200 text-${isMobile ? 'base' : 'sm'}`,
-                  input: `w-full px-3 py-${isMobile ? '3' : '2'} border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow duration-200 text-${isMobile ? 'base' : 'sm'}`,
-                  label: `block text-${isMobile ? 'base' : 'sm'} font-medium text-gray-700 dark:text-gray-300 mb-1`,
-                  message: `text-${isMobile ? 'base' : 'sm'} text-gray-600 dark:text-gray-400 mt-1`,
+                  container: 'space-y-3',
+                  button: 'w-full px-4 py-2.5 text-white font-medium rounded-lg shadow-sm hover:opacity-90 transition-opacity duration-200',
+                  input: 'w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow duration-200',
+                  label: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1',
+                  message: 'text-sm text-gray-600 dark:text-gray-400 mt-1',
                   anchor: 'text-blue-600 hover:text-blue-700 font-medium',
                   divider: 'my-4',
                 },

@@ -7,7 +7,7 @@
   "display": "standalone",
   "background_color": "#450d82",
   "theme_color": "#450d82",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
@@ -71,37 +71,5 @@
       "description": "Análises inteligentes",
       "url": "/ai-insights"
     }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/screen1.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "/screenshots/screen2.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "/screenshots/mobile1.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "/screenshots/mobile2.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ],
-  "related_applications": [],
-  "prefer_related_applications": false,
-  "categories": ["business", "productivity", "utilities"],
-  "edge_side_panel": {
-    "preferred_width": 480
-  }
+  ]
 }
