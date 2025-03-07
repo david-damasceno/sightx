@@ -154,7 +154,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user, toast])
 
-  // Load default organization
+  // Load default organization - Modificado para resolver o problema
   useEffect(() => {
     let mounted = true
 
@@ -176,18 +176,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .eq('user_id', user.id)
           .maybeSingle()
 
-        if (memberError) throw memberError
-
-        if (memberData?.organization_id) {
+        if (memberError) {
+          console.error('Error loading organization membership:', memberError)
+          if (mounted) setCurrentOrganization(null)
+        } else if (memberData?.organization_id) {
+          console.log('Found organization membership:', memberData.organization_id)
           const { data: org, error: orgError } = await supabase
             .from('organizations')
             .select('*')
             .eq('id', memberData.organization_id)
             .maybeSingle()
 
-          if (orgError) throw orgError
-          console.log('Organization loaded:', org)
-          if (mounted) setCurrentOrganization(org)
+          if (orgError) {
+            console.error('Error loading organization details:', orgError)
+            if (mounted) setCurrentOrganization(null)
+          } else {
+            console.log('Organization loaded:', org)
+            if (mounted && org) setCurrentOrganization(org)
+            else if (mounted) setCurrentOrganization(null)
+          }
         } else {
           console.log('No organization found for user')
           if (mounted) setCurrentOrganization(null)

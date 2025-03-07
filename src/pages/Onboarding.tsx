@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useToast } from "@/hooks/use-toast"
@@ -25,7 +24,7 @@ export default function Onboarding() {
   const [state, setState] = useState("")
   const [description, setDescription] = useState("")
   const [companySize, setCompanySize] = useState("")
-  const { session } = useAuth()
+  const { session, currentOrganization } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
   const { createOrganization } = useOrganization()
@@ -33,55 +32,26 @@ export default function Onboarding() {
   useEffect(() => {
     let mounted = true
 
-    const checkExistingOrganization = async () => {
-      if (!session?.user) {
-        if (mounted) {
-          setInitialLoading(false)
-          navigate('/login')
-        }
-        return
-      }
-
-      try {
-        const { data: memberData, error: memberError } = await supabase
-          .from('organization_members')
-          .select('organization_id')
-          .eq('user_id', session.user.id)
-          .maybeSingle()
-
-        if (memberError) throw memberError
-
-        if (memberData && mounted) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({ onboarded: true })
-            .eq('id', session.user.id)
-
-          if (profileError) throw profileError
-
-          navigate('/')
-          return
-        }
-      } catch (error) {
-        console.error('Error checking organization:', error)
-        toast({
-          variant: "destructive",
-          title: "Erro",
-          description: "Não foi possível verificar sua organização. Tente novamente.",
-        })
-      } finally {
-        if (mounted) {
-          setInitialLoading(false)
-        }
-      }
+    if (currentOrganization && mounted) {
+      console.log("Usuário já tem organização, redirecionando para home")
+      navigate('/')
+      return
     }
 
-    checkExistingOrganization()
+    if (!session?.user && mounted) {
+      console.log("Usuário não autenticado, redirecionando para login")
+      navigate('/login')
+      return
+    }
+
+    if (mounted) {
+      setInitialLoading(false)
+    }
 
     return () => {
       mounted = false
     }
-  }, [session, navigate, toast])
+  }, [session, currentOrganization, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,6 +59,14 @@ export default function Onboarding() {
 
     try {
       setLoading(true)
+      console.log("Criando organização:", {
+        orgName,
+        sector,
+        city,
+        state,
+        description
+      })
+
       const org = await createOrganization(
         orgName.trim(),
         sector.trim(),
@@ -114,7 +92,9 @@ export default function Onboarding() {
         description: "Sua organização foi criada com sucesso.",
       })
 
-      navigate('/')
+      setTimeout(() => {
+        navigate('/')
+      }, 500)
     } catch (error: any) {
       console.error('Erro ao criar organização:', error)
       toast({

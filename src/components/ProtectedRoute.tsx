@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedRouteProps) {
-  const { session, loading, organizationLoading, profileLoading, currentOrganization } = useAuth()
+  const { session, loading, organizationLoading, profileLoading, currentOrganization, profile } = useAuth()
   const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null)
   const [checkingOnboarding, setCheckingOnboarding] = useState(true)
   const location = useLocation()
@@ -47,7 +47,7 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
     }
   }, [session, checkOnboarding])
 
-  // Adicionando logs para debug
+  // Adicionando logs mais detalhados para debug
   console.log('ProtectedRoute state:', { 
     loading, 
     profileLoading, 
@@ -55,11 +55,13 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
     checkingOnboarding,
     session: !!session,
     isOnboarded,
+    profile: !!profile,
     path: location.pathname,
-    hasOrg: !!currentOrganization
+    hasOrg: !!currentOrganization,
+    onboardingFlag: profile?.onboarded
   })
 
-  // Mostra loading durante qualquer verificação inicial
+  // Garante que não renderizemos nada até que o estado inicial seja carregado
   if (loading || (checkOnboarding && checkingOnboarding) || profileLoading || organizationLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -79,20 +81,21 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
     return <Navigate to="/login" state={{ from: location.pathname }} replace />
   }
 
+  // IMPORTANTE: Verificação específica para a página de onboarding
+  if (location.pathname === '/onboarding') {
+    // Se já tiver uma organização, redireciona para home
+    if (currentOrganization) {
+      return <Navigate to="/" replace />
+    }
+    // Se estiver na página de onboarding, permitimos renderizar o conteúdo mesmo sem ter organização
+    return <>{children}</>
+  }
+
   // Se não tiver organização e não estiver na página de onboarding, redireciona para onboarding
-  if (!currentOrganization && location.pathname !== '/onboarding') {
+  if (!currentOrganization) {
     return <Navigate to="/onboarding" replace />
   }
 
-  // Redireciona para onboarding se necessário e não estiver já na página de onboarding
-  if (checkOnboarding && !isOnboarded && location.pathname !== '/onboarding') {
-    return <Navigate to="/onboarding" replace />
-  }
-
-  // Se já estiver onboarded e tentar acessar a página de onboarding, redireciona para home
-  if (isOnboarded && location.pathname === '/onboarding') {
-    return <Navigate to="/" replace />
-  }
-
+  // Se chegou até aqui, é uma rota protegida normal que pode ser renderizada
   return <>{children}</>
 }
