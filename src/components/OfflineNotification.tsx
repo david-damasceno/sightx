@@ -8,6 +8,19 @@ export default function OfflineNotification() {
   const isOnline = useOnlineStatus();
   const [showOffline, setShowOffline] = useState(false);
   const [showReconnected, setShowReconnected] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Detectar se está em dispositivo móvel
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     if (!isOnline) {
@@ -29,22 +42,22 @@ export default function OfflineNotification() {
   if (!showOffline && !showReconnected) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 max-w-sm">
+    <div className={`fixed ${isMobile ? 'top-2 right-2 left-2 z-50' : 'top-4 right-4 z-50 max-w-sm'}`}>
       {showOffline && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="shadow-lg animate-fade-in">
           <WifiOff className="h-4 w-4" />
-          <AlertTitle>Sem conexão</AlertTitle>
-          <AlertDescription>
+          <AlertTitle className={isMobile ? 'text-base' : ''}>Sem conexão</AlertTitle>
+          <AlertDescription className={isMobile ? 'text-sm' : ''}>
             Você está offline. Algumas funcionalidades podem estar limitadas.
           </AlertDescription>
         </Alert>
       )}
       
       {showReconnected && (
-        <Alert variant="default" className="bg-green-100 dark:bg-green-900">
+        <Alert variant="default" className="bg-green-100 dark:bg-green-900 shadow-lg animate-fade-in">
           <Wifi className="h-4 w-4" />
-          <AlertTitle>Conectado</AlertTitle>
-          <AlertDescription>
+          <AlertTitle className={isMobile ? 'text-base' : ''}>Conectado</AlertTitle>
+          <AlertDescription className={isMobile ? 'text-sm' : ''}>
             Sua conexão foi restabelecida.
           </AlertDescription>
         </Alert>
