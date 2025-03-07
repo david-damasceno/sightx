@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -7,6 +8,8 @@ import { ThemeProvider } from "next-themes"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { AppNavbar } from "@/components/AppNavbar"
+import PWAInstallPrompt from "@/components/PWAInstallPrompt"
+import OfflineNotification from "@/components/OfflineNotification"
 import Index from "./pages/Index"
 import Login from "./pages/Login"
 import Onboarding from "./pages/Onboarding"
@@ -31,6 +34,8 @@ const AppContent = () => {
   return (
     <div className="min-h-screen flex flex-col w-full">
       {!isLoginPage && !isOnboardingPage && <AppNavbar />}
+      <PWAInstallPrompt />
+      <OfflineNotification />
       <main className={`flex-1 ${!isLoginPage && !isOnboardingPage ? 'pt-16' : ''}`}>
         <Routes>
           <Route path="/login" element={<Login />} />
