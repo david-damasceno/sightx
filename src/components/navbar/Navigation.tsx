@@ -1,3 +1,4 @@
+
 import { useLocation } from "react-router-dom"
 import { Home, Share2, Users, Brain, MessageSquare, FileText, DollarSign, TrendingUp, Database } from "lucide-react"
 import { NavItem } from "./NavItem"
@@ -54,7 +55,7 @@ export function Navigation() {
   const location = useLocation()
   
   return (
-    <div className="hidden md:flex items-center space-x-1">
+    <div className="hidden md:flex items-center space-x-1 overflow-x-auto">
       {menuItems.map((item) => (
         <NavItem
           key={item.href}

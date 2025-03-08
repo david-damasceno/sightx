@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { AppNavbar } from "@/components/AppNavbar"
 import PWAInstallPrompt from "@/components/PWAInstallPrompt"
 import OfflineNotification from "@/components/OfflineNotification"
+import { Analytics } from "@vercel/analytics/react"
 import Index from "./pages/Index"
 import Login from "./pages/Login"
 import Onboarding from "./pages/Onboarding"
@@ -138,6 +139,7 @@ const AppContent = () => {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <Analytics />
     </div>
   )
 }

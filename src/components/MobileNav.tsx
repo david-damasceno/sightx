@@ -98,8 +98,12 @@ export function MobileNav() {
                   : "text-muted-foreground hover:text-primary"
               )}
             >
-              <item.icon className="h-5 w-5 mb-1" />
-              <span>{item.title}</span>
+              <item.icon className={cn(
+                "h-6 w-6 mb-1",
+                activeItem === item.href
+                  ? "text-foreground" 
+                  : "text-muted-foreground"
+              )} />
             </Link>
           ))}
         </nav>
@@ -122,14 +126,6 @@ export function MobileNav() {
             <div className="p-4 border-b">
               <div className="flex items-center justify-between">
                 <Logo />
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setOpen(false)}
-                >
-                  <X className="h-5 w-5" />
-                  <span className="sr-only">Fechar</span>
-                </Button>
               </div>
             </div>
             <div className="flex-1 overflow-auto py-2">
