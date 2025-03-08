@@ -2,6 +2,7 @@
 import { useLocation } from "react-router-dom"
 import { Home, Share2, Users, Brain, MessageSquare, FileText, DollarSign, TrendingUp, Database } from "lucide-react"
 import { NavItem } from "./NavItem"
+import { useMobile } from "@/hooks/use-mobile"
 
 const menuItems = [
   {
@@ -53,10 +54,16 @@ const menuItems = [
 
 export function Navigation() {
   const location = useLocation()
+  const isMobile = useMobile()
+  
+  // Filtra os itens mais importantes para a versão mobile
+  const importantItems = isMobile 
+    ? menuItems.filter(item => ["/", "/sales", "/ai-insights", "/reports"].includes(item.href))
+    : menuItems
   
   return (
     <div className="hidden md:flex items-center space-x-1 overflow-x-auto">
-      {menuItems.map((item) => (
+      {importantItems.map((item) => (
         <NavItem
           key={item.href}
           href={item.href}

@@ -11,6 +11,7 @@ import { AppNavbar } from "@/components/AppNavbar"
 import PWAInstallPrompt from "@/components/PWAInstallPrompt"
 import OfflineNotification from "@/components/OfflineNotification"
 import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/react"
 import Index from "./pages/Index"
 import Login from "./pages/Login"
 import Onboarding from "./pages/Onboarding"
@@ -140,6 +141,7 @@ const AppContent = () => {
         </Routes>
       </main>
       <Analytics />
+      <SpeedInsights />
     </div>
   )
 }
