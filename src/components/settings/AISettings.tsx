@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -9,47 +10,47 @@ export function AISettings() {
   
   const handleSave = () => {
     toast({
-      title: "Settings saved",
-      description: "AI settings have been updated successfully.",
+      title: "Configurações salvas",
+      description: "As configurações de IA foram atualizadas com sucesso.",
     })
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-medium">AI Settings</h2>
+        <h2 className="text-lg font-medium">Configurações de IA</h2>
         <p className="text-sm text-muted-foreground">
-          Configure AI analysis and prediction preferences
+          Configure preferências de análise e previsão de IA
         </p>
       </div>
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Analysis Frequency</Label>
-          <Select defaultValue="daily">
+          <Label>Frequência de Análise</Label>
+          <Select defaultValue="daily" className="w-full">
             <SelectTrigger>
-              <SelectValue placeholder="Select frequency" />
+              <SelectValue placeholder="Selecione a frequência" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="hourly">Hourly</SelectItem>
-              <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="weekly">Weekly</SelectItem>
+              <SelectItem value="hourly">A cada hora</SelectItem>
+              <SelectItem value="daily">Diário</SelectItem>
+              <SelectItem value="weekly">Semanal</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between py-2">
           <div className="space-y-0.5">
-            <Label>Automated Insights</Label>
+            <Label>Insights Automatizados</Label>
             <p className="text-sm text-muted-foreground">
-              Generate AI-powered business insights
+              Gerar insights de negócios com IA
             </p>
           </div>
           <Switch defaultChecked />
         </div>
       </div>
 
-      <Button onClick={handleSave}>Save Changes</Button>
+      <Button onClick={handleSave} className="w-full md:w-auto">Salvar Alterações</Button>
     </div>
   )
 }

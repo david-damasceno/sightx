@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -8,38 +9,38 @@ export function LocationsSettings() {
   
   const handleSave = () => {
     toast({
-      title: "Settings saved",
-      description: "Location settings have been updated successfully.",
+      title: "Configurações salvas",
+      description: "As configurações de localização foram atualizadas com sucesso.",
     })
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-medium">Locations</h2>
+        <h2 className="text-lg font-medium">Localizações</h2>
         <p className="text-sm text-muted-foreground">
-          Manage your business locations and geography settings
+          Gerencie as localizações do seu negócio e configurações geográficas
         </p>
       </div>
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Default Location</Label>
-          <Input placeholder="Enter default location" />
+          <Label>Localização Padrão</Label>
+          <Input placeholder="Digite a localização padrão" className="w-full" />
         </div>
 
         <div className="space-y-2">
-          <Label>Radius (km)</Label>
-          <Input type="number" placeholder="Enter radius" defaultValue={10} />
+          <Label>Raio (km)</Label>
+          <Input type="number" placeholder="Digite o raio" defaultValue={10} className="w-full" />
         </div>
 
         <div className="space-y-2">
-          <Label>Google Maps API Key</Label>
-          <Input type="password" placeholder="Enter API key" />
+          <Label>Chave API do Google Maps</Label>
+          <Input type="password" placeholder="Digite a chave API" className="w-full" />
         </div>
       </div>
 
-      <Button onClick={handleSave}>Save Changes</Button>
+      <Button onClick={handleSave} className="w-full md:w-auto">Salvar Alterações</Button>
     </div>
   )
 }

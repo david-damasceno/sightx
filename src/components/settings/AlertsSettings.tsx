@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -8,53 +9,53 @@ export function AlertsSettings() {
   
   const handleSave = () => {
     toast({
-      title: "Settings saved",
-      description: "Alert settings have been updated successfully.",
+      title: "Configurações salvas",
+      description: "As configurações de alerta foram atualizadas com sucesso.",
     })
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-medium">Alerts & Notifications</h2>
+        <h2 className="text-lg font-medium">Alertas & Notificações</h2>
         <p className="text-sm text-muted-foreground">
-          Configure your notification preferences
+          Configure suas preferências de notificação
         </p>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between py-2">
           <div className="space-y-0.5">
-            <Label>Email Notifications</Label>
+            <Label>Notificações por E-mail</Label>
             <p className="text-sm text-muted-foreground">
-              Receive important updates via email
+              Receba atualizações importantes por e-mail
             </p>
           </div>
           <Switch defaultChecked />
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between py-2">
           <div className="space-y-0.5">
-            <Label>Push Notifications</Label>
+            <Label>Notificações Push</Label>
             <p className="text-sm text-muted-foreground">
-              Get real-time alerts on your device
+              Receba alertas em tempo real no seu dispositivo
             </p>
           </div>
           <Switch defaultChecked />
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between py-2">
           <div className="space-y-0.5">
-            <Label>SMS Alerts</Label>
+            <Label>Alertas SMS</Label>
             <p className="text-sm text-muted-foreground">
-              Receive critical alerts via SMS
+              Receba alertas críticos via SMS
             </p>
           </div>
           <Switch />
         </div>
       </div>
 
-      <Button onClick={handleSave}>Save Changes</Button>
+      <Button onClick={handleSave} className="w-full md:w-auto">Salvar Alterações</Button>
     </div>
   )
 }

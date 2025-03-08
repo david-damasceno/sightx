@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -8,55 +9,55 @@ export function LocalizationSettings() {
   
   const handleSave = () => {
     toast({
-      title: "Settings saved",
-      description: "Localization settings have been updated successfully.",
+      title: "Configurações salvas",
+      description: "As configurações de localização foram atualizadas com sucesso.",
     })
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-medium">Localization</h2>
+        <h2 className="text-lg font-medium">Localização</h2>
         <p className="text-sm text-muted-foreground">
-          Configure regional and language settings
+          Configure idioma e configurações regionais
         </p>
       </div>
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Default Language</Label>
-          <Select defaultValue="en">
+          <Label>Idioma Padrão</Label>
+          <Select defaultValue="pt" className="w-full">
             <SelectTrigger>
-              <SelectValue placeholder="Select language" />
+              <SelectValue placeholder="Selecione o idioma" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="en">English</SelectItem>
-              <SelectItem value="es">Spanish</SelectItem>
-              <SelectItem value="pt">Portuguese</SelectItem>
-              <SelectItem value="fr">French</SelectItem>
+              <SelectItem value="en">Inglês</SelectItem>
+              <SelectItem value="es">Espanhol</SelectItem>
+              <SelectItem value="pt">Português</SelectItem>
+              <SelectItem value="fr">Francês</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label>Date Format</Label>
-          <Select defaultValue="mdy">
+          <Label>Formato de Data</Label>
+          <Select defaultValue="dmy" className="w-full">
             <SelectTrigger>
-              <SelectValue placeholder="Select date format" />
+              <SelectValue placeholder="Selecione o formato de data" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="mdy">MM/DD/YYYY</SelectItem>
-              <SelectItem value="dmy">DD/MM/YYYY</SelectItem>
-              <SelectItem value="ymd">YYYY/MM/DD</SelectItem>
+              <SelectItem value="mdy">MM/DD/AAAA</SelectItem>
+              <SelectItem value="dmy">DD/MM/AAAA</SelectItem>
+              <SelectItem value="ymd">AAAA/MM/DD</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label>Number Format</Label>
-          <Select defaultValue="us">
+          <Label>Formato de Número</Label>
+          <Select defaultValue="eu" className="w-full">
             <SelectTrigger>
-              <SelectValue placeholder="Select number format" />
+              <SelectValue placeholder="Selecione o formato de número" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="us">1,234.56</SelectItem>
@@ -66,7 +67,7 @@ export function LocalizationSettings() {
         </div>
       </div>
 
-      <Button onClick={handleSave}>Save Changes</Button>
+      <Button onClick={handleSave} className="w-full md:w-auto">Salvar Alterações</Button>
     </div>
   )
 }

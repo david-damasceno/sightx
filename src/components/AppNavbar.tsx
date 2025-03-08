@@ -1,14 +1,14 @@
+
 import { useEffect, useState } from "react"
-import { useLocation } from "react-router-dom"
 import { ModeToggle } from "@/components/mode-toggle"
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { Logo } from "./navbar/Logo"
 import { Navigation } from "./navbar/Navigation"
 import { UserMenu } from "./navbar/UserMenu"
+import { MobileNav } from "./MobileNav"
 
 export function AppNavbar() {
-  const location = useLocation()
   const { session } = useAuth()
   const [profile, setProfile] = useState<{
     full_name: string;
@@ -46,20 +46,25 @@ export function AppNavbar() {
   }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-green-100/20 dark:border-emerald-900/20">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Logo />
-            <Navigation />
-          </div>
+    <>
+      <nav className="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-green-100/20 dark:border-emerald-900/20 safe-area-top">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between">
+            <div className="flex items-center gap-8">
+              <Logo />
+              <Navigation />
+            </div>
 
-          <div className="flex items-center gap-4">
-            <ModeToggle />
-            <UserMenu profile={profile} />
+            <div className="flex items-center gap-4">
+              <ModeToggle />
+              <UserMenu profile={profile} />
+            </div>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+      
+      {/* Menu para Mobile */}
+      <MobileNav />
+    </>
   )
 }

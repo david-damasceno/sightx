@@ -36,7 +36,7 @@ const AppContent = () => {
       {!isLoginPage && !isOnboardingPage && <AppNavbar />}
       <PWAInstallPrompt />
       <OfflineNotification />
-      <main className={`flex-1 ${!isLoginPage && !isOnboardingPage ? 'pt-16' : ''}`}>
+      <main className={`flex-1 ${!isLoginPage && !isOnboardingPage ? 'pt-16' : ''} pb-16 md:pb-0`}>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route
