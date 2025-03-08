@@ -29,9 +29,9 @@ export default function OfflineNotification() {
   if (!showOffline && !showReconnected) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 max-w-sm">
+    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-[90%] max-w-sm">
       {showOffline && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="shadow-lg animate-fade-in">
           <WifiOff className="h-4 w-4" />
           <AlertTitle>Sem conexão</AlertTitle>
           <AlertDescription>
@@ -41,7 +41,7 @@ export default function OfflineNotification() {
       )}
       
       {showReconnected && (
-        <Alert variant="default" className="bg-green-100 dark:bg-green-900">
+        <Alert variant="default" className="bg-green-100 dark:bg-green-900 shadow-lg animate-fade-in">
           <Wifi className="h-4 w-4" />
           <AlertTitle>Conectado</AlertTitle>
           <AlertDescription>

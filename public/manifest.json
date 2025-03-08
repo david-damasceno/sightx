@@ -3,7 +3,7 @@
   "name": "SightX - Análise Empresarial Inteligente",
   "short_name": "SightX",
   "description": "Transforme Dados em Decisões Inteligentes com IA",
-  "start_url": "/",
+  "start_url": "/splash.html",
   "display": "standalone",
   "background_color": "#450d82",
   "theme_color": "#450d82",
@@ -71,5 +71,22 @@
       "description": "Análises inteligentes",
       "url": "/ai-insights"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshots/mobile.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "scope": "/"
 }

@@ -236,6 +236,54 @@ export type Database = {
           },
         ]
       }
+      data_clientes_2025_03_06_947447: {
+        Row: {
+          categoria: string | null
+          cdigo: number | null
+          cidade: string | null
+          cnpj: string | null
+          created_at: string | null
+          id: string
+          ltima_compra: string | null
+          nome_fantasia: string | null
+          organization_id: string
+          projeo: string | null
+          razo_social: string | null
+          status: string | null
+          uf: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          cdigo?: number | null
+          cidade?: string | null
+          cnpj?: string | null
+          created_at?: string | null
+          id?: string
+          ltima_compra?: string | null
+          nome_fantasia?: string | null
+          organization_id: string
+          projeo?: string | null
+          razo_social?: string | null
+          status?: string | null
+          uf?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          cdigo?: number | null
+          cidade?: string | null
+          cnpj?: string | null
+          created_at?: string | null
+          id?: string
+          ltima_compra?: string | null
+          nome_fantasia?: string | null
+          organization_id?: string
+          projeo?: string | null
+          razo_social?: string | null
+          status?: string | null
+          uf?: string | null
+        }
+        Relationships: []
+      }
       data_file_changes: {
         Row: {
           changed_by: string | null
@@ -434,558 +482,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      data_pedidos__2__025100: {
-        Row: {
-          a_verificar: string | null
-          ateno: string | null
-          boleto_ok: string | null
-          boleto_rl: string | null
-          cancelado_motivo: string | null
-          cnpj: string | null
-          cobrana: string | null
-          conta_ok: string | null
-          created_at: string | null
-          creditodebito: number | null
-          data: number | null
-          data_cancelar: number | null
-          data_conta: number | null
-          data_deposito: number | null
-          data_nf: number | null
-          data_programado: number | null
-          data3: number | null
-          deposito_ok: string | null
-          despacho: string | null
-          fator: number | null
-          fatura: string | null
-          forma_liberao: string | null
-          fornecedor: string | null
-          fornecedor_pedido_ok: string | null
-          id: string
-          nf: string | null
-          nmero_resgate: number | null
-          numero: number | null
-          organization_id: string
-          origem: string | null
-          pagamento: string | null
-          pedido_programado: string | null
-          razo_social: string | null
-          romaneio: string | null
-          sazonal: string | null
-          status: string | null
-          tabela: string | null
-          totalpedido: number | null
-          uf: string | null
-          vale: string | null
-          vendedor: string | null
-          vendedor_responsvel: string | null
-          vgcd: string | null
-        }
-        Insert: {
-          a_verificar?: string | null
-          ateno?: string | null
-          boleto_ok?: string | null
-          boleto_rl?: string | null
-          cancelado_motivo?: string | null
-          cnpj?: string | null
-          cobrana?: string | null
-          conta_ok?: string | null
-          created_at?: string | null
-          creditodebito?: number | null
-          data?: number | null
-          data_cancelar?: number | null
-          data_conta?: number | null
-          data_deposito?: number | null
-          data_nf?: number | null
-          data_programado?: number | null
-          data3?: number | null
-          deposito_ok?: string | null
-          despacho?: string | null
-          fator?: number | null
-          fatura?: string | null
-          forma_liberao?: string | null
-          fornecedor?: string | null
-          fornecedor_pedido_ok?: string | null
-          id?: string
-          nf?: string | null
-          nmero_resgate?: number | null
-          numero?: number | null
-          organization_id: string
-          origem?: string | null
-          pagamento?: string | null
-          pedido_programado?: string | null
-          razo_social?: string | null
-          romaneio?: string | null
-          sazonal?: string | null
-          status?: string | null
-          tabela?: string | null
-          totalpedido?: number | null
-          uf?: string | null
-          vale?: string | null
-          vendedor?: string | null
-          vendedor_responsvel?: string | null
-          vgcd?: string | null
-        }
-        Update: {
-          a_verificar?: string | null
-          ateno?: string | null
-          boleto_ok?: string | null
-          boleto_rl?: string | null
-          cancelado_motivo?: string | null
-          cnpj?: string | null
-          cobrana?: string | null
-          conta_ok?: string | null
-          created_at?: string | null
-          creditodebito?: number | null
-          data?: number | null
-          data_cancelar?: number | null
-          data_conta?: number | null
-          data_deposito?: number | null
-          data_nf?: number | null
-          data_programado?: number | null
-          data3?: number | null
-          deposito_ok?: string | null
-          despacho?: string | null
-          fator?: number | null
-          fatura?: string | null
-          forma_liberao?: string | null
-          fornecedor?: string | null
-          fornecedor_pedido_ok?: string | null
-          id?: string
-          nf?: string | null
-          nmero_resgate?: number | null
-          numero?: number | null
-          organization_id?: string
-          origem?: string | null
-          pagamento?: string | null
-          pedido_programado?: string | null
-          razo_social?: string | null
-          romaneio?: string | null
-          sazonal?: string | null
-          status?: string | null
-          tabela?: string | null
-          totalpedido?: number | null
-          uf?: string | null
-          vale?: string | null
-          vendedor?: string | null
-          vendedor_responsvel?: string | null
-          vgcd?: string | null
-        }
-        Relationships: []
-      }
-      data_pedidos__2__391582: {
-        Row: {
-          a_verificar: string | null
-          ateno: string | null
-          boleto_ok: string | null
-          boleto_rl: string | null
-          cancelado_motivo: string | null
-          cnpj: string | null
-          cobrana: string | null
-          conta_ok: string | null
-          created_at: string | null
-          creditodebito: number | null
-          data: number | null
-          data_cancelar: number | null
-          data_conta: number | null
-          data_deposito: number | null
-          data_nf: number | null
-          data_programado: number | null
-          data3: number | null
-          deposito_ok: string | null
-          despacho: string | null
-          fator: number | null
-          fatura: string | null
-          forma_liberao: string | null
-          fornecedor: string | null
-          fornecedor_pedido_ok: string | null
-          id: string
-          nf: string | null
-          nmero_resgate: number | null
-          numero: number | null
-          organization_id: string
-          origem: string | null
-          pagamento: string | null
-          pedido_programado: string | null
-          razo_social: string | null
-          romaneio: string | null
-          sazonal: string | null
-          status: string | null
-          tabela: string | null
-          totalpedido: number | null
-          uf: string | null
-          vale: string | null
-          vendedor: string | null
-          vendedor_responsvel: string | null
-          vgcd: string | null
-        }
-        Insert: {
-          a_verificar?: string | null
-          ateno?: string | null
-          boleto_ok?: string | null
-          boleto_rl?: string | null
-          cancelado_motivo?: string | null
-          cnpj?: string | null
-          cobrana?: string | null
-          conta_ok?: string | null
-          created_at?: string | null
-          creditodebito?: number | null
-          data?: number | null
-          data_cancelar?: number | null
-          data_conta?: number | null
-          data_deposito?: number | null
-          data_nf?: number | null
-          data_programado?: number | null
-          data3?: number | null
-          deposito_ok?: string | null
-          despacho?: string | null
-          fator?: number | null
-          fatura?: string | null
-          forma_liberao?: string | null
-          fornecedor?: string | null
-          fornecedor_pedido_ok?: string | null
-          id?: string
-          nf?: string | null
-          nmero_resgate?: number | null
-          numero?: number | null
-          organization_id: string
-          origem?: string | null
-          pagamento?: string | null
-          pedido_programado?: string | null
-          razo_social?: string | null
-          romaneio?: string | null
-          sazonal?: string | null
-          status?: string | null
-          tabela?: string | null
-          totalpedido?: number | null
-          uf?: string | null
-          vale?: string | null
-          vendedor?: string | null
-          vendedor_responsvel?: string | null
-          vgcd?: string | null
-        }
-        Update: {
-          a_verificar?: string | null
-          ateno?: string | null
-          boleto_ok?: string | null
-          boleto_rl?: string | null
-          cancelado_motivo?: string | null
-          cnpj?: string | null
-          cobrana?: string | null
-          conta_ok?: string | null
-          created_at?: string | null
-          creditodebito?: number | null
-          data?: number | null
-          data_cancelar?: number | null
-          data_conta?: number | null
-          data_deposito?: number | null
-          data_nf?: number | null
-          data_programado?: number | null
-          data3?: number | null
-          deposito_ok?: string | null
-          despacho?: string | null
-          fator?: number | null
-          fatura?: string | null
-          forma_liberao?: string | null
-          fornecedor?: string | null
-          fornecedor_pedido_ok?: string | null
-          id?: string
-          nf?: string | null
-          nmero_resgate?: number | null
-          numero?: number | null
-          organization_id?: string
-          origem?: string | null
-          pagamento?: string | null
-          pedido_programado?: string | null
-          razo_social?: string | null
-          romaneio?: string | null
-          sazonal?: string | null
-          status?: string | null
-          tabela?: string | null
-          totalpedido?: number | null
-          uf?: string | null
-          vale?: string | null
-          vendedor?: string | null
-          vendedor_responsvel?: string | null
-          vgcd?: string | null
-        }
-        Relationships: []
-      }
-      data_pedidos__2__662578: {
-        Row: {
-          a_verificar: string | null
-          ateno: string | null
-          boleto_ok: string | null
-          boleto_rl: string | null
-          cancelado_motivo: string | null
-          cnpj: string | null
-          cobrana: string | null
-          conta_ok: string | null
-          created_at: string | null
-          creditodebito: number | null
-          data: number | null
-          data_cancelar: number | null
-          data_conta: number | null
-          data_deposito: number | null
-          data_nf: number | null
-          data_programado: number | null
-          data3: number | null
-          deposito_ok: string | null
-          despacho: string | null
-          fator: number | null
-          fatura: string | null
-          forma_liberao: string | null
-          fornecedor: string | null
-          fornecedor_pedido_ok: string | null
-          id: string
-          nf: string | null
-          nmero_resgate: number | null
-          numero: number | null
-          organization_id: string
-          origem: string | null
-          pagamento: string | null
-          pedido_programado: string | null
-          razo_social: string | null
-          romaneio: string | null
-          sazonal: string | null
-          status: string | null
-          tabela: string | null
-          totalpedido: number | null
-          uf: string | null
-          vale: string | null
-          vendedor: string | null
-          vendedor_responsvel: string | null
-          vgcd: string | null
-        }
-        Insert: {
-          a_verificar?: string | null
-          ateno?: string | null
-          boleto_ok?: string | null
-          boleto_rl?: string | null
-          cancelado_motivo?: string | null
-          cnpj?: string | null
-          cobrana?: string | null
-          conta_ok?: string | null
-          created_at?: string | null
-          creditodebito?: number | null
-          data?: number | null
-          data_cancelar?: number | null
-          data_conta?: number | null
-          data_deposito?: number | null
-          data_nf?: number | null
-          data_programado?: number | null
-          data3?: number | null
-          deposito_ok?: string | null
-          despacho?: string | null
-          fator?: number | null
-          fatura?: string | null
-          forma_liberao?: string | null
-          fornecedor?: string | null
-          fornecedor_pedido_ok?: string | null
-          id?: string
-          nf?: string | null
-          nmero_resgate?: number | null
-          numero?: number | null
-          organization_id: string
-          origem?: string | null
-          pagamento?: string | null
-          pedido_programado?: string | null
-          razo_social?: string | null
-          romaneio?: string | null
-          sazonal?: string | null
-          status?: string | null
-          tabela?: string | null
-          totalpedido?: number | null
-          uf?: string | null
-          vale?: string | null
-          vendedor?: string | null
-          vendedor_responsvel?: string | null
-          vgcd?: string | null
-        }
-        Update: {
-          a_verificar?: string | null
-          ateno?: string | null
-          boleto_ok?: string | null
-          boleto_rl?: string | null
-          cancelado_motivo?: string | null
-          cnpj?: string | null
-          cobrana?: string | null
-          conta_ok?: string | null
-          created_at?: string | null
-          creditodebito?: number | null
-          data?: number | null
-          data_cancelar?: number | null
-          data_conta?: number | null
-          data_deposito?: number | null
-          data_nf?: number | null
-          data_programado?: number | null
-          data3?: number | null
-          deposito_ok?: string | null
-          despacho?: string | null
-          fator?: number | null
-          fatura?: string | null
-          forma_liberao?: string | null
-          fornecedor?: string | null
-          fornecedor_pedido_ok?: string | null
-          id?: string
-          nf?: string | null
-          nmero_resgate?: number | null
-          numero?: number | null
-          organization_id?: string
-          origem?: string | null
-          pagamento?: string | null
-          pedido_programado?: string | null
-          razo_social?: string | null
-          romaneio?: string | null
-          sazonal?: string | null
-          status?: string | null
-          tabela?: string | null
-          totalpedido?: number | null
-          uf?: string | null
-          vale?: string | null
-          vendedor?: string | null
-          vendedor_responsvel?: string | null
-          vgcd?: string | null
-        }
-        Relationships: []
-      }
-      data_pedidos__2__958057: {
-        Row: {
-          a_verificar: string | null
-          ateno: string | null
-          boleto_ok: string | null
-          boleto_rl: string | null
-          cancelado_motivo: string | null
-          cnpj: string | null
-          cobrana: string | null
-          conta_ok: string | null
-          created_at: string | null
-          creditodebito: number | null
-          data: number | null
-          data_cancelar: number | null
-          data_conta: number | null
-          data_deposito: number | null
-          data_nf: number | null
-          data_programado: number | null
-          data3: number | null
-          deposito_ok: string | null
-          despacho: string | null
-          fator: number | null
-          fatura: string | null
-          forma_liberao: string | null
-          fornecedor: string | null
-          fornecedor_pedido_ok: string | null
-          id: string
-          nf: string | null
-          nmero_resgate: number | null
-          numero: number | null
-          organization_id: string
-          origem: string | null
-          pagamento: string | null
-          pedido_programado: string | null
-          razo_social: string | null
-          romaneio: string | null
-          sazonal: string | null
-          status: string | null
-          tabela: string | null
-          totalpedido: number | null
-          uf: string | null
-          vale: string | null
-          vendedor: string | null
-          vendedor_responsvel: string | null
-          vgcd: string | null
-        }
-        Insert: {
-          a_verificar?: string | null
-          ateno?: string | null
-          boleto_ok?: string | null
-          boleto_rl?: string | null
-          cancelado_motivo?: string | null
-          cnpj?: string | null
-          cobrana?: string | null
-          conta_ok?: string | null
-          created_at?: string | null
-          creditodebito?: number | null
-          data?: number | null
-          data_cancelar?: number | null
-          data_conta?: number | null
-          data_deposito?: number | null
-          data_nf?: number | null
-          data_programado?: number | null
-          data3?: number | null
-          deposito_ok?: string | null
-          despacho?: string | null
-          fator?: number | null
-          fatura?: string | null
-          forma_liberao?: string | null
-          fornecedor?: string | null
-          fornecedor_pedido_ok?: string | null
-          id?: string
-          nf?: string | null
-          nmero_resgate?: number | null
-          numero?: number | null
-          organization_id: string
-          origem?: string | null
-          pagamento?: string | null
-          pedido_programado?: string | null
-          razo_social?: string | null
-          romaneio?: string | null
-          sazonal?: string | null
-          status?: string | null
-          tabela?: string | null
-          totalpedido?: number | null
-          uf?: string | null
-          vale?: string | null
-          vendedor?: string | null
-          vendedor_responsvel?: string | null
-          vgcd?: string | null
-        }
-        Update: {
-          a_verificar?: string | null
-          ateno?: string | null
-          boleto_ok?: string | null
-          boleto_rl?: string | null
-          cancelado_motivo?: string | null
-          cnpj?: string | null
-          cobrana?: string | null
-          conta_ok?: string | null
-          created_at?: string | null
-          creditodebito?: number | null
-          data?: number | null
-          data_cancelar?: number | null
-          data_conta?: number | null
-          data_deposito?: number | null
-          data_nf?: number | null
-          data_programado?: number | null
-          data3?: number | null
-          deposito_ok?: string | null
-          despacho?: string | null
-          fator?: number | null
-          fatura?: string | null
-          forma_liberao?: string | null
-          fornecedor?: string | null
-          fornecedor_pedido_ok?: string | null
-          id?: string
-          nf?: string | null
-          nmero_resgate?: number | null
-          numero?: number | null
-          organization_id?: string
-          origem?: string | null
-          pagamento?: string | null
-          pedido_programado?: string | null
-          razo_social?: string | null
-          romaneio?: string | null
-          sazonal?: string | null
-          status?: string | null
-          tabela?: string | null
-          totalpedido?: number | null
-          uf?: string | null
-          vale?: string | null
-          vendedor?: string | null
-          vendedor_responsvel?: string | null
-          vgcd?: string | null
-        }
-        Relationships: []
       }
       data_processing_results: {
         Row: {

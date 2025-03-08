@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SightX - Carregando</title>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <style>
+    :root {
+      --primary: #450d82;
+      --secondary: #4abd40;
+      --background: #f9f9fb;
+      --text: #333;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #1a1a1a;
+        --text: #f1f1f1;
+      }
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter var', sans-serif;
+    }
+    
+    body {
+      background-color: var(--background);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+    
+    .splash-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      text-align: center;
+      padding: 2rem;
+    }
+    
+    .logo-container {
+      width: 120px;
+      height: 120px;
+      position: relative;
+      animation: pulse 2s infinite;
+    }
+    
+    .logo {
+      width: 100%;
+      height: 100%;
+    }
+    
+    .app-name {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--primary), #6a3cb5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    
+    .app-slogan {
+      font-size: 1rem;
+      opacity: 0.8;
+    }
+    
+    .loading-bar {
+      width: 200px;
+      height: 4px;
+      background-color: rgba(150, 150, 150, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+    
+    .loading-progress {
+      height: 100%;
+      width: 30%;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 2px;
+      animation: loading 1.5s infinite ease-in-out;
+    }
+    
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+    
+    @keyframes loading {
+      0% {
+        width: 0%;
+        margin-left: 0%;
+      }
+      50% {
+        width: 70%;
+        margin-left: 0%;
+      }
+      100% {
+        width: 30%;
+        margin-left: 70%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash-container">
+    <div class="logo-container">
+      <svg class="logo" xmlns="http://www.w3.org/2000/svg" width="400" viewBox="0 0 300 187.5" height="250">
+        <defs>
+          <clipPath id="clip1"><path d="M 53.78 53 L 127.51 53 L 127.51 133.84 L 53.78 133.84 Z M 53.78 53"/></clipPath>
+          <clipPath id="clip2"><path d="M 53.78 93.5 L 127.51 53.15 L 127.51 133.84 Z M 53.78 93.5"/></clipPath>
+          <clipPath id="clip3"><path d="M 172.49 53.15 L 246.22 53.15 L 246.22 134 L 172.49 134 Z M 172.49 53.15"/></clipPath>
+          <clipPath id="clip4"><path d="M 246.22 93.5 L 172.49 133.85 L 172.49 53.15 Z M 246.22 93.5"/></clipPath>
+        </defs>
+        <g clip-path="url(#clip1)"><g clip-path="url(#clip2)"><path fill="#ffffff" d="M 53.78 133.84 L 53.78 53.2 L 127.51 53.2 L 127.51 133.84 Z M 53.78 133.84"/></g></g>
+        <g clip-path="url(#clip3)"><g clip-path="url(#clip4)"><path fill="#ffffff" d="M 246.22 53.15 L 246.22 133.79 L 172.49 133.79 L 172.49 53.15 Z M 246.22 53.15"/></g></g>
+        <path fill="#450d82" d="M 142.29 174 L 14.98 98.1 C 13.37 97.13 12.38 95.39 12.38 93.5 C 12.38 91.62 13.37 89.87 14.98 88.91 L 142.29 13.03 C 147.04 10.2 152.95 10.2 157.7 13.03 L 285 88.91 C 286.62 89.87 287.61 91.62 287.61 93.5 C 287.61 95.39 286.62 97.13 285 98.1 L 157.7 174 C 152.95 176.8 147.04 176.8 142.29 174 Z M 142.29 174"/>
+        <path fill="#459d3d" d="M 86.56 123 L 83.11 79.56 L 158.62 73.55 L 162.07 117 Z M 86.56 123"/>
+        <path fill="#4abd40" d="M 213.43 64 L 216.88 107.44 L 141.37 113.44 L 137.92 70 Z M 213.43 64"/>
+      </svg>
+    </div>
+    <div>
+      <h1 class="app-name">SightX</h1>
+      <p class="app-slogan">Transforme Dados em Decisões Inteligentes com IA</p>
+    </div>
+    <div class="loading-bar">
+      <div class="loading-progress"></div>
+    </div>
+  </div>
+  
+  <script>
+    // Redirecionar para a página principal após 2.5 segundos
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 2500);
+  </script>
+</body>
+</html>
