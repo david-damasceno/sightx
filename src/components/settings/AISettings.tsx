@@ -27,8 +27,8 @@ export function AISettings() {
       <div className="space-y-4">
         <div className="space-y-2">
           <Label>Frequência de Análise</Label>
-          <Select defaultValue="daily" className="w-full">
-            <SelectTrigger>
+          <Select defaultValue="daily">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecione a frequência" />
             </SelectTrigger>
             <SelectContent>

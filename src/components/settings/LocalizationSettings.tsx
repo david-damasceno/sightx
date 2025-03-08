@@ -26,8 +26,8 @@ export function LocalizationSettings() {
       <div className="space-y-4">
         <div className="space-y-2">
           <Label>Idioma Padrão</Label>
-          <Select defaultValue="pt" className="w-full">
-            <SelectTrigger>
+          <Select defaultValue="pt">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecione o idioma" />
             </SelectTrigger>
             <SelectContent>
@@ -41,8 +41,8 @@ export function LocalizationSettings() {
 
         <div className="space-y-2">
           <Label>Formato de Data</Label>
-          <Select defaultValue="dmy" className="w-full">
-            <SelectTrigger>
+          <Select defaultValue="dmy">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecione o formato de data" />
             </SelectTrigger>
             <SelectContent>
@@ -55,8 +55,8 @@ export function LocalizationSettings() {
 
         <div className="space-y-2">
           <Label>Formato de Número</Label>
-          <Select defaultValue="eu" className="w-full">
-            <SelectTrigger>
+          <Select defaultValue="eu">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecione o formato de número" />
             </SelectTrigger>
             <SelectContent>
