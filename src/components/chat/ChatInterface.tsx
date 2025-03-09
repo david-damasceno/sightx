@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { useToast } from "@/components/ui/use-toast"
 import { ChatMessageList } from "./ChatMessageList"
@@ -12,12 +13,14 @@ interface ChatMessage {
   timestamp: Date
 }
 
-interface ChatInterfaceProps {
+export interface ChatInterfaceProps {
   selectedChat: string | null
   onSelectChat: (chatId: string | null) => void
+  onOpenSidebar?: () => void
+  isSidebarCollapsed?: boolean
 }
 
-export function ChatInterface({ selectedChat, onSelectChat }: ChatInterfaceProps) {
+export function ChatInterface({ selectedChat, onSelectChat, onOpenSidebar, isSidebarCollapsed }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputMessage, setInputMessage] = useState("")
   const [isRecording, setIsRecording] = useState(false)
