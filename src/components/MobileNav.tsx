@@ -8,7 +8,8 @@ import {
   DollarSign, 
   Settings,
   Menu,
-  X
+  X,
+  Database
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,11 @@ const menuItems = [
     icon: DollarSign
   },
   {
+    title: "Dados",
+    href: "/data",
+    icon: Database
+  },
+  {
     title: "IA Insights",
     href: "/ai-insights",
     icon: Brain
@@ -35,11 +41,6 @@ const menuItems = [
     title: "Relatórios",
     href: "/reports",
     icon: FileText
-  },
-  {
-    title: "Configurações",
-    href: "/settings/general",
-    icon: Settings
   }
 ];
 
@@ -54,6 +55,11 @@ const fullMenuItems = [
     title: "Vendas",
     href: "/sales",
     icon: DollarSign
+  },
+  {
+    title: "Dados",
+    href: "/data",
+    icon: Database
   },
   {
     title: "IA Insights",

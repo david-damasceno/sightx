@@ -24,6 +24,7 @@ import Sales from "./pages/Sales"
 import Performance from "./pages/Performance"
 import Profile from "./pages/Profile"
 import Settings from "./pages/Settings"
+import DataConnectors from "./pages/DataConnectors"
 
 const queryClient = new QueryClient()
 
@@ -69,6 +70,14 @@ const AppContent = () => {
             element={
               <ProtectedRoute checkOnboarding>
                 <Performance />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/data"
+            element={
+              <ProtectedRoute checkOnboarding>
+                <DataConnectors />
               </ProtectedRoute>
             }
           />

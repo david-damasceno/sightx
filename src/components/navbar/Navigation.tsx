@@ -1,6 +1,6 @@
 
 import { useLocation } from "react-router-dom"
-import { Home, Share2, Users, Brain, MessageSquare, FileText, DollarSign, TrendingUp } from "lucide-react"
+import { Home, Share2, Users, Brain, MessageSquare, FileText, DollarSign, TrendingUp, Database } from "lucide-react"
 import { NavItem } from "./NavItem"
 import { useMobile } from "@/hooks/use-mobile"
 
@@ -19,6 +19,11 @@ const menuItems = [
     title: "Desempenho",
     href: "/performance",
     icon: TrendingUp
+  },
+  {
+    title: "Dados",
+    href: "/data",
+    icon: Database
   },
   {
     title: "Redes Sociais",
@@ -53,7 +58,7 @@ export function Navigation() {
   
   // Filtra os itens mais importantes para a versão mobile
   const importantItems = isMobile 
-    ? menuItems.filter(item => ["/", "/sales", "/ai-insights", "/reports"].includes(item.href))
+    ? menuItems.filter(item => ["/", "/sales", "/data", "/ai-insights", "/reports"].includes(item.href))
     : menuItems
   
   return (
