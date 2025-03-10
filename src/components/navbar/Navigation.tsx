@@ -21,11 +21,6 @@ const menuItems = [
     icon: TrendingUp
   },
   {
-    title: "Dados",
-    href: "/data",
-    icon: Database
-  },
-  {
     title: "Redes Sociais",
     href: "/social",
     icon: Share2
@@ -49,6 +44,11 @@ const menuItems = [
     title: "Relatórios",
     href: "/reports",
     icon: FileText
+  },
+  {
+    title: "Dados",
+    href: "/data",
+    icon: Database
   }
 ]
 
@@ -58,7 +58,7 @@ export function Navigation() {
   
   // Filtra os itens mais importantes para a versão mobile
   const importantItems = isMobile 
-    ? menuItems.filter(item => ["/", "/sales", "/data", "/ai-insights", "/reports"].includes(item.href))
+    ? menuItems.filter(item => ["/", "/sales", "/ai-insights", "/reports", "/data"].includes(item.href))
     : menuItems
   
   return (

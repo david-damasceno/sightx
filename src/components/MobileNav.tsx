@@ -28,11 +28,6 @@ const menuItems = [
     icon: DollarSign
   },
   {
-    title: "Dados",
-    href: "/data",
-    icon: Database
-  },
-  {
     title: "IA Insights",
     href: "/ai-insights",
     icon: Brain
@@ -41,6 +36,11 @@ const menuItems = [
     title: "Relatórios",
     href: "/reports",
     icon: FileText
+  },
+  {
+    title: "Dados",
+    href: "/data",
+    icon: Database
   }
 ];
 
@@ -57,9 +57,19 @@ const fullMenuItems = [
     icon: DollarSign
   },
   {
-    title: "Dados",
-    href: "/data",
-    icon: Database
+    title: "Desempenho",
+    href: "/performance",
+    icon: TrendingUp
+  },
+  {
+    title: "Redes Sociais",
+    href: "/social",
+    icon: Share2
+  },
+  {
+    title: "Demografia",
+    href: "/demographics",
+    icon: Users
   },
   {
     title: "IA Insights",
@@ -67,9 +77,19 @@ const fullMenuItems = [
     icon: Brain
   },
   {
+    title: "NPS",
+    href: "/feedback",
+    icon: MessageSquare
+  },
+  {
     title: "Relatórios",
     href: "/reports",
     icon: FileText
+  },
+  {
+    title: "Dados",
+    href: "/data",
+    icon: Database
   },
   {
     title: "Configurações",

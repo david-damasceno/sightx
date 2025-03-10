@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,9 +23,25 @@ import {
   CheckSquare,
   Calendar,
   CreditCard,
-  DollarSign
+  DollarSign,
+  ChevronDown
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type ConnectorCategory = 
   | "ERP" 
@@ -526,7 +541,6 @@ const CONNECTORS: Connector[] = [
   }
 ];
 
-// Componente para obter o ícone correto para cada categoria
 const getCategoryIcon = (category: ConnectorCategory) => {
   switch (category) {
     case "ERP":
@@ -579,7 +593,6 @@ export default function DataConnectors() {
   const [selectedCategory, setSelectedCategory] = useState<ConnectorCategory | "all">("all");
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  // Filtrar conectores com base na pesquisa e categoria
   const filteredConnectors = useMemo(() => {
     return CONNECTORS.filter((connector) => {
       const matchesSearch = connector.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -589,17 +602,23 @@ export default function DataConnectors() {
     });
   }, [searchQuery, selectedCategory]);
 
-  // Obtenha todas as categorias únicas para o filtro
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(new Set(CONNECTORS.map((connector) => connector.category)));
     return uniqueCategories;
   }, []);
 
   const handleConnectClick = (connector: Connector) => {
-    toast({
-      title: `Conectando ao ${connector.name}`,
-      description: "Você será redirecionado para autenticação em breve.",
-    });
+    if (connector.id === "excel") {
+      toast({
+        title: `Upload de arquivo Excel`,
+        description: "Selecione um arquivo Excel para importar.",
+      });
+    } else {
+      toast({
+        title: `Conectando ao ${connector.name}`,
+        description: "Você será redirecionado para autenticação em breve.",
+      });
+    }
   };
 
   return (
@@ -614,7 +633,6 @@ export default function DataConnectors() {
           </p>
         </div>
 
-        {/* Barra de Pesquisa e Filtros */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <div className="relative">
             <div className="relative group">
@@ -629,28 +647,40 @@ export default function DataConnectors() {
             </div>
           </div>
           
-          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-thin">
-            <Button
-              variant={selectedCategory === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedCategory("all")}
-              className="whitespace-nowrap h-10 px-4 font-medium"
-            >
-              Todos
-            </Button>
-            
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
-                className="whitespace-nowrap h-10 px-4 font-medium"
-              >
-                {getCategoryIcon(category)}
-                <span className="ml-2">{categoryLabels[category]}</span>
-              </Button>
-            ))}
+          <div className="flex flex-col">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between h-12 bg-background">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    <span>{selectedCategory === "all" ? "Filtrar por categoria" : categoryLabels[selectedCategory]}</span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56 bg-background shadow-lg border-border">
+                <DropdownMenuLabel>Categorias</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => setSelectedCategory("all")}
+                  className={selectedCategory === "all" ? "bg-accent text-accent-foreground" : ""}
+                >
+                  Todos
+                </DropdownMenuItem>
+                {categories.map((category) => (
+                  <DropdownMenuItem
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={selectedCategory === category ? "bg-accent text-accent-foreground" : ""}
+                  >
+                    <div className="flex items-center gap-2">
+                      {getCategoryIcon(category)}
+                      <span>{categoryLabels[category]}</span>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           
           <div className="flex justify-end">
@@ -675,7 +705,6 @@ export default function DataConnectors() {
           </div>
         </div>
 
-        {/* Lista de Conectores */}
         {filteredConnectors.length > 0 ? (
           <div className={view === "grid" ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-4"}>
             {filteredConnectors.map((connector) => (
@@ -686,14 +715,20 @@ export default function DataConnectors() {
                 <CardContent className={`p-0 ${view === "list" ? "flex items-center w-full" : ""}`}>
                   <div className={view === "list" ? "flex items-center space-x-6 p-5 w-full" : "flex flex-col"}>
                     <div className={view === "list" 
-                      ? "flex-shrink-0" 
-                      : "flex items-center justify-center p-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 group-hover:from-slate-100 group-hover:to-slate-50 dark:group-hover:from-slate-800 dark:group-hover:to-slate-700 transition-colors"
+                      ? "flex-shrink-0 w-20 h-20" 
+                      : "flex items-center justify-center p-8 w-full h-36 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 group-hover:from-slate-100 group-hover:to-slate-50 dark:group-hover:from-slate-800 dark:group-hover:to-slate-700 transition-colors"
                     }>
-                      <div className="w-16 h-16 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center overflow-hidden border shadow-md group-hover:shadow-lg transition-all">
+                      <div className={`
+                        ${view === "list" ? "w-20 h-20" : "w-28 h-28"} 
+                        rounded-full bg-white dark:bg-slate-700 flex items-center justify-center overflow-hidden border shadow-md group-hover:shadow-lg transition-all
+                      `}>
                         <img 
                           src={connector.logo} 
                           alt={`${connector.name} logo`} 
-                          className="w-14 h-14 object-contain p-1 group-hover:scale-110 transition-transform duration-300" 
+                          className={`
+                            ${view === "list" ? "w-16 h-16" : "w-24 h-24"}
+                            object-contain p-1 group-hover:scale-110 transition-transform duration-300
+                          `} 
                         />
                       </div>
                     </div>
@@ -727,7 +762,7 @@ export default function DataConnectors() {
                             onClick={() => handleConnectClick(connector)}
                             className="ml-auto group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                           >
-                            Conectar
+                            {connector.id === "excel" ? "Upload" : "Conectar"}
                             <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                           </Button>
                         )}
@@ -740,7 +775,7 @@ export default function DataConnectors() {
                           onClick={() => handleConnectClick(connector)}
                           className="w-full mt-3 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                         >
-                          Conectar
+                          {connector.id === "excel" ? "Upload" : "Conectar"}
                           <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                         </Button>
                       )}
