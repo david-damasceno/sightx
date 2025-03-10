@@ -139,7 +139,7 @@ export function MobileNav() {
         </nav>
       </div>
 
-      {/* Menu de navegação lateral por slide */}
+      {/* Menu de navegação lateral por slide - Apenas botão na versão mobile, sem avatar */}
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button 

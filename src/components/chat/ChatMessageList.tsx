@@ -1,7 +1,9 @@
+
 import { useEffect, useRef } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
+import { useMobile } from "@/hooks/use-mobile"
 
 interface ChatMessage {
   id: string
@@ -18,6 +20,7 @@ interface ChatMessageListProps {
 export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { profile } = useAuth()
+  const isMobile = useMobile()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -28,9 +31,30 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
     return () => clearTimeout(timeoutId)
   }, [messages])
 
+  // Formata o texto preservando quebras de linha e adicionando links
+  const formatMessageText = (text: string) => {
+    // Substitui URLs por links clicáveis
+    const urlRegex = /(https?:\/\/[^\s]+)/g
+    const textWithLinks = text.replace(urlRegex, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary underline hover:text-primary/80">${url}</a>`)
+    
+    // Preserva quebras de linha
+    return textWithLinks.split('\n').map((line, i) => (
+      <span key={i}>
+        <span dangerouslySetInnerHTML={{ __html: line }} />
+        {i < textWithLinks.split('\n').length - 1 && <br />}
+      </span>
+    ))
+  }
+
   return (
-    <ScrollArea className="flex-1 px-4 py-6">
-      <div className="space-y-4 max-w-3xl mx-auto">
+    <ScrollArea className={cn(
+      "flex-1",
+      isMobile ? "px-3 py-5" : "px-4 py-6"
+    )}>
+      <div className={cn(
+        "space-y-6",
+        isMobile ? "max-w-full mx-2" : "max-w-3xl mx-auto"
+      )}>
         {messages.map((message) => (
           <div
             key={message.id}
@@ -54,14 +78,18 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
             
             <div
               className={cn(
-                "max-w-[85%] rounded-2xl p-3",
+                "rounded-2xl p-3",
                 message.sender === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-white/40 dark:bg-gray-800/40 backdrop-blur-md border border-purple-100/20 dark:border-purple-900/20"
+                  ? "bg-primary text-primary-foreground ml-12"
+                  : "bg-white/40 dark:bg-gray-800/40 backdrop-blur-md border border-purple-100/20 dark:border-purple-900/20 mr-12",
+                isMobile ? "max-w-[85%]" : "max-w-[75%]"
               )}
             >
-              <p className="text-sm leading-relaxed">
-                {message.content}
+              <p className={cn(
+                "leading-relaxed",
+                isMobile ? "text-sm" : "text-base"
+              )}>
+                {formatMessageText(message.content)}
               </p>
             </div>
 
@@ -95,7 +123,7 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
                 <path d="M150 50c-55.225 0-100 44.775-100 100s44.775 100 100 100 100-44.775 100-100-44.775-100-100-100zm0 175c-41.355 0-75-33.645-75-75s33.645-75 75-75 75 33.645 75 75-33.645 75-75 75z" fill="currentColor" className="text-primary"/>
               </svg>
             </div>
-            <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-md border border-purple-100/20 dark:border-purple-900/20 max-w-[85%] rounded-2xl p-3 ml-3">
+            <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-md border border-purple-100/20 dark:border-purple-900/20 rounded-2xl p-3 ml-3 mr-12">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
