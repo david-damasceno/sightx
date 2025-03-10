@@ -1,6 +1,6 @@
 
 import { useLocation } from "react-router-dom"
-import { Home, Share2, Users, Brain, MessageSquare, FileText, DollarSign, TrendingUp, Database } from "lucide-react"
+import { Home, Share2, Users, Brain, MessageSquare, FileText, DollarSign, TrendingUp } from "lucide-react"
 import { NavItem } from "./NavItem"
 import { useMobile } from "@/hooks/use-mobile"
 
@@ -44,11 +44,6 @@ const menuItems = [
     title: "Relatórios",
     href: "/reports",
     icon: FileText
-  },
-  {
-    title: "Dados",
-    href: "/reports/data-context",
-    icon: Database
   }
 ]
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { 
@@ -64,11 +63,6 @@ const fullMenuItems = [
     title: "Relatórios",
     href: "/reports",
     icon: FileText
-  },
-  {
-    title: "Dados",
-    href: "/reports/data-context",
-    icon: Home
   },
   {
     title: "Configurações",
