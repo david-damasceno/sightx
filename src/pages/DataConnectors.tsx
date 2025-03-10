@@ -604,33 +604,37 @@ export default function DataConnectors() {
 
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
-      <div className="flex flex-col space-y-6">
-        <div className="flex flex-col space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Conectores de Dados</h1>
-          <p className="text-muted-foreground">
-            Conecte-se a diferentes fontes de dados para análise e geração de insights.
+      <div className="flex flex-col space-y-8">
+        <div className="flex flex-col space-y-3">
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+            Conectores de Dados
+          </h1>
+          <p className="text-muted-foreground text-lg max-w-3xl">
+            Conecte-se a diferentes fontes de dados para análise avançada e geração de insights poderosos para seu negócio.
           </p>
         </div>
 
         {/* Barra de Pesquisa e Filtros */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Pesquisar conectores..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <div className="relative group">
+              <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+              <Input
+                type="search"
+                placeholder="Pesquisar conectores..."
+                className="pl-10 h-12 text-base bg-background/70 backdrop-blur-sm border-muted focus-within:border-primary/50 transition-all focus-visible:ring-1 focus-visible:ring-primary/30"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
           
-          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
+          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-thin">
             <Button
               variant={selectedCategory === "all" ? "default" : "outline"}
               size="sm"
               onClick={() => setSelectedCategory("all")}
-              className="whitespace-nowrap"
+              className="whitespace-nowrap h-10 px-4 font-medium"
             >
               Todos
             </Button>
@@ -641,21 +645,21 @@ export default function DataConnectors() {
                 variant={selectedCategory === category ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedCategory(category)}
-                className="whitespace-nowrap"
+                className="whitespace-nowrap h-10 px-4 font-medium"
               >
                 {getCategoryIcon(category)}
-                <span className="ml-1">{categoryLabels[category]}</span>
+                <span className="ml-2">{categoryLabels[category]}</span>
               </Button>
             ))}
           </div>
           
           <div className="flex justify-end">
-            <div className="flex items-center border rounded-md overflow-hidden">
+            <div className="flex items-center border rounded-md overflow-hidden shadow-sm">
               <Button
                 variant={view === "grid" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setView("grid")}
-                className="rounded-none h-9"
+                className="rounded-none h-10 px-4 font-medium"
               >
                 Grid
               </Button>
@@ -663,7 +667,7 @@ export default function DataConnectors() {
                 variant={view === "list" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setView("list")}
-                className="rounded-none h-9"
+                className="rounded-none h-10 px-4 font-medium"
               >
                 Lista
               </Button>
@@ -673,38 +677,44 @@ export default function DataConnectors() {
 
         {/* Lista de Conectores */}
         {filteredConnectors.length > 0 ? (
-          <div className={view === "grid" ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-4"}>
+          <div className={view === "grid" ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-4"}>
             {filteredConnectors.map((connector) => (
-              <Card key={connector.id} className={`overflow-hidden transition-all hover:shadow-md ${view === "list" ? "flex" : ""}`}>
+              <Card 
+                key={connector.id} 
+                className={`overflow-hidden transition-all hover:shadow-lg border-border/40 hover:border-primary/30 group ${view === "list" ? "flex" : ""}`}
+              >
                 <CardContent className={`p-0 ${view === "list" ? "flex items-center w-full" : ""}`}>
-                  <div className={view === "list" ? "flex items-center space-x-4 p-4 w-full" : "flex flex-col"}>
-                    <div className={view === "list" ? "flex-shrink-0" : "flex items-center justify-center p-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800"}>
-                      <div className="w-12 h-12 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center overflow-hidden border shadow-sm">
+                  <div className={view === "list" ? "flex items-center space-x-6 p-5 w-full" : "flex flex-col"}>
+                    <div className={view === "list" 
+                      ? "flex-shrink-0" 
+                      : "flex items-center justify-center p-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 group-hover:from-slate-100 group-hover:to-slate-50 dark:group-hover:from-slate-800 dark:group-hover:to-slate-700 transition-colors"
+                    }>
+                      <div className="w-16 h-16 rounded-full bg-white dark:bg-slate-700 flex items-center justify-center overflow-hidden border shadow-md group-hover:shadow-lg transition-all">
                         <img 
                           src={connector.logo} 
                           alt={`${connector.name} logo`} 
-                          className="w-10 h-10 object-contain" 
+                          className="w-14 h-14 object-contain p-1 group-hover:scale-110 transition-transform duration-300" 
                         />
                       </div>
                     </div>
                     
-                    <div className={view === "list" ? "flex-grow" : "p-4 space-y-2"}>
+                    <div className={view === "list" ? "flex-grow" : "p-5 space-y-3"}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                          <h3 className="font-medium">{connector.name}</h3>
+                          <h3 className="font-semibold text-lg">{connector.name}</h3>
                           {connector.popular && (
-                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
+                            <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 dark:bg-primary/20 dark:text-primary-foreground dark:border-primary/30">
                               Popular
                             </Badge>
                           )}
                         </div>
                       </div>
                       
-                      <p className="text-sm text-muted-foreground line-clamp-2">
+                      <p className="text-muted-foreground line-clamp-2">
                         {connector.description}
                       </p>
                       
-                      <div className={`flex items-center mt-2 ${view === "list" ? "justify-between" : ""}`}>
+                      <div className={`flex items-center mt-3 ${view === "list" ? "justify-between" : ""}`}>
                         <Badge variant="outline" className="text-xs">
                           {getCategoryIcon(connector.category)}
                           <span className="ml-1">{categoryLabels[connector.category]}</span>
@@ -715,10 +725,10 @@ export default function DataConnectors() {
                             variant="outline" 
                             size="sm" 
                             onClick={() => handleConnectClick(connector)}
-                            className="ml-auto"
+                            className="ml-auto group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                           >
                             Conectar
-                            <ArrowRight className="ml-1 h-4 w-4" />
+                            <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                           </Button>
                         )}
                       </div>
@@ -728,10 +738,10 @@ export default function DataConnectors() {
                           variant="outline" 
                           size="sm" 
                           onClick={() => handleConnectClick(connector)}
-                          className="w-full mt-2"
+                          className="w-full mt-3 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                         >
                           Conectar
-                          <ArrowRight className="ml-1 h-4 w-4" />
+                          <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                         </Button>
                       )}
                     </div>
@@ -741,14 +751,15 @@ export default function DataConnectors() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-12 border rounded-lg bg-muted/10">
-            <p className="text-muted-foreground">Nenhum conector encontrado. Tente uma pesquisa diferente.</p>
+          <div className="flex flex-col items-center justify-center py-16 border rounded-lg bg-muted/10 border-dashed">
+            <p className="text-muted-foreground text-lg mb-4">Nenhum conector encontrado. Tente uma pesquisa diferente.</p>
             <Button 
-              variant="link" 
+              variant="outline" 
               onClick={() => {
                 setSearchQuery("");
                 setSelectedCategory("all");
               }}
+              className="px-6"
             >
               Limpar filtros
             </Button>
