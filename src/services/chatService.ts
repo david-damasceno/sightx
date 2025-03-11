@@ -53,15 +53,23 @@ export const saveChatSettings = async (settings: ChatSettings): Promise<void> =>
       .eq("id", (await supabase.auth.getUser()).data.user?.id);
   } catch (error) {
     console.error("Erro ao salvar configurações do chat:", error);
+    throw new Error("Não foi possível salvar as configurações");
   }
 };
 
 // Carrega todas as conversas do usuário
 export const loadChats = async (): Promise<Chat[]> => {
   try {
+    const { data: user } = await supabase.auth.getUser();
+    
+    if (!user?.user?.id) {
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from("chats")
       .select("*")
+      .eq("user_id", user.user.id)
       .order("updated_at", { ascending: false });
 
     if (error) throw error;
@@ -106,8 +114,15 @@ export const loadChat = async (chatId: string): Promise<Chat | null> => {
 // Cria uma nova conversa
 export const createChat = async (initialMessage?: string): Promise<Chat> => {
   const now = new Date();
+  const { data: user } = await supabase.auth.getUser();
+  
+  if (!user?.user?.id) {
+    throw new Error("Usuário não autenticado");
+  }
+  
+  const chatId = uuidv4();
   const newChat: Chat = {
-    id: uuidv4(),
+    id: chatId,
     title: `Nova conversa (${now.toLocaleDateString()})`,
     messages: initialMessage ? [
       {
@@ -128,14 +143,14 @@ export const createChat = async (initialMessage?: string): Promise<Chat> => {
       messages: newChat.messages,
       created_at: newChat.createdAt.toISOString(),
       updated_at: newChat.updatedAt.toISOString(),
+      user_id: user.user.id
     });
 
     if (error) throw error;
     return newChat;
   } catch (error) {
     console.error("Erro ao criar nova conversa:", error);
-    // Retornar a conversa mesmo com erro, para funcionar offline
-    return newChat;
+    throw new Error("Não foi possível criar uma nova conversa");
   }
 };
 
@@ -167,34 +182,37 @@ export const addMessageToChat = async (
         : message.text;
     }
 
+    const now = new Date();
     await supabase
       .from("chats")
       .update({
         messages,
         title,
-        updated_at: newMessage.timestamp.toISOString(),
+        updated_at: now.toISOString(),
       })
       .eq("id", chatId);
 
     return newMessage;
   } catch (error) {
     console.error(`Erro ao adicionar mensagem à conversa ${chatId}:`, error);
-    return newMessage;
+    throw new Error("Erro ao adicionar mensagem");
   }
 };
 
 // Atualiza o título de uma conversa
 export const updateChatTitle = async (chatId: string, title: string): Promise<void> => {
   try {
+    const now = new Date();
     await supabase
       .from("chats")
       .update({
         title,
-        updated_at: new Date().toISOString(),
+        updated_at: now.toISOString(),
       })
       .eq("id", chatId);
   } catch (error) {
     console.error(`Erro ao atualizar título da conversa ${chatId}:`, error);
+    throw new Error("Erro ao atualizar título");
   }
 };
 
@@ -207,6 +225,7 @@ export const deleteChat = async (chatId: string): Promise<void> => {
       .eq("id", chatId);
   } catch (error) {
     console.error(`Erro ao excluir conversa ${chatId}:`, error);
+    throw new Error("Erro ao excluir conversa");
   }
 };
 
@@ -219,17 +238,24 @@ export const deleteAllChats = async (): Promise<void> => {
     await supabase
       .from("chats")
       .delete()
-      .filter("user_id", "eq", user.user.id);
+      .eq("user_id", user.user.id);
   } catch (error) {
     console.error("Erro ao excluir todas as conversas:", error);
+    throw new Error("Erro ao limpar histórico");
   }
 };
 
 // Envia mensagem para a IA e obtém resposta
 export const sendMessageToAI = async (message: string, context?: string): Promise<string> => {
   try {
+    const settings = await loadChatSettings();
+    
     const { data, error } = await supabase.functions.invoke("chat-with-dona", {
-      body: { message, context },
+      body: { 
+        message, 
+        context,
+        settings
+      },
     });
 
     if (error) throw error;

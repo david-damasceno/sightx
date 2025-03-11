@@ -57,7 +57,7 @@ export function ChatInterface({
 
       // Obter resposta da IA
       const chatContext = messages.length > 0 
-        ? messages.slice(-5).map(m => `${m.sender === 'user' ? 'Usuário' : 'IA'}: ${m.text}`).join('\n')
+        ? messages.slice(-10).map(m => `${m.sender === 'user' ? 'Usuário' : 'IA'}: ${m.text}`).join('\n')
         : '';
 
       const aiResponse = await sendMessageToAI(inputMessage, chatContext)

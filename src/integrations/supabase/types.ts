@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chats: {
+        Row: {
+          created_at: string
+          id: string
+          messages: Json
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          messages?: Json
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          messages?: Json
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       integrations: {
         Row: {
           created_at: string | null
@@ -270,6 +297,7 @@ export type Database = {
           id: string
           onboarded: boolean | null
           phone: string | null
+          settings: Json | null
           updated_at: string | null
         }
         Insert: {
@@ -282,6 +310,7 @@ export type Database = {
           id: string
           onboarded?: boolean | null
           phone?: string | null
+          settings?: Json | null
           updated_at?: string | null
         }
         Update: {
@@ -294,6 +323,7 @@ export type Database = {
           id?: string
           onboarded?: boolean | null
           phone?: string | null
+          settings?: Json | null
           updated_at?: string | null
         }
         Relationships: []

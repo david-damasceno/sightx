@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
 import { Card } from "@/components/ui/card"
-import { Brain, Sparkles, Settings, AlertCircle, ArrowLeft, Save } from "lucide-react"
+import { Brain, Sparkles, Settings, AlertCircle, ArrowLeft, Save, Loader2 } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import { ChatSettings } from "@/types/chat"
 import { loadChatSettings, saveChatSettings } from "@/services/chatService"
@@ -27,10 +27,14 @@ export function AISettings({ onSaved }: AISettingsProps) {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
+        setIsLoading(true);
         const userSettings = await loadChatSettings()
         setSettings(userSettings)
       } catch (error) {
         console.error("Erro ao carregar configurações:", error)
+        toast.error("Erro ao carregar configurações")
+      } finally {
+        setIsLoading(false);
       }
     }
     

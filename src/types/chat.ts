@@ -20,3 +20,13 @@ export interface ChatSettings {
   saveHistory: boolean;
   autoAnalysis: boolean;
 }
+
+export interface FileAttachment {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  url: string;
+  uploadedAt: Date;
+  chatId: string;
+}
