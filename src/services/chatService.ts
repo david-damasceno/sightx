@@ -23,10 +23,10 @@ export const loadChatSettings = async (): Promise<ChatSettings> => {
       (typeof profile.settings === 'object' && profile.settings !== null && 'chat' in profile.settings ? 
        profile.settings.chat : null) : null;
     
-    if (chatSettings) {
+    if (chatSettings && typeof chatSettings === 'object') {
       return {
         ...DEFAULT_SETTINGS,
-        ...chatSettings,
+        ...chatSettings as Partial<ChatSettings>,
       };
     }
     
@@ -55,7 +55,7 @@ export const saveChatSettings = async (settings: ChatSettings): Promise<void> =>
     await supabase
       .from("profiles")
       .update({
-        settings: updatedSettings,
+        settings: updatedSettings as any, // Usando any para contornar limitações do tipo Json
       })
       .eq("id", (await supabase.auth.getUser()).data.user?.id);
   } catch (error) {
@@ -66,16 +66,35 @@ export const saveChatSettings = async (settings: ChatSettings): Promise<void> =>
 
 // Função auxiliar para converter os timestamps de string para Date
 const convertChatDates = (chat: any): Chat => {
+  // Garantir que messages é um array mesmo que venha como null ou undefined
+  let messages: ChatMessage[] = [];
+  
+  if (Array.isArray(chat.messages)) {
+    messages = chat.messages.map((msg: any) => ({
+      id: msg.id || uuidv4(),
+      sender: msg.sender,
+      text: msg.text,
+      timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+    }));
+  }
+  
   return {
     id: chat.id,
     title: chat.title,
-    messages: Array.isArray(chat.messages) ? chat.messages.map((msg: any) => ({
-      ...msg,
-      timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
-    })) : [],
+    messages: messages,
     createdAt: new Date(chat.created_at),
     updatedAt: new Date(chat.updated_at),
   };
+};
+
+// Função para serializar mensagens para armazenamento
+const serializeMessages = (messages: ChatMessage[]): any[] => {
+  return messages.map(msg => ({
+    id: msg.id,
+    sender: msg.sender,
+    text: msg.text,
+    timestamp: typeof msg.timestamp === 'string' ? msg.timestamp : msg.timestamp.toISOString()
+  }));
 };
 
 // Carrega todas as conversas do usuário
@@ -151,7 +170,7 @@ export const createChat = async (initialMessage?: string): Promise<Chat> => {
     const { error } = await supabase.from("chats").insert({
       id: newChat.id,
       title: newChat.title,
-      messages: initialMessages,
+      messages: initialMessages.length > 0 ? serializeMessages(initialMessages) : [],
       created_at: newChat.createdAt.toISOString(),
       updated_at: newChat.updatedAt.toISOString(),
       user_id: user.user.id
@@ -185,11 +204,18 @@ export const addMessageToChat = async (
     
     // Garantimos que messages seja sempre um array
     const currentMessages = Array.isArray(chat?.messages) ? chat.messages : [];
-    const messages = [...currentMessages, newMessage];
+    
+    // Combinamos as mensagens existentes com a nova e serializamos
+    const serializedMessages = serializeMessages([...currentMessages.map((msg: any) => ({
+      id: msg.id,
+      sender: msg.sender,
+      text: msg.text,
+      timestamp: msg.timestamp
+    })), newMessage]);
     
     // Se for a primeira mensagem do usuário e título for genérico, atualize o título
     let title = chat?.title;
-    if (message.sender === "user" && messages.length <= 2 && chat?.title?.startsWith("Nova conversa")) {
+    if (message.sender === "user" && serializedMessages.length <= 2 && chat?.title?.startsWith("Nova conversa")) {
       title = message.text.length > 30 
         ? `${message.text.substring(0, 30)}...` 
         : message.text;
@@ -199,7 +225,7 @@ export const addMessageToChat = async (
     await supabase
       .from("chats")
       .update({
-        messages,
+        messages: serializedMessages,
         title,
         updated_at: now.toISOString(),
       })

@@ -2,22 +2,19 @@
 import { cn } from "@/lib/utils"
 import { Loader2 } from "lucide-react"
 import { Avatar } from "@/components/ui/avatar"
-
-interface Message {
-  id: string
-  sender: "user" | "ai"
-  text: string
-  timestamp: Date
-}
+import { ChatMessage } from "@/types/chat"
 
 interface ChatMessageListProps {
-  messages: Message[]
+  messages: ChatMessage[]
   isLoading: boolean
 }
 
 export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
   // Formatador de data para exibir horários de mensagens
-  const formatMessageTime = (date: Date) => {
+  const formatMessageTime = (date: Date | string) => {
+    if (typeof date === 'string') {
+      date = new Date(date);
+    }
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
 
