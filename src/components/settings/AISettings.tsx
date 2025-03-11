@@ -1,122 +1,180 @@
 
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import { Card } from "@/components/ui/card"
-import { Brain, Sparkles, Settings, AlertCircle } from "lucide-react"
+import { Brain, Sparkles, Settings, AlertCircle, ArrowLeft, Save } from "lucide-react"
+import { Slider } from "@/components/ui/slider"
+import { ChatSettings } from "@/types/chat"
+import { loadChatSettings, saveChatSettings } from "@/services/chatService"
 
-export function AISettings() {
-  const { toast } = useToast()
+interface AISettingsProps {
+  onSaved?: () => void
+}
+
+export function AISettings({ onSaved }: AISettingsProps) {
+  const [settings, setSettings] = useState<ChatSettings>({
+    model: "gpt-4",
+    temperature: 0.7,
+    saveHistory: true,
+    autoAnalysis: true
+  })
+  const [isLoading, setIsLoading] = useState(false)
   
-  const handleSave = () => {
-    toast({
-      title: "Configurações salvas",
-      description: "As configurações de IA foram atualizadas com sucesso.",
-    })
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const userSettings = await loadChatSettings()
+        setSettings(userSettings)
+      } catch (error) {
+        console.error("Erro ao carregar configurações:", error)
+      }
+    }
+    
+    fetchSettings()
+  }, [])
+  
+  const handleSave = async () => {
+    setIsLoading(true)
+    try {
+      await saveChatSettings(settings)
+      toast.success("Configurações salvas com sucesso")
+      onSaved?.()
+    } catch (error) {
+      toast.error("Erro ao salvar configurações")
+      console.error("Erro ao salvar configurações:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-medium flex items-center gap-2">
-          <Brain className="h-5 w-5 text-primary" />
-          Configurações de IA
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Configure preferências de análise e previsão de IA
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onSaved}
+            className="mr-2 h-8 w-8"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="text-lg font-medium flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            Configurações de IA
+          </h2>
+        </div>
+        
+        <Button 
+          onClick={handleSave} 
+          disabled={isLoading}
+          className="gap-2"
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4" />
+          )}
+          Salvar
+        </Button>
       </div>
+      
+      <p className="text-sm text-muted-foreground">
+        Configure preferências de análise e previsão de IA
+      </p>
 
       <div className="space-y-4">
         <Card className="p-4 space-y-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
           <div className="flex items-center gap-2 pb-2 border-b">
             <Sparkles className="h-4 w-4 text-primary" />
-            <h3 className="font-medium">Análise & Insights</h3>
+            <h3 className="font-medium">Modelo e Personalização</h3>
           </div>
           
           <div className="space-y-2">
-            <Label>Frequência de Análise</Label>
-            <Select defaultValue="daily">
+            <Label>Modelo de IA</Label>
+            <Select 
+              value={settings.model} 
+              onValueChange={(value) => setSettings({...settings, model: value as any})}
+            >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione a frequência" />
+                <SelectValue placeholder="Selecione o modelo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="hourly">A cada hora</SelectItem>
-                <SelectItem value="daily">Diário</SelectItem>
-                <SelectItem value="weekly">Semanal</SelectItem>
+                <SelectItem value="gpt-4">GPT-4 (Mais preciso, mais lento)</SelectItem>
+                <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo (Mais rápido)</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="flex items-center justify-between py-2">
-            <div className="space-y-0.5">
-              <Label>Insights Automatizados</Label>
-              <p className="text-xs text-muted-foreground">
-                Gerar insights de negócios com IA
-              </p>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <Label>Temperatura</Label>
+              <span className="text-sm text-muted-foreground">{settings.temperature.toFixed(1)}</span>
             </div>
-            <Switch defaultChecked />
+            <Slider
+              value={[settings.temperature]}
+              min={0}
+              max={1}
+              step={0.1}
+              onValueChange={(values) => setSettings({...settings, temperature: values[0]})}
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Mais focado</span>
+              <span>Mais criativo</span>
+            </div>
           </div>
         </Card>
         
         <Card className="p-4 space-y-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
           <div className="flex items-center gap-2 pb-2 border-b">
             <Settings className="h-4 w-4 text-primary" />
-            <h3 className="font-medium">Personalização</h3>
+            <h3 className="font-medium">Privacidade e Histórico</h3>
           </div>
           
           <div className="flex items-center justify-between py-2">
             <div className="space-y-0.5">
-              <Label>Aprendizado de Preferências</Label>
+              <Label>Salvar histórico de conversas</Label>
               <p className="text-xs text-muted-foreground">
-                Permitir que a IA aprenda com suas interações
+                Armazenar conversas para referência futura
               </p>
             </div>
-            <Switch defaultChecked />
+            <Switch 
+              checked={settings.saveHistory}
+              onCheckedChange={(checked) => setSettings({...settings, saveHistory: checked})}
+            />
           </div>
           
           <div className="flex items-center justify-between py-2">
             <div className="space-y-0.5">
-              <Label>Sugestões Personalizadas</Label>
+              <Label>Análise automática de dados</Label>
               <p className="text-xs text-muted-foreground">
-                Receber sugestões baseadas no seu perfil
+                Permitir que a IA analise seus dados para insights personalizados
               </p>
             </div>
-            <Switch defaultChecked />
+            <Switch
+              checked={settings.autoAnalysis}
+              onCheckedChange={(checked) => setSettings({...settings, autoAnalysis: checked})}
+            />
           </div>
         </Card>
         
         <Card className="p-4 space-y-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
           <div className="flex items-center gap-2 pb-2 border-b">
             <AlertCircle className="h-4 w-4 text-primary" />
-            <h3 className="font-medium">Notificações & Alertas</h3>
+            <h3 className="font-medium">Sobre</h3>
           </div>
           
-          <div className="flex items-center justify-between py-2">
-            <div className="space-y-0.5">
-              <Label>Alertas de Anomalias</Label>
-              <p className="text-xs text-muted-foreground">
-                Notificar quando detectar dados incomuns
-              </p>
-            </div>
-            <Switch defaultChecked />
-          </div>
-          
-          <div className="flex items-center justify-between py-2">
-            <div className="space-y-0.5">
-              <Label>Previsões de Tendências</Label>
-              <p className="text-xs text-muted-foreground">
-                Alertar sobre tendências emergentes
-              </p>
-            </div>
-            <Switch defaultChecked />
+          <div className="text-sm space-y-2">
+            <p>O SightX utiliza inteligência artificial avançada para transformar seus dados em insights acionáveis.</p>
+            <p>Nossa IA processa informações contextuais e históricas para gerar respostas mais precisas e relevantes para o seu negócio.</p>
+            <p className="text-xs text-muted-foreground mt-2">Versão: 1.0.0</p>
           </div>
         </Card>
       </div>
-
-      <Button onClick={handleSave} className="w-full md:w-auto">Salvar Alterações</Button>
     </div>
   )
 }

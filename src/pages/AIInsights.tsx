@@ -9,6 +9,9 @@ import { cn } from "@/lib/utils"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
+import { loadChats, createChat, loadChat } from "@/services/chatService"
+import { Chat } from "@/types/chat"
+import { toast } from "sonner"
 
 export default function AIInsights() {
   const [selectedChat, setSelectedChat] = useState<string | null>(null)
@@ -16,9 +19,49 @@ export default function AIInsights() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("chat")
+  const [chats, setChats] = useState<Chat[]>([])
+  const [currentChat, setCurrentChat] = useState<Chat | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   
   const isMobile = useMobile()
+  
+  // Carregar lista de chats quando o componente é montado
+  useEffect(() => {
+    const fetchChats = async () => {
+      try {
+        setIsLoading(true)
+        const chatsList = await loadChats()
+        setChats(chatsList)
+      } catch (error) {
+        console.error("Erro ao carregar conversas:", error)
+        toast.error("Não foi possível carregar o histórico de conversas")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchChats()
+  }, [])
+
+  // Carregar um chat específico quando selecionado
+  useEffect(() => {
+    const fetchChat = async () => {
+      if (selectedChat && selectedChat !== 'settings' && selectedChat !== 'new') {
+        try {
+          const chat = await loadChat(selectedChat)
+          setCurrentChat(chat)
+        } catch (error) {
+          console.error(`Erro ao carregar conversa ${selectedChat}:`, error)
+          toast.error("Não foi possível carregar esta conversa")
+        }
+      } else {
+        setCurrentChat(null)
+      }
+    }
+    
+    fetchChat()
+  }, [selectedChat])
   
   useEffect(() => {
     // Em dispositivos móveis, colapsar o sidebar automaticamente
@@ -27,16 +70,49 @@ export default function AIInsights() {
     }
   }, [isMobile])
 
-  const handleNewChat = () => {
-    setSelectedChat(null)
-    if (isMobile) {
-      setIsMobileSidebarOpen(false)
-      setActiveTab("chat")
+  const handleNewChat = async () => {
+    try {
+      const newChat = await createChat()
+      await refreshChats()
+      setSelectedChat(newChat.id)
+      if (isMobile) {
+        setIsMobileSidebarOpen(false)
+        setActiveTab("chat")
+      }
+    } catch (error) {
+      console.error("Erro ao criar nova conversa:", error)
+      toast.error("Não foi possível criar uma nova conversa")
+    }
+  }
+
+  const handleChatSelect = (chatId: string) => {
+    if (chatId === 'new') {
+      handleNewChat()
+    } else {
+      setSelectedChat(chatId)
+      if (isMobile) {
+        setIsMobileSidebarOpen(false)
+      }
     }
   }
 
   const handleMobileMenuToggle = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen)
+  }
+
+  const refreshChats = async () => {
+    try {
+      const chatsList = await loadChats()
+      setChats(chatsList)
+      
+      // Se o chat atual ainda está na lista, recarregue-o
+      if (selectedChat && selectedChat !== 'settings' && chatsList.some(c => c.id === selectedChat)) {
+        const updatedChat = await loadChat(selectedChat)
+        setCurrentChat(updatedChat)
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar conversas:", error)
+    }
   }
 
   // Rola para o topo quando um novo chat é iniciado
@@ -108,9 +184,11 @@ export default function AIInsights() {
             <div className="h-full" ref={chatContainerRef}>
               <ChatInterface
                 selectedChat={selectedChat}
-                onSelectChat={setSelectedChat}
+                chat={currentChat}
+                onSelectChat={handleChatSelect}
                 onOpenSidebar={() => setIsMobileSidebarOpen(true)}
                 isSidebarCollapsed={isSidebarCollapsed}
+                onChatUpdated={refreshChats}
               />
             </div>
           ) : (
@@ -139,23 +217,31 @@ export default function AIInsights() {
               <div className="mt-auto">
                 <h3 className="text-sm font-medium text-muted-foreground mb-2">Conversas recentes</h3>
                 <div className="space-y-2">
-                  {/* Conversas seriam renderizadas aqui */}
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left h-auto py-3 px-4 gap-2"
-                    onClick={() => setSelectedChat("chat-1")}
-                  >
-                    <History className="h-4 w-4 flex-shrink-0" />
-                    <div className="truncate">Análise de vendas de janeiro</div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left h-auto py-3 px-4 gap-2"
-                    onClick={() => setSelectedChat("chat-2")}
-                  >
-                    <History className="h-4 w-4 flex-shrink-0" />
-                    <div className="truncate">Previsão de tendências para Q2</div>
-                  </Button>
+                  {chats.slice(0, 2).map(chat => (
+                    <Button
+                      key={chat.id}
+                      variant="outline"
+                      className="w-full justify-start text-left h-auto py-3 px-4 gap-2"
+                      onClick={() => handleChatSelect(chat.id)}
+                    >
+                      <History className="h-4 w-4 flex-shrink-0" />
+                      <div className="truncate">{chat.title}</div>
+                    </Button>
+                  ))}
+                  
+                  {chats.length === 0 && !isLoading && (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      Nenhuma conversa encontrada
+                    </p>
+                  )}
+                  
+                  {isLoading && (
+                    <div className="flex justify-center py-4">
+                      <div className="animate-pulse flex space-x-4">
+                        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -175,35 +261,71 @@ export default function AIInsights() {
           </div>
           
           <div className="mt-6 space-y-4">
-            {/* Resultados da busca seriam mostrados aqui */}
-            <p className="text-center text-sm text-muted-foreground py-10">
-              {searchQuery ? "Nenhum resultado encontrado" : "Digite para buscar"}
-            </p>
+            {/* Resultados da busca */}
+            {searchQuery && (
+              <div className="space-y-2">
+                {chats
+                  .filter(chat => 
+                    chat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    chat.messages.some(msg => 
+                      msg.text.toLowerCase().includes(searchQuery.toLowerCase())
+                    )
+                  )
+                  .map(chat => (
+                    <Button
+                      key={chat.id}
+                      variant="outline"
+                      className="w-full justify-start text-left h-auto py-3 px-4 gap-2"
+                      onClick={() => {
+                        handleChatSelect(chat.id)
+                        setActiveTab("chat")
+                      }}
+                    >
+                      <History className="h-4 w-4 flex-shrink-0" />
+                      <div>
+                        <div className="font-medium truncate">{chat.title}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(chat.updatedAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </Button>
+                  ))
+                }
+                
+                {chats.filter(chat => 
+                  chat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  chat.messages.some(msg => 
+                    msg.text.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                ).length === 0 && (
+                  <p className="text-center text-sm text-muted-foreground py-10">
+                    Nenhum resultado encontrado
+                  </p>
+                )}
+              </div>
+            )}
+            
+            {!searchQuery && (
+              <p className="text-center text-sm text-muted-foreground py-10">
+                Digite para buscar
+              </p>
+            )}
           </div>
         </TabsContent>
         
         <TabsContent value="settings" className="flex-1 overflow-auto p-4 m-0">
-          <div className="space-y-4">
-            <div className="rounded-lg border p-4">
-              <h3 className="text-sm font-medium mb-2">Preferências de IA</h3>
-              <p className="text-xs text-muted-foreground mb-4">
-                Personalize como a IA responde às suas perguntas.
-              </p>
-              <div className="space-y-3">
-                <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
-                  <SettingsIcon className="h-4 w-4" />
-                  <span>Modelo da IA</span>
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
-                  <SettingsIcon className="h-4 w-4" />
-                  <span>Histórico de Conversas</span>
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-2 h-auto py-3">
-                  <SettingsIcon className="h-4 w-4" />
-                  <span>Configurações Avançadas</span>
-                </Button>
-              </div>
-            </div>
+          <div className="h-full">
+            <ChatInterface
+              selectedChat="settings"
+              chat={null}
+              onSelectChat={(chatId) => {
+                setSelectedChat(chatId !== 'settings' ? chatId : null)
+                setActiveTab("chat")
+              }}
+              onOpenSidebar={() => {}}
+              isSidebarCollapsed={false}
+              onChatUpdated={() => {}}
+            />
           </div>
         </TabsContent>
 
@@ -211,15 +333,16 @@ export default function AIInsights() {
         <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
           <SheetContent side="left" className="w-[85%] max-w-[320px] p-0">
             <ChatSidebar
+              chats={chats}
               selectedChat={selectedChat}
               onSelectChat={(chatId) => {
-                setSelectedChat(chatId)
-                setIsMobileSidebarOpen(false)
+                handleChatSelect(chatId)
                 setActiveTab("chat")
               }}
               isCollapsed={false}
               onToggleCollapse={() => {}}
               onNewChat={handleNewChat}
+              onChatsUpdated={refreshChats}
             />
           </SheetContent>
         </Sheet>
@@ -270,16 +393,13 @@ export default function AIInsights() {
             )}
           >
             <ChatSidebar 
+              chats={chats}
               selectedChat={selectedChat}
-              onSelectChat={(chatId) => {
-                setSelectedChat(chatId)
-                if (isMobile) {
-                  setIsMobileSidebarOpen(false)
-                }
-              }}
+              onSelectChat={handleChatSelect}
               isCollapsed={isSidebarCollapsed}
               onToggleCollapse={() => !isMobile && setIsSidebarCollapsed(!isSidebarCollapsed)}
               onNewChat={handleNewChat}
+              onChatsUpdated={refreshChats}
             />
           </aside>
 
@@ -291,9 +411,11 @@ export default function AIInsights() {
           )}>
             <ChatInterface 
               selectedChat={selectedChat}
-              onSelectChat={setSelectedChat}
+              chat={currentChat}
+              onSelectChat={handleChatSelect}
               onOpenSidebar={() => isMobile ? setIsMobileSidebarOpen(true) : setIsSidebarCollapsed(false)}
               isSidebarCollapsed={isSidebarCollapsed}
+              onChatUpdated={refreshChats}
             />
           </main>
         </div>

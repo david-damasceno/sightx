@@ -1,47 +1,148 @@
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import { ChevronLeft, ChevronRight, Search, PlusCircle, Trash2, MessageSquare, Settings, History } from "lucide-react"
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Search, 
+  PlusCircle, 
+  Trash2, 
+  MessageSquare, 
+  Settings, 
+  History, 
+  Edit, 
+  MoreVertical
+} from "lucide-react"
 import { useMobile } from "@/hooks/use-mobile"
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu"
+import { Chat } from "@/types/chat"
+import { deleteChat, updateChatTitle, deleteAllChats } from "@/services/chatService"
+import { toast } from "sonner"
 
 interface ChatSidebarProps {
+  chats: Chat[]
   selectedChat: string | null
   onSelectChat: (chatId: string) => void
   isCollapsed: boolean
   onToggleCollapse: () => void
   onNewChat?: () => void
+  onChatsUpdated: () => void
 }
 
 export function ChatSidebar({
+  chats,
   selectedChat,
   onSelectChat,
   isCollapsed,
   onToggleCollapse,
-  onNewChat
+  onNewChat,
+  onChatsUpdated
 }: ChatSidebarProps) {
   const [search, setSearch] = useState("")
+  const [editingChatId, setEditingChatId] = useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = useState("")
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false)
+  const [chatToDelete, setChatToDelete] = useState<string | null>(null)
   const isMobile = useMobile()
   
-  // Mock data - seria substituído por dados reais
-  const chats = [
-    { id: "chat-1", title: "Análise de vendas de janeiro", date: "1d atrás" },
-    { id: "chat-2", title: "Previsão de tendências para Q2", date: "3d atrás" },
-    { id: "chat-3", title: "Comparativo de desempenho regional", date: "5d atrás" },
-    { id: "chat-4", title: "Análise de campanhas de marketing", date: "1sem atrás" },
-    { id: "chat-5", title: "Insights sobre satisfação do cliente", date: "2sem atrás" }
-  ]
-
   const filteredChats = chats.filter(chat => 
     chat.title.toLowerCase().includes(search.toLowerCase())
   )
 
+  const handleEditChat = (chat: Chat, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    setEditingChatId(chat.id)
+    setEditingTitle(chat.title)
+  }
+
+  const handleSaveTitle = async (e?: React.FormEvent) => {
+    e?.preventDefault()
+    if (editingChatId && editingTitle.trim()) {
+      await updateChatTitle(editingChatId, editingTitle.trim())
+      setEditingChatId(null)
+      onChatsUpdated()
+      toast.success("Título atualizado com sucesso")
+    }
+  }
+
+  const handleDeleteChat = async () => {
+    if (chatToDelete) {
+      await deleteChat(chatToDelete)
+      setIsDeleteDialogOpen(false)
+      setChatToDelete(null)
+      onChatsUpdated()
+      toast.success("Conversa excluída com sucesso")
+    }
+  }
+
+  const handleDeleteAllChats = async () => {
+    await deleteAllChats()
+    setIsDeleteAllDialogOpen(false)
+    onChatsUpdated()
+    toast.success("Todas as conversas foram excluídas")
+  }
+
+  const openDeleteDialog = (chatId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    setChatToDelete(chatId)
+    setIsDeleteDialogOpen(true)
+  }
+
+  useEffect(() => {
+    // Fechar modo de edição se o chat selecionado mudar
+    setEditingChatId(null)
+  }, [selectedChat])
+
+  // Agrupar chats por data (hoje, esta semana, este mês, mais antigos)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  const oneWeekAgo = new Date(today)
+  oneWeekAgo.setDate(today.getDate() - 7)
+  
+  const oneMonthAgo = new Date(today)
+  oneMonthAgo.setMonth(today.getMonth() - 1)
+
   const chatGroups = [
-    { id: "recent", title: "Recentes", chats: filteredChats.slice(0, 3) },
-    { id: "older", title: "Mais antigos", chats: filteredChats.slice(3) }
-  ]
+    { 
+      id: "today", 
+      title: "Hoje", 
+      chats: filteredChats.filter(chat => chat.updatedAt >= today) 
+    },
+    { 
+      id: "week", 
+      title: "Esta semana", 
+      chats: filteredChats.filter(chat => chat.updatedAt >= oneWeekAgo && chat.updatedAt < today) 
+    },
+    { 
+      id: "month", 
+      title: "Este mês", 
+      chats: filteredChats.filter(chat => chat.updatedAt >= oneMonthAgo && chat.updatedAt < oneWeekAgo) 
+    },
+    { 
+      id: "older", 
+      title: "Mais antigos", 
+      chats: filteredChats.filter(chat => chat.updatedAt < oneMonthAgo) 
+    }
+  ].filter(group => group.chats.length > 0)
 
   if (isCollapsed && !isMobile) {
     return (
@@ -112,21 +213,75 @@ export function ChatSidebar({
               {group.chats.length > 0 ? (
                 <div className="space-y-1">
                   {group.chats.map((chat) => (
-                    <Button
+                    <div 
                       key={chat.id}
-                      variant={selectedChat === chat.id ? "secondary" : "ghost"}
-                      onClick={() => onSelectChat(chat.id)}
                       className={cn(
-                        "w-full justify-start gap-2 h-auto py-3 px-3 rounded-lg",
-                        selectedChat === chat.id && "bg-accent"
+                        "relative group",
+                        selectedChat === chat.id && "bg-accent rounded-lg"
                       )}
                     >
-                      <MessageSquare className="h-4 w-4 flex-shrink-0" />
-                      <div className="flex-1 truncate text-left">
-                        <div className="font-medium truncate">{chat.title}</div>
-                        <div className="text-xs text-muted-foreground">{chat.date}</div>
-                      </div>
-                    </Button>
+                      {editingChatId === chat.id ? (
+                        <form 
+                          onSubmit={handleSaveTitle}
+                          className="flex items-center gap-2 p-1"
+                        >
+                          <Input
+                            autoFocus
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            onBlur={handleSaveTitle}
+                            className="h-8 text-sm"
+                          />
+                        </form>
+                      ) : (
+                        <Button
+                          variant={selectedChat === chat.id ? "secondary" : "ghost"}
+                          onClick={() => onSelectChat(chat.id)}
+                          className={cn(
+                            "w-full justify-start gap-2 h-auto py-3 px-3 rounded-lg",
+                            selectedChat === chat.id && "bg-accent"
+                          )}
+                        >
+                          <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                          <div className="flex-1 truncate text-left">
+                            <div className="font-medium truncate">{chat.title}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {chat.updatedAt.toLocaleDateString()} às {chat.updatedAt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </div>
+                          </div>
+                        </Button>
+                      )}
+
+                      {selectedChat === chat.id && editingChatId !== chat.id && (
+                        <TooltipProvider>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 h-7 w-7"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => handleEditChat(chat, e)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                <span>Renomear</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={(e) => openDeleteDialog(chat.id, e)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Excluir</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TooltipProvider>
+                      )}
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -144,7 +299,7 @@ export function ChatSidebar({
               </div>
               <p className="text-sm font-medium">Nenhuma conversa encontrada</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Tente usar termos diferentes na busca
+                {search ? "Tente usar termos diferentes na busca" : "Inicie uma nova conversa clicando no botão acima"}
               </p>
             </div>
           )}
@@ -152,15 +307,62 @@ export function ChatSidebar({
       </ScrollArea>
 
       <div className="p-3 border-t mt-auto">
-        <Button 
-          variant="outline" 
-          size="sm"
-          className="w-full justify-start gap-2 h-9 rounded-lg"
-        >
-          <Settings className="h-4 w-4" />
-          <span>Configurações</span>
-        </Button>
+        <div className="flex flex-col gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="w-full justify-start gap-2 h-9 rounded-lg"
+            onClick={() => onSelectChat('settings')}
+          >
+            <Settings className="h-4 w-4" />
+            <span>Configurações</span>
+          </Button>
+          
+          {filteredChats.length > 0 && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="w-full justify-start gap-2 h-9 rounded-lg text-destructive hover:text-destructive"
+              onClick={() => setIsDeleteAllDialogOpen(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>Limpar histórico</span>
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* Diálogo de confirmação para excluir uma conversa */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir conversa</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir esta conversa? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleDeleteChat}>Excluir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo de confirmação para excluir todas as conversas */}
+      <Dialog open={isDeleteAllDialogOpen} onOpenChange={setIsDeleteAllDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Limpar histórico</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir todas as suas conversas? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteAllDialogOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleDeleteAllChats}>Excluir tudo</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
