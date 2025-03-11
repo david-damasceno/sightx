@@ -1,4 +1,3 @@
-
 import { Auth } from "@supabase/auth-ui-react"
 import { ThemeSupa } from "@supabase/auth-ui-shared"
 import { supabase } from "@/integrations/supabase/client"
@@ -40,7 +39,6 @@ export default function Login() {
       
       if (event === 'SIGNED_IN' && session) {
         console.log("Usuário logado, redirecionando")
-        // Pequeno atraso para garantir que os outros componentes tenham tempo de reagir
         setTimeout(() => navigate("/"), 500)
       }
     })
@@ -50,27 +48,32 @@ export default function Login() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <p className="ml-2 text-sm text-gray-500">Verificando sessão...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-background/95">
+        <div className="animate-pulse flex items-center gap-2">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+          <p className="text-sm text-muted-foreground">Verificando sessão...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-full max-w-md bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg rounded-2xl shadow-xl">
-          <div className="p-6">
-            <div className="text-center mb-6">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-background to-background/95">
+      <div className="absolute -top-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-pulse delay-700"></div>
+      
+      <div className="container relative min-h-screen mx-auto flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="bg-card/50 backdrop-blur-xl rounded-2xl border border-border/50 shadow-xl p-6 space-y-6">
+            <div className="text-center space-y-2">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
-                  width="80" 
-                  height="50" 
+                  width="60" 
+                  height="40" 
                   viewBox="0 0 300 187.499995" 
-                  preserveAspectRatio="xMidYMid meet" 
-                  className="hover:opacity-80 transition-opacity"
+                  className="text-primary transition-all hover:scale-105"
+                  preserveAspectRatio="xMidYMid meet"
                 >
                   <defs>
                     <clipPath id="e7ffea59ae"><path d="M 53.777344 53 L 127.507812 53 L 127.507812 133.84375 L 53.777344 133.84375 Z M 53.777344 53 " clip-rule="nonzero"/></clipPath>
@@ -116,16 +119,18 @@ export default function Login() {
                     </g>
                   </g>
                 </svg>
-                <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-100">
+                <h1 className="text-3xl font-bold text-foreground">
                   SightX
-                </h2>
+                </h1>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                Bem-vindo
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Faça login para acessar seu painel de controle
-              </p>
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold text-foreground">
+                  Bem-vindo de volta
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Use suas credenciais para acessar sua conta
+                </p>
+              </div>
             </div>
 
             <Auth
@@ -135,26 +140,27 @@ export default function Login() {
                 variables: {
                   default: {
                     colors: {
-                      brand: '#3b82f6',
-                      brandAccent: '#2563eb',
-                      inputBackground: 'white',
-                      inputText: '#1f2937',
-                      inputPlaceholder: '#9ca3af',
-                      messageText: '#374151',
-                      anchorTextColor: '#2563eb',
-                      dividerBackground: '#e5e7eb',
+                      brand: 'hsl(var(--primary))',
+                      brandAccent: 'hsl(var(--primary))',
+                      inputBackground: 'hsl(var(--background))',
+                      inputText: 'hsl(var(--foreground))',
+                      inputPlaceholder: 'hsl(var(--muted-foreground))',
+                      messageText: 'hsl(var(--foreground))',
+                      anchorTextColor: 'hsl(var(--primary))',
+                      dividerBackground: 'hsl(var(--border))',
                     },
                     radii: {
-                      buttonBorderRadius: '0.75rem',
-                      inputBorderRadius: '0.75rem',
+                      borderRadius: 'var(--radius)',
+                      buttonBorderRadius: 'var(--radius)',
+                      inputBorderRadius: 'var(--radius)',
                     },
                     space: {
                       inputPadding: '0.75rem',
                       buttonPadding: '0.75rem',
                     },
                     fonts: {
-                      bodyFontFamily: `ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`,
-                      buttonFontFamily: `ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"`,
+                      bodyFontFamily: `"Inter var", ui-sans-serif, system-ui, -apple-system, sans-serif`,
+                      buttonFontFamily: `"Inter var", ui-sans-serif, system-ui, -apple-system, sans-serif`,
                     },
                     fontSizes: {
                       baseButtonSize: '0.875rem',
@@ -163,12 +169,12 @@ export default function Login() {
                   },
                 },
                 className: {
-                  container: 'space-y-3',
-                  button: 'w-full px-4 py-2.5 text-white font-medium rounded-lg shadow-sm hover:opacity-90 transition-opacity duration-200',
-                  input: 'w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow duration-200',
-                  label: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1',
-                  message: 'text-sm text-gray-600 dark:text-gray-400 mt-1',
-                  anchor: 'text-blue-600 hover:text-blue-700 font-medium',
+                  container: 'space-y-4',
+                  button: 'w-full px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg shadow-sm hover:bg-primary/90 transition-colors duration-200',
+                  input: 'w-full px-3 py-2 bg-background border border-input rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-200',
+                  label: 'block text-sm font-medium text-foreground mb-1.5',
+                  message: 'text-sm text-muted-foreground mt-1',
+                  anchor: 'text-primary hover:text-primary/90 font-medium transition-colors',
                   divider: 'my-4',
                 },
               }}
@@ -178,10 +184,10 @@ export default function Login() {
                     email_label: "Email",
                     password_label: "Senha",
                     email_input_placeholder: "Seu endereço de email",
-                    password_input_placeholder: "Sua senha",
+                    password_input_placeholder: "Escolha uma senha segura",
                     button_label: "Criar conta",
-                    loading_button_label: "Criando conta...",
-                    social_provider_text: "Entrar com {{provider}}",
+                    loading_button_label: "Criando sua conta...",
+                    social_provider_text: "Continuar com {{provider}}",
                     link_text: "Não tem uma conta? Cadastre-se",
                   },
                   sign_in: {
@@ -191,7 +197,7 @@ export default function Login() {
                     password_input_placeholder: "Sua senha",
                     button_label: "Entrar",
                     loading_button_label: "Entrando...",
-                    social_provider_text: "Entrar com {{provider}}",
+                    social_provider_text: "Continuar com {{provider}}",
                     link_text: "Já tem uma conta? Entre",
                   },
                   forgotten_password: {
@@ -201,22 +207,6 @@ export default function Login() {
                     button_label: "Recuperar senha",
                     loading_button_label: "Enviando instruções...",
                     link_text: "Esqueceu sua senha?",
-                  },
-                  update_password: {
-                    password_label: "Nova senha",
-                    password_input_placeholder: "Sua nova senha",
-                    button_label: "Atualizar senha",
-                    loading_button_label: "Atualizando senha...",
-                  },
-                  verify_otp: {
-                    email_input_label: "Email",
-                    email_input_placeholder: "Seu endereço de email",
-                    phone_input_label: "Número de telefone",
-                    phone_input_placeholder: "Seu número de telefone",
-                    token_input_label: "Token",
-                    token_input_placeholder: "Seu token de verificação",
-                    button_label: "Verificar",
-                    loading_button_label: "Verificando...",
                   },
                 },
               }}
