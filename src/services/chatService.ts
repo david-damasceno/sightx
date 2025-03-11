@@ -18,10 +18,15 @@ export const loadChatSettings = async (): Promise<ChatSettings> => {
       .select("settings")
       .single();
 
-    if (profile?.settings?.chat) {
+    // Garantindo que acessamos propriedades apenas se elas existirem
+    const chatSettings = profile?.settings ? 
+      (typeof profile.settings === 'object' && profile.settings !== null && 'chat' in profile.settings ? 
+       profile.settings.chat : null) : null;
+    
+    if (chatSettings) {
       return {
         ...DEFAULT_SETTINGS,
-        ...profile.settings.chat,
+        ...chatSettings,
       };
     }
     
@@ -40,8 +45,10 @@ export const saveChatSettings = async (settings: ChatSettings): Promise<void> =>
       .select("settings")
       .single();
 
+    const currentSettings = profile?.settings || {};
+    
     const updatedSettings = {
-      ...profile?.settings || {},
+      ...(typeof currentSettings === 'object' ? currentSettings : {}),
       chat: settings,
     };
 
@@ -55,6 +62,20 @@ export const saveChatSettings = async (settings: ChatSettings): Promise<void> =>
     console.error("Erro ao salvar configurações do chat:", error);
     throw new Error("Não foi possível salvar as configurações");
   }
+};
+
+// Função auxiliar para converter os timestamps de string para Date
+const convertChatDates = (chat: any): Chat => {
+  return {
+    id: chat.id,
+    title: chat.title,
+    messages: Array.isArray(chat.messages) ? chat.messages.map((msg: any) => ({
+      ...msg,
+      timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+    })) : [],
+    createdAt: new Date(chat.created_at),
+    updatedAt: new Date(chat.updated_at),
+  };
 };
 
 // Carrega todas as conversas do usuário
@@ -74,13 +95,7 @@ export const loadChats = async (): Promise<Chat[]> => {
 
     if (error) throw error;
 
-    return data.map((chat) => ({
-      id: chat.id,
-      title: chat.title,
-      messages: chat.messages,
-      createdAt: new Date(chat.created_at),
-      updatedAt: new Date(chat.updated_at),
-    }));
+    return data.map(convertChatDates);
   } catch (error) {
     console.error("Erro ao carregar conversas:", error);
     return [];
@@ -98,13 +113,7 @@ export const loadChat = async (chatId: string): Promise<Chat | null> => {
 
     if (error) throw error;
     
-    return {
-      id: data.id,
-      title: data.title,
-      messages: data.messages,
-      createdAt: new Date(data.created_at),
-      updatedAt: new Date(data.updated_at),
-    };
+    return convertChatDates(data);
   } catch (error) {
     console.error(`Erro ao carregar conversa ${chatId}:`, error);
     return null;
@@ -121,17 +130,19 @@ export const createChat = async (initialMessage?: string): Promise<Chat> => {
   }
   
   const chatId = uuidv4();
+  const initialMessages: ChatMessage[] = initialMessage ? [
+    {
+      id: uuidv4(),
+      sender: "user",
+      text: initialMessage,
+      timestamp: now,
+    }
+  ] : [];
+
   const newChat: Chat = {
     id: chatId,
     title: `Nova conversa (${now.toLocaleDateString()})`,
-    messages: initialMessage ? [
-      {
-        id: uuidv4(),
-        sender: "user",
-        text: initialMessage,
-        timestamp: now,
-      }
-    ] : [],
+    messages: initialMessages,
     createdAt: now,
     updatedAt: now,
   };
@@ -140,7 +151,7 @@ export const createChat = async (initialMessage?: string): Promise<Chat> => {
     const { error } = await supabase.from("chats").insert({
       id: newChat.id,
       title: newChat.title,
-      messages: newChat.messages,
+      messages: initialMessages,
       created_at: newChat.createdAt.toISOString(),
       updated_at: newChat.updatedAt.toISOString(),
       user_id: user.user.id
@@ -172,7 +183,9 @@ export const addMessageToChat = async (
       .eq("id", chatId)
       .single();
     
-    const messages = [...(chat?.messages || []), newMessage];
+    // Garantimos que messages seja sempre um array
+    const currentMessages = Array.isArray(chat?.messages) ? chat.messages : [];
+    const messages = [...currentMessages, newMessage];
     
     // Se for a primeira mensagem do usuário e título for genérico, atualize o título
     let title = chat?.title;
