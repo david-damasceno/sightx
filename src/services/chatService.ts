@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Chat, ChatMessage, ChatSettings } from "@/types/chat";
 import { v4 as uuidv4 } from "uuid";
@@ -328,7 +329,7 @@ export const getUserAndOrgContext = async (): Promise<{
       if (org) {
         orgInfo = {
           name: org.name,
-          ...(org.settings || {})
+          ...(org.settings && typeof org.settings === 'object' ? org.settings : {})
         };
       }
     }
