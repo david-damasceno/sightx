@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -25,6 +24,7 @@ import Performance from "./pages/Performance"
 import Profile from "./pages/Profile"
 import Settings from "./pages/Settings"
 import DataConnectors from "./pages/DataConnectors"
+import AcceptInvite from "./pages/AcceptInvite"
 
 const queryClient = new QueryClient()
 
@@ -40,27 +40,14 @@ const AppContent = () => {
       <OfflineNotification />
       <main className={`flex-1 ${!isLoginPage && !isOnboardingPage ? 'pt-16' : ''} pb-16 md:pb-0`}>
         <Routes>
+          <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
-          <Route
-            path="/onboarding"
-            element={
-              <ProtectedRoute>
-                <Onboarding />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute checkOnboarding>
-                <Index />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/accept-invite" element={<AcceptInvite />} />
           <Route
             path="/sales"
             element={
-              <ProtectedRoute checkOnboarding>
+              <ProtectedRoute>
                 <Sales />
               </ProtectedRoute>
             }
