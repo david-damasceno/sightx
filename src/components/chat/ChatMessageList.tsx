@@ -11,13 +11,6 @@ interface ChatMessageListProps {
 }
 
 export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
-  const formatMessageTime = (date: Date | string) => {
-    if (typeof date === 'string') {
-      date = new Date(date)
-    }
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  }
-
   const formatText = (text: string) => {
     return text.split('\n').map((line, i) => (
       <span key={i}>
@@ -50,16 +43,6 @@ export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
             <div className="text-sm leading-relaxed">
               {formatText(message.text)}
             </div>
-            <span 
-              className={cn(
-                "block text-xs mt-1",
-                message.sender === "user" 
-                  ? "text-primary-foreground/80" 
-                  : "text-muted-foreground"
-              )}
-            >
-              {formatMessageTime(message.timestamp)}
-            </span>
           </div>
         </div>
       ))}

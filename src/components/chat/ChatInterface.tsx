@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react"
 import { ChatInput } from "./ChatInput"
 import { ChatMessageList } from "./ChatMessageList"
@@ -39,6 +40,17 @@ export function ChatInterface({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  // Garantir que o componente é renderizado corretamente em dispositivos móveis
+  useEffect(() => {
+    const handleResize = () => {
+      // Forçar uma atualização da UI
+      setInputMessage(prev => prev)
+    }
+    
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() === "" || !selectedChat || selectedChat === 'settings') return
@@ -137,6 +149,7 @@ export function ChatInterface({
     )
   }
 
+  // Para dispositivos móveis e quando um chat está selecionado
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
