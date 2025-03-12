@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react"
 import { ChatInput } from "./ChatInput"
 import { ChatMessageList } from "./ChatMessageList"
@@ -162,22 +161,20 @@ export function ChatInterface({
       )}
 
       {/* Message list */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
         <ChatMessageList messages={messages} isLoading={isLoading} />
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input area */}
-      <div className="border-t bg-background/50 backdrop-blur-sm">
-        <ChatInput
-          inputMessage={inputMessage}
-          onInputChange={setInputMessage}
-          onSendMessage={handleSendMessage}
-          onVoiceRecord={handleVoiceRecord}
-          isRecording={isRecording}
-          isLoading={isLoading}
-        />
-      </div>
+      <ChatInput
+        inputMessage={inputMessage}
+        onInputChange={setInputMessage}
+        onSendMessage={handleSendMessage}
+        onVoiceRecord={handleVoiceRecord}
+        isRecording={isRecording}
+        isLoading={isLoading}
+      />
     </div>
   )
 }
