@@ -66,32 +66,32 @@ export function ChatInput({
           onChange={handleFileChange}
         />
         
-        <div className="flex items-center gap-2 h-10">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleFileClick}
-            className="flex-shrink-0 h-8 w-8 hover:bg-primary/10 text-muted-foreground rounded-full"
-            disabled={isLoading}
-          >
-            <Paperclip className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onVoiceRecord}
-            className={cn(
-              "flex-shrink-0 h-8 w-8 hover:bg-primary/10 text-muted-foreground rounded-full",
-              isRecording && "bg-red-100 text-red-500 dark:bg-red-900/20"
-            )}
-            disabled={isLoading}
-          >
-            <Mic className="h-4 w-4" />
-          </Button>
-        </div>
-
         <div className="relative flex-1">
+          <div className="absolute left-2 bottom-1 flex items-center gap-1 z-10">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleFileClick}
+              className="flex-shrink-0 h-8 w-8 hover:bg-primary/10 text-muted-foreground rounded-full"
+              disabled={isLoading}
+            >
+              <Paperclip className="h-4 w-4" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onVoiceRecord}
+              className={cn(
+                "flex-shrink-0 h-8 w-8 hover:bg-primary/10 text-muted-foreground rounded-full",
+                isRecording && "bg-red-100 text-red-500 dark:bg-red-900/20"
+              )}
+              disabled={isLoading}
+            >
+              <Mic className="h-4 w-4" />
+            </Button>
+          </div>
+          
           <Textarea
             ref={inputRef}
             value={inputMessage}
@@ -99,7 +99,7 @@ export function ChatInput({
             placeholder="Digite sua mensagem..."
             onKeyDown={handleKeyDown}
             className={cn(
-              "min-h-[40px] max-h-[120px] pe-12 resize-none",
+              "min-h-[40px] max-h-[120px] pl-20 pr-12 resize-none",
               "bg-white/40 dark:bg-gray-800/40 backdrop-blur-md",
               "border-primary/10 dark:border-primary/20 focus-visible:ring-primary/20",
               "rounded-2xl py-2 px-4",

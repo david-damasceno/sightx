@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Chat, ChatMessage, ChatSettings } from "@/types/chat";
 import { v4 as uuidv4 } from "uuid";
@@ -284,15 +283,107 @@ export const deleteAllChats = async (): Promise<void> => {
   }
 };
 
+// Obtém as informações do usuário e da organização para o contexto do chat
+export const getUserAndOrgContext = async (): Promise<{
+  userName: string;
+  orgInfo: {
+    name?: string;
+    sector?: string;
+    city?: string;
+    state?: string;
+    description?: string;
+    [key: string]: any;
+  } | null;
+}> => {
+  try {
+    // Obter perfil do usuário
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error("Usuário não autenticado");
+    }
+    
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+      
+    // Obter organização atual do usuário
+    const { data: memberData } = await supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+      
+    let orgInfo = null;
+    
+    if (memberData?.organization_id) {
+      const { data: org } = await supabase
+        .from("organizations")
+        .select("*")
+        .eq("id", memberData.organization_id)
+        .single();
+        
+      if (org) {
+        orgInfo = {
+          name: org.name,
+          ...(org.settings || {})
+        };
+      }
+    }
+    
+    return {
+      userName: profile?.full_name || user.email?.split('@')[0] || "Usuário",
+      orgInfo
+    };
+  } catch (error) {
+    console.error("Erro ao obter contexto do usuário:", error);
+    return {
+      userName: "Usuário",
+      orgInfo: null
+    };
+  }
+};
+
 // Envia mensagem para a IA e obtém resposta
 export const sendMessageToAI = async (message: string, context?: string): Promise<string> => {
   try {
     const settings = await loadChatSettings();
     
+    // Obter informações do usuário e da organização
+    const { userName, orgInfo } = await getUserAndOrgContext();
+    
+    // Construir contexto adicional com informações do usuário e da organização
+    let enhancedContext = `O usuário @${userName} está lhe enviando uma mensagem.`;
+    
+    if (orgInfo) {
+      enhancedContext += "\n\nPara fornecer a melhor resposta, segue as informações sobre a empresa dele:";
+      
+      if (orgInfo.name) enhancedContext += `\nNome da empresa: ${orgInfo.name}`;
+      if (orgInfo.sector) enhancedContext += `\nSetor: ${orgInfo.sector}`;
+      if (orgInfo.city && orgInfo.state) enhancedContext += `\nLocalização: ${orgInfo.city}, ${orgInfo.state}`;
+      if (orgInfo.description) enhancedContext += `\nSobre a empresa: ${orgInfo.description}`;
+      
+      // Adicionar outras informações disponíveis
+      Object.entries(orgInfo).forEach(([key, value]) => {
+        if (!['name', 'sector', 'city', 'state', 'description'].includes(key) && value) {
+          enhancedContext += `\n${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`;
+        }
+      });
+    }
+    
+    enhancedContext += `\n\nAbaixo, segue a mensagem do @${userName} para você:\n\n"${message}"`;
+    
+    // Incluir histórico do chat se fornecido
+    if (context) {
+      enhancedContext += `\n\nHistórico recente da conversa:\n${context}`;
+    }
+    
     const { data, error } = await supabase.functions.invoke("chat-with-dona", {
       body: { 
-        message, 
-        context,
+        message: enhancedContext,
+        context: "",
         settings
       },
     });

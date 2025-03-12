@@ -67,10 +67,12 @@ export function ChatInterface({
       onChatUpdated()
 
       // Obter resposta da IA
+      // Agora não precisamos enviar o contexto completo aqui, pois será construído na função sendMessageToAI
       const chatContext = messages.length > 0 
         ? messages.slice(-10).map(m => `${m.sender === 'user' ? 'Usuário' : 'IA'}: ${m.text}`).join('\n')
         : '';
 
+      // Enviando a mensagem original do usuário - a função sendMessageToAI já vai adicionar o contexto
       const aiResponse = await sendMessageToAI(inputMessage, chatContext)
       
       // Adicionar resposta da IA ao chat

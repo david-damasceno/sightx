@@ -26,14 +26,22 @@ serve(async (req) => {
       throw new Error('Missing required Azure OpenAI configuration')
     }
 
-    const { message, context } = await req.json()
-    console.log('Processing request:', { message, context })
+    const { message, context, settings } = await req.json()
+    console.log('Processing request with message:', { 
+      messageLength: message.length,
+      hasContext: !!context,
+      hasSettings: !!settings 
+    })
 
     const baseEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint
     const url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-07-01-preview`
     
     console.log('Calling Azure OpenAI at:', url)
     console.log('Using deployment:', deployment)
+
+    // Configurações que podem ser ajustadas com base em settings
+    const temperature = settings?.temperature || 0.7
+    const maxTokens = settings?.maxTokens || 800
 
     const azureResponse = await fetch(url, {
       method: 'POST',
@@ -52,8 +60,8 @@ serve(async (req) => {
             content: message
           }
         ],
-        temperature: 0.7,
-        max_tokens: 800,
+        temperature: temperature,
+        max_tokens: maxTokens,
         top_p: 0.95,
         frequency_penalty: 0,
         presence_penalty: 0,
