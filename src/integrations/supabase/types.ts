@@ -88,34 +88,34 @@ export type Database = {
       }
       nps_responses: {
         Row: {
-          comment: string | null
-          created_at: string | null
+          answers: Json | null
+          created_at: string
+          feedback: string | null
           id: string
-          metadata: Json | null
           respondent_email: string | null
-          score: number
-          sentiment: string | null
+          score: number | null
           survey_id: string
+          updated_at: string
         }
         Insert: {
-          comment?: string | null
-          created_at?: string | null
+          answers?: Json | null
+          created_at?: string
+          feedback?: string | null
           id?: string
-          metadata?: Json | null
           respondent_email?: string | null
-          score: number
-          sentiment?: string | null
+          score?: number | null
           survey_id: string
+          updated_at?: string
         }
         Update: {
-          comment?: string | null
-          created_at?: string | null
+          answers?: Json | null
+          created_at?: string
+          feedback?: string | null
           id?: string
-          metadata?: Json | null
           respondent_email?: string | null
-          score?: number
-          sentiment?: string | null
+          score?: number | null
           survey_id?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -129,7 +129,7 @@ export type Database = {
       }
       nps_surveys: {
         Row: {
-          created_at: string | null
+          created_at: string
           description: string | null
           id: string
           organization_id: string
@@ -137,10 +137,10 @@ export type Database = {
           status: Database["public"]["Enums"]["survey_status"]
           title: string
           type: Database["public"]["Enums"]["survey_type"]
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           description?: string | null
           id?: string
           organization_id: string
@@ -148,10 +148,10 @@ export type Database = {
           status?: Database["public"]["Enums"]["survey_status"]
           title: string
           type?: Database["public"]["Enums"]["survey_type"]
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           description?: string | null
           id?: string
           organization_id?: string
@@ -159,7 +159,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["survey_status"]
           title?: string
           type?: Database["public"]["Enums"]["survey_type"]
-          updated_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {

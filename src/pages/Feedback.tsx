@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { MessageSquare, PlusCircle, BarChart2, Send, Loader2, Mail, Copy, Link2, ArrowUpRight, Users, CheckCircle, Clock, Settings2, ExternalLink, Filter, Eye, Trash2, Edit, HelpCircle } from "lucide-react"
@@ -15,22 +14,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Json } from "@/integrations/supabase/types"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
-
-type NPSSurvey = {
-  id: string
-  title: string
-  description: string | null
-  status: 'draft' | 'active' | 'inactive' | 'archived'
-  created_at: string
-  type: 'simple' | 'detailed' | 'advanced'
-  organization_id: string
-  settings: Json
-}
+import { NPSSurvey, NPSResponse, Question, SurveySettings, SurveyStatus, SurveyType } from "@/types/feedback"
 
 type AIPromptType = 'manual' | 'recommend'
 
@@ -1032,4 +1020,3 @@ export default function Feedback() {
     </div>
   )
 }
-
