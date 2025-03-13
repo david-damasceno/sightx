@@ -13,7 +13,7 @@ const clientOptions = {
     persistSession: true,
     storageKey: 'sightx-auth-token',
     detectSessionInUrl: true,
-    flowType: 'pkce'
+    flowType: 'pkce' as const
   }
 };
 

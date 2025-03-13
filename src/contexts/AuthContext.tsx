@@ -84,8 +84,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Load user profile
   useEffect(() => {
-    const controller = new AbortController()
-
     const loadProfile = async () => {
       setProfileLoading(true)
       if (!user) {
@@ -103,7 +101,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .select('*')
           .eq('id', user.id)
           .single()
-          .abortSignal(controller.signal)
 
         if (error) {
           console.error('Error loading profile:', error)
@@ -112,18 +109,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (error.code === 'PGRST116') {
             console.log('Profile not found, creating one')
             const currentTime = new Date().toISOString()
+            
+            // Buscar dados do usuário
+            const { data: userData } = await supabase.auth.getUser()
+            if (!userData?.user) throw new Error('Usuário não encontrado')
+            
+            // Inserir novo perfil
             const { data: newProfile, error: insertError } = await supabase
               .from('profiles')
               .insert({
-                id: user.id,
-                email: user.email,
+                id: userData.user.id,
+                email: userData.user.email,
                 updated_at: currentTime,
                 onboarded: false,
                 default_organization_id: null
               })
               .select()
               .single()
-              .abortSignal(controller.signal)
 
             if (insertError) {
               console.error('Error creating profile:', insertError)
@@ -154,16 +156,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     loadProfile()
-
-    return () => {
-      controller.abort()
-    }
   }, [user, toast])
 
   // Load default organization
   useEffect(() => {
-    const controller = new AbortController()
-
     const loadDefaultOrganization = async () => {
       setOrganizationLoading(true)
       if (!user) {
@@ -181,7 +177,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .select('organization_id')
           .eq('user_id', user.id)
           .maybeSingle()
-          .abortSignal(controller.signal)
 
         if (memberError) {
           console.error('Error loading organization membership:', memberError)
@@ -193,7 +188,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             .select('*')
             .eq('id', memberData.organization_id)
             .maybeSingle()
-            .abortSignal(controller.signal)
 
           if (orgError) {
             console.error('Error loading organization details:', orgError)
@@ -218,10 +212,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     loadDefaultOrganization()
-
-    return () => {
-      controller.abort()
-    }
   }, [user])
 
   return (

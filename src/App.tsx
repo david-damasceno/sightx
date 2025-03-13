@@ -37,7 +37,7 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: true,
       refetchOnMount: true,
       refetchOnReconnect: true,
-      cacheTime: 1000 * 60 * 5, // 5 minutos
+      gcTime: 1000 * 60 * 5, // 5 minutos (substituindo cacheTime que foi deprecado)
     },
     mutations: {
       retry: 1,

@@ -7,14 +7,17 @@ import { Logo } from "./navbar/Logo"
 import { Navigation } from "./navbar/Navigation"
 import { UserMenu } from "./navbar/UserMenu"
 import { MobileNav } from "./MobileNav"
+import { Database } from "@/integrations/supabase/types"
+
+type Profile = {
+  full_name: string;
+  email: string;
+  avatar_url: string;
+}
 
 export function AppNavbar() {
   const { session } = useAuth()
-  const [profile, setProfile] = useState<{
-    full_name: string;
-    email: string;
-    avatar_url: string;
-  } | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
 
   useEffect(() => {
     if (session?.user) {
@@ -27,7 +30,7 @@ export function AppNavbar() {
       const { data, error } = await supabase
         .from('profiles')
         .select('full_name, email, avatar_url')
-        .eq('id', session?.user?.id)
+        .eq('id', session?.user?.id || '')
         .single()
 
       if (error) {
@@ -35,7 +38,13 @@ export function AppNavbar() {
         return
       }
       
-      setProfile(data)
+      if (data) {
+        setProfile({
+          full_name: data.full_name || '',
+          email: data.email || '',
+          avatar_url: data.avatar_url || ''
+        })
+      }
     } catch (error) {
       console.error('Error loading profile:', error)
     }

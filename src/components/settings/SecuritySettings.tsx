@@ -1,157 +1,196 @@
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { useToast } from "@/components/ui/use-toast"
-import { useState } from "react"
-import { useAuth } from "@/contexts/AuthContext"
-import { supabase } from "@/integrations/supabase/client"
-import { useTranslation } from "react-i18next"
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { ShieldCheck, AlertTriangle, Key, FileDigit } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Translate } from "@/components/Translate";
+import { useLocalization } from "@/hooks/use-localization";
+
+interface SecuritySettings {
+  ipWhitelisting: boolean;
+  auditLogging: boolean;
+  twoFactorAuth: boolean;
+  apiKeySet: boolean;
+}
 
 export function SecuritySettings() {
-  const { toast } = useToast()
-  const { user } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [apiKey, setApiKey] = useState("")
-  const [ipWhitelisting, setIpWhitelisting] = useState(false)
-  const [auditLogging, setAuditLogging] = useState(true)
-  const [twoFactorAuth, setTwoFactorAuth] = useState(false)
-  
-  // Função utilitária para sanitizar entradas
-  const sanitizeInput = (input: string): string => {
-    return input.trim().replace(/[<>&"']/g, '');
-  }
-  
-  const handleSave = async () => {
-    if (!user) {
-      toast({
-        title: "Erro",
-        description: "Você precisa estar autenticado para salvar configurações de segurança.",
-        variant: "destructive",
-      })
-      return
-    }
-    
-    setLoading(true)
-    
-    try {
-      // Sanitizar dados
-      const sanitizedApiKey = sanitizeInput(apiKey)
-      
-      // Verificar se o usuário está logado
-      const { data: sessionData } = await supabase.auth.getSession()
-      
-      if (!sessionData.session) {
-        throw new Error("Sessão expirada. Faça login novamente.")
+  const { toast } = useToast();
+  const { t } = useLocalization();
+  const [settings, setSettings] = useState<SecuritySettings>({
+    ipWhitelisting: false,
+    auditLogging: true,
+    twoFactorAuth: false,
+    apiKeySet: false
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('settings')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+
+        if (data?.settings?.security) {
+          setSettings(data.settings.security);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar configurações de segurança:", error);
       }
-      
-      // Atualizar configurações na tabela de perfis
+    }
+
+    loadSettings();
+  }, []);
+
+  const saveSettings = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      // Obter configurações atuais primeiro
+      const { data: currentProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('settings')
+        .eq('id', user.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Mesclar configurações atuais com novas configurações de segurança
+      const updatedSettings = {
+        ...(currentProfile?.settings || {}),
+        security: settings
+      };
+
       const { error } = await supabase
         .from('profiles')
         .update({
-          settings: {
-            security: {
-              ipWhitelisting,
-              auditLogging,
-              twoFactorAuth,
-              apiKeySet: !!sanitizedApiKey
-            }
-          }
+          settings: updatedSettings
         })
-        .eq('id', user.id)
-      
-      if (error) throw error
-      
+        .eq('id', user.id);
+
+      if (error) throw error;
+
       toast({
-        title: "Configurações salvas",
-        description: "As configurações de segurança foram atualizadas com sucesso.",
+        title: t("Configurações salvas"),
+        description: t("Configurações de segurança atualizadas com sucesso"),
         variant: "success",
-      })
+      });
     } catch (error) {
-      console.error("Erro ao salvar configurações:", error)
+      console.error("Erro ao salvar configurações de segurança:", error);
       toast({
-        title: "Erro ao salvar",
-        description: error.message || "Ocorreu um erro ao salvar as configurações. Tente novamente.",
+        title: t("Erro"),
+        description: t("Não foi possível salvar as configurações"),
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-medium">Segurança</h2>
+        <h2 className="text-lg font-medium"><Translate text="Segurança" /></h2>
         <p className="text-sm text-muted-foreground">
-          Gerencie configurações de segurança e controles de acesso
+          <Translate text="Configure as medidas de segurança para sua conta" />
         </p>
       </div>
 
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="apiKey">Chave de API</Label>
-          <Input 
-            id="apiKey"
-            type="password" 
-            placeholder="Insira a chave de API" 
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            aria-describedby="apiKeyHint"
-          />
-          <p id="apiKeyHint" className="text-xs text-muted-foreground">
-            Nunca compartilhe suas chaves de API. As chaves são armazenadas de forma segura.
-          </p>
-        </div>
+      <Alert>
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle><Translate text="Proteção de Conta" /></AlertTitle>
+        <AlertDescription>
+          <Translate text="Recomendamos habilitar a autenticação de dois fatores para maior segurança. Isso ajuda a proteger sua conta mesmo se suas credenciais forem comprometidas." />
+        </AlertDescription>
+      </Alert>
 
+      <Card className="p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="ipWhitelist">Lista de IPs permitidos</Label>
-            <p className="text-sm text-muted-foreground">
-              Restringir acesso a endereços IP específicos
-            </p>
+          <div className="flex items-center space-x-4">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <div>
+              <h3 className="font-medium"><Translate text="Lista de IPs permitidos" /></h3>
+              <p className="text-sm text-muted-foreground">
+                <Translate text="Restrinja acesso apenas a IPs específicos" />
+              </p>
+            </div>
           </div>
           <Switch 
-            id="ipWhitelist"
-            checked={ipWhitelisting}
-            onCheckedChange={setIpWhitelisting}
+            checked={settings.ipWhitelisting}
+            onCheckedChange={(checked) => setSettings({...settings, ipWhitelisting: checked})}
           />
         </div>
 
         <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="auditLog">Registro de Auditoria</Label>
-            <p className="text-sm text-muted-foreground">
-              Monitorar todas as atividades do sistema
-            </p>
+          <div className="flex items-center space-x-4">
+            <FileDigit className="h-5 w-5 text-primary" />
+            <div>
+              <h3 className="font-medium"><Translate text="Registro de auditoria" /></h3>
+              <p className="text-sm text-muted-foreground">
+                <Translate text="Mantenha registros detalhados de todas as atividades" />
+              </p>
+            </div>
           </div>
           <Switch 
-            id="auditLog"
-            checked={auditLogging}
-            onCheckedChange={setAuditLogging}
-            defaultChecked 
+            checked={settings.auditLogging}
+            onCheckedChange={(checked) => setSettings({...settings, auditLogging: checked})}
           />
         </div>
-        
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="twoFactor">Autenticação de Dois Fatores (2FA)</Label>
-            <p className="text-sm text-muted-foreground">
-              Exigir verificação adicional ao fazer login
-            </p>
-          </div>
-          <Switch 
-            id="twoFactor"
-            checked={twoFactorAuth}
-            onCheckedChange={setTwoFactorAuth}
-          />
-        </div>
-      </div>
 
-      <Button onClick={handleSave} disabled={loading}>
-        {loading ? "Salvando..." : "Salvar Alterações"}
-      </Button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <div>
+              <h3 className="font-medium"><Translate text="Autenticação de dois fatores" /></h3>
+              <p className="text-sm text-muted-foreground">
+                <Translate text="Adicione uma camada extra de segurança ao seu login" />
+              </p>
+            </div>
+          </div>
+          <Switch 
+            checked={settings.twoFactorAuth}
+            onCheckedChange={(checked) => setSettings({...settings, twoFactorAuth: checked})}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Key className="h-5 w-5 text-primary" />
+            <div>
+              <h3 className="font-medium"><Translate text="Chaves de API" /></h3>
+              <p className="text-sm text-muted-foreground">
+                <Translate text="Gerencie chaves de API para integração com outros sistemas" />
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm">
+            <Translate text={settings.apiKeySet ? "Gerenciar Chaves" : "Gerar Chave"} />
+          </Button>
+        </div>
+
+        <Button 
+          onClick={saveSettings} 
+          disabled={loading}
+          className="w-full sm:w-auto mt-4"
+        >
+          {loading ? <Translate text="Salvando..." /> : <Translate text="Salvar Configurações" />}
+        </Button>
+      </Card>
     </div>
-  )
+  );
 }
