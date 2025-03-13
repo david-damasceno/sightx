@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useRef } from "react"
 import { Session, User } from "@supabase/supabase-js"
 import { supabase } from "@/integrations/supabase/client"
 import { Database } from "@/integrations/supabase/types"
@@ -39,22 +39,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [organizationLoading, setOrganizationLoading] = useState(true)
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null)
   const { toast } = useToast()
+  
+  // Usar useRef para controlar o cancelamento de solicitações quando o componente for desmontado
+  const mountedRef = useRef(true)
+
+  // Limpar a referência quando o componente for desmontado
+  useEffect(() => {
+    return () => { mountedRef.current = false }
+  }, [])
 
   useEffect(() => {
-    let mounted = true
-
     const initializeAuth = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession()
         
-        if (mounted) {
+        if (mountedRef.current) {
           setSession(currentSession)
           setUser(currentSession?.user ?? null)
           setLoading(false)
         }
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-          if (mounted) {
+          if (mountedRef.current) {
             console.log('Auth state changed:', { event: _event, hasSession: !!session })
             setSession(session)
             setUser(session?.user ?? null)
@@ -67,27 +73,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
-        if (mounted) {
+        if (mountedRef.current) {
           setLoading(false)
         }
       }
     }
 
     initializeAuth()
-
-    return () => {
-      mounted = false
-    }
   }, [])
 
   // Load user profile
   useEffect(() => {
-    let mounted = true
+    const controller = new AbortController()
 
     const loadProfile = async () => {
       setProfileLoading(true)
       if (!user) {
-        if (mounted) {
+        if (mountedRef.current) {
           setProfile(null)
           setProfileLoading(false)
         }
@@ -101,6 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .select('*')
           .eq('id', user.id)
           .single()
+          .abortSignal(controller.signal)
 
         if (error) {
           console.error('Error loading profile:', error)
@@ -120,48 +123,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               })
               .select()
               .single()
+              .abortSignal(controller.signal)
 
             if (insertError) {
               console.error('Error creating profile:', insertError)
               throw insertError
             }
 
-            if (mounted) setProfile(newProfile)
+            if (mountedRef.current) setProfile(newProfile)
           } else {
             throw error
           }
         } else {
           console.log('Profile loaded successfully:', data)
-          if (mounted) setProfile(data)
+          if (mountedRef.current) setProfile(data)
         }
       } catch (error) {
-        console.error('Error in profile flow:', error)
-        toast({
-          title: "Erro",
-          description: "Não foi possível carregar seu perfil. Tente recarregar a página.",
-          variant: "destructive"
-        })
-        if (mounted) setProfile(null)
+        if (error.name !== 'AbortError') {
+          console.error('Error in profile flow:', error)
+          toast({
+            title: "Erro",
+            description: "Não foi possível carregar seu perfil. Tente recarregar a página.",
+            variant: "destructive"
+          })
+          if (mountedRef.current) setProfile(null)
+        }
       } finally {
-        if (mounted) setProfileLoading(false)
+        if (mountedRef.current) setProfileLoading(false)
       }
     }
 
     loadProfile()
 
     return () => {
-      mounted = false
+      controller.abort()
     }
   }, [user, toast])
 
-  // Load default organization - Modificado para resolver o problema
+  // Load default organization
   useEffect(() => {
-    let mounted = true
+    const controller = new AbortController()
 
     const loadDefaultOrganization = async () => {
       setOrganizationLoading(true)
       if (!user) {
-        if (mounted) {
+        if (mountedRef.current) {
           setCurrentOrganization(null)
           setOrganizationLoading(false)
         }
@@ -175,10 +181,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .select('organization_id')
           .eq('user_id', user.id)
           .maybeSingle()
+          .abortSignal(controller.signal)
 
         if (memberError) {
           console.error('Error loading organization membership:', memberError)
-          if (mounted) setCurrentOrganization(null)
+          if (mountedRef.current) setCurrentOrganization(null)
         } else if (memberData?.organization_id) {
           console.log('Found organization membership:', memberData.organization_id)
           const { data: org, error: orgError } = await supabase
@@ -186,31 +193,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             .select('*')
             .eq('id', memberData.organization_id)
             .maybeSingle()
+            .abortSignal(controller.signal)
 
           if (orgError) {
             console.error('Error loading organization details:', orgError)
-            if (mounted) setCurrentOrganization(null)
+            if (mountedRef.current) setCurrentOrganization(null)
           } else {
             console.log('Organization loaded:', org)
-            if (mounted && org) setCurrentOrganization(org)
-            else if (mounted) setCurrentOrganization(null)
+            if (mountedRef.current && org) setCurrentOrganization(org)
+            else if (mountedRef.current) setCurrentOrganization(null)
           }
         } else {
           console.log('No organization found for user')
-          if (mounted) setCurrentOrganization(null)
+          if (mountedRef.current) setCurrentOrganization(null)
         }
       } catch (error) {
-        console.error('Error loading default organization:', error)
-        if (mounted) setCurrentOrganization(null)
+        if (error.name !== 'AbortError') {
+          console.error('Error loading default organization:', error)
+          if (mountedRef.current) setCurrentOrganization(null)
+        }
       } finally {
-        if (mounted) setOrganizationLoading(false)
+        if (mountedRef.current) setOrganizationLoading(false)
       }
     }
 
     loadDefaultOrganization()
 
     return () => {
-      mounted = false
+      controller.abort()
     }
   }, [user])
 

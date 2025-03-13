@@ -11,7 +11,10 @@ import {
   LOCALIZATION_CHANGE_EVENT
 } from '@/utils/localization';
 
-// Hook para acessar e gerenciar as configurações de localização
+/**
+ * Hook personalizado para acessar e gerenciar as configurações de localização
+ * @returns Objeto com configurações e funções de formatação
+ */
 export function useLocalization() {
   const [settings, setSettings] = useState<LocalizationSettings>(getLocalizationSettings());
   
@@ -20,7 +23,12 @@ export function useLocalization() {
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'localizationSettings' && event.newValue) {
         try {
-          setSettings(JSON.parse(event.newValue));
+          // Sanitizar dados antes de processar
+          const parsedSettings = JSON.parse(event.newValue);
+          // Validação básica das configurações recebidas
+          if (typeof parsedSettings === 'object' && parsedSettings !== null) {
+            setSettings(parsedSettings);
+          }
         } catch (e) {
           console.error('Erro ao processar novas configurações:', e);
         }
@@ -28,7 +36,11 @@ export function useLocalization() {
     };
     
     const handleLocalizationChange = (event: CustomEvent<LocalizationSettings>) => {
-      setSettings(event.detail);
+      // Validação de segurança dos dados recebidos
+      const newSettings = event.detail;
+      if (typeof newSettings === 'object' && newSettings !== null) {
+        setSettings(newSettings);
+      }
     };
     
     window.addEventListener('storage', handleStorageChange);
@@ -46,12 +58,25 @@ export function useLocalization() {
     };
   }, []);
   
-  // Função para atualizar as configurações
+  // Função para atualizar as configurações com validação
   const updateSettings = useCallback((newSettings: Partial<LocalizationSettings>) => {
+    // Verificar e validar as novas configurações
+    if (typeof newSettings !== 'object' || newSettings === null) {
+      console.error('Configurações inválidas recebidas:', newSettings);
+      return;
+    }
+    
+    // Construir configurações atualizadas
     const updatedSettings = {
       ...settings,
       ...newSettings
     };
+    
+    // Verificar valores permitidos
+    if (newSettings.language && !['pt-BR', 'en-US', 'es-ES'].includes(newSettings.language)) {
+      console.error('Idioma inválido:', newSettings.language);
+      return;
+    }
     
     saveLocalizationSettings(updatedSettings);
     setSettings(updatedSettings);

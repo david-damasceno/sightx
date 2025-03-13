@@ -28,7 +28,22 @@ import Settings from "./pages/Settings"
 import DataConnectors from "./pages/DataConnectors"
 import { initializeLocalization, getLocalizationSettings } from "@/utils/localization";
 
-const queryClient = new QueryClient()
+// Configuração segura do cliente de consulta
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30000,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+      refetchOnReconnect: true,
+      cacheTime: 1000 * 60 * 5, // 5 minutos
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+})
 
 const AppContent = () => {
   const location = useLocation()
@@ -60,6 +75,38 @@ const AppContent = () => {
     }
     
     document.title = `SightX - ${suffix}`;
+    
+    // Configurar Content Security Policy
+    const metaCSP = document.createElement('meta');
+    metaCSP.httpEquiv = 'Content-Security-Policy';
+    metaCSP.content = "default-src 'self'; script-src 'self' https://storage.googleapis.com; connect-src 'self' https://*.supabase.co; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src 'self'";
+    document.head.appendChild(metaCSP);
+    
+    // Configurar X-XSS-Protection header
+    const metaXSS = document.createElement('meta');
+    metaXSS.httpEquiv = 'X-XSS-Protection';
+    metaXSS.content = '1; mode=block';
+    document.head.appendChild(metaXSS);
+    
+    // Configurar X-Content-Type-Options
+    const metaContentType = document.createElement('meta');
+    metaContentType.httpEquiv = 'X-Content-Type-Options';
+    metaContentType.content = 'nosniff';
+    document.head.appendChild(metaContentType);
+    
+    // Configurar Referrer-Policy
+    const metaReferrer = document.createElement('meta');
+    metaReferrer.name = 'referrer';
+    metaReferrer.content = 'strict-origin-when-cross-origin';
+    document.head.appendChild(metaReferrer);
+    
+    return () => {
+      // Remover meta tags ao desmontar
+      document.head.removeChild(metaCSP);
+      document.head.removeChild(metaXSS);
+      document.head.removeChild(metaContentType);
+      document.head.removeChild(metaReferrer);
+    };
   }, []);
 
   return (

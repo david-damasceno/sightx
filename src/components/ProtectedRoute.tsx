@@ -17,6 +17,7 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
 
   useEffect(() => {
     let mounted = true
+    let controller = new AbortController()
 
     async function checkOnboardingStatus() {
       if (session?.user && checkOnboarding) {
@@ -26,12 +27,15 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
             .select('onboarded')
             .eq('id', session.user.id)
             .maybeSingle()
+            .abortSignal(controller.signal)
 
           if (error) throw error
           if (mounted) setIsOnboarded(data?.onboarded ?? false)
         } catch (error) {
-          console.error('Error checking onboarding status:', error)
-          if (mounted) setIsOnboarded(false)
+          if (error.name !== 'AbortError') {
+            console.error('Erro ao verificar status de onboarding:', error)
+            if (mounted) setIsOnboarded(false)
+          }
         }
       } else {
         // Se não precisamos verificar onboarding, setamos como true para não bloquear
@@ -44,6 +48,7 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
 
     return () => {
       mounted = false
+      controller.abort()
     }
   }, [session, checkOnboarding])
 
@@ -61,7 +66,7 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
     onboardingFlag: profile?.onboarded
   })
 
-  // Garante que não renderizemos nada até que o estado inicial seja carregado
+  // Estado de carregamento - mostra um indicador de progresso
   if (loading || (checkOnboarding && checkingOnboarding) || profileLoading || organizationLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -71,12 +76,7 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
     )
   }
 
-  // Se estiver na página de login e já estiver autenticado, redireciona para home
-  if (location.pathname === '/login' && session) {
-    return <Navigate to="/" replace />
-  }
-
-  // Se não estiver autenticado, redireciona para login
+  // Se não estiver autenticado, redireciona para login com o caminho atual como estado
   if (!session) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />
   }

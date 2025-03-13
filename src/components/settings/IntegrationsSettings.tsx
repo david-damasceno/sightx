@@ -1,12 +1,15 @@
+
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { Database } from "@/integrations/supabase/types"
-import { AlertCircle, CheckCircle2, XCircle, Loader2 } from "lucide-react"
+import { AlertCircle, CheckCircle2, XCircle, Loader2, ShieldAlert } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/AuthContext"
+import { useState } from "react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 type Integration = Database['public']['Tables']['integrations']['Row']
 type IntegrationType = Database['public']['Enums']['integration_type']
@@ -14,14 +17,19 @@ type IntegrationType = Database['public']['Enums']['integration_type']
 export function IntegrationsSettings() {
   const { toast } = useToast()
   const { currentOrganization } = useAuth()
+  const [isConnecting, setIsConnecting] = useState<IntegrationType | null>(null)
 
   const { data: integrations, isLoading, refetch } = useQuery({
     queryKey: ['integrations', currentOrganization?.id],
     queryFn: async () => {
+      if (!currentOrganization?.id) {
+        throw new Error('Organização não selecionada')
+      }
+      
       const { data, error } = await supabase
         .from('integrations')
         .select('*')
-        .eq('organization_id', currentOrganization?.id)
+        .eq('organization_id', currentOrganization.id)
       
       if (error) throw error
       return data as Integration[]
@@ -31,14 +39,27 @@ export function IntegrationsSettings() {
 
   const handleConnect = async (type: IntegrationType) => {
     try {
+      setIsConnecting(type)
+      
       if (!currentOrganization?.id) {
         throw new Error('Organização não selecionada')
       }
 
-      // Criar ou atualizar registro de integração
+      // Verificar se já existe uma integração pendente
+      const existingIntegration = integrations?.find(i => 
+        i.integration_type === type && i.status === 'pending'
+      )
+      
+      if (existingIntegration) {
+        // Se já existe uma integração pendente, use-a
+        initiateOAuthFlow(type, existingIntegration.id, currentOrganization.id)
+        return
+      }
+
+      // Criar registro de integração
       const { data: integration, error: integrationError } = await supabase
         .from('integrations')
-        .upsert({
+        .insert({
           organization_id: currentOrganization.id,
           integration_type: type,
           status: 'pending'
@@ -47,39 +68,91 @@ export function IntegrationsSettings() {
         .single()
 
       if (integrationError) throw integrationError
-
-      // Configurar parâmetros OAuth
-      const clientId = 'YOUR_GOOGLE_CLIENT_ID' // Substituir pelo seu Client ID
-      const redirectUri = `${window.location.origin}/settings/integrations/callback`
-      const scope = 'https://www.googleapis.com/auth/business.manage'
-      const state = currentOrganization.id // Usar organization_id como state
-
-      // Construir URL de autorização
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
-        client_id: clientId,
-        redirect_uri: redirectUri,
-        response_type: 'code',
-        scope,
-        state,
-        access_type: 'offline',
-        prompt: 'consent'
-      })}`
-
-      // Redirecionar para página de autorização do Google
-      window.location.href = authUrl
-
-      toast({
-        title: "Iniciando integração",
-        description: "Você será redirecionado para autorizar o acesso.",
-      })
+      
+      // Iniciar fluxo OAuth com o ID da integração criada
+      initiateOAuthFlow(type, integration.id, currentOrganization.id)
     } catch (error) {
       console.error('Error starting integration:', error)
       toast({
         title: "Erro",
-        description: "Não foi possível iniciar a integração.",
+        description: "Não foi possível iniciar a integração. Tente novamente mais tarde.",
         variant: "destructive"
       })
+      setIsConnecting(null)
     }
+  }
+  
+  const initiateOAuthFlow = (type: IntegrationType, integrationId: string, organizationId: string) => {
+    // Parâmetros OAuth comuns sanitizados
+    const state = `${integrationId}|${organizationId}`
+    
+    // Construir URL de redirecionamento para callback seguro
+    const redirectUri = `${window.location.origin}/settings/integrations/callback`
+    
+    // Configurar parâmetros específicos por tipo de integração
+    switch (type) {
+      case 'google_business':
+        // Informações da API do Google Business Profile
+        const clientId = 'YOUR_GOOGLE_CLIENT_ID' // Substituir pelo cliente real
+        const scope = 'https://www.googleapis.com/auth/business.manage'
+        
+        // Construir URL de autorização
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
+          client_id: clientId,
+          redirect_uri: redirectUri,
+          response_type: 'code',
+          scope,
+          state,
+          access_type: 'offline',
+          prompt: 'consent'
+        })}`
+        
+        // Redirecionar para página de autorização do Google
+        window.location.href = authUrl
+        break
+        
+      case 'google_analytics':
+        // Configuração para Google Analytics
+        const gaClientId = 'YOUR_GA_CLIENT_ID'
+        const gaScope = 'https://www.googleapis.com/auth/analytics.readonly'
+        
+        const gaAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
+          client_id: gaClientId,
+          redirect_uri: redirectUri,
+          response_type: 'code',
+          scope: gaScope,
+          state,
+          access_type: 'offline',
+          prompt: 'consent'
+        })}`
+        
+        window.location.href = gaAuthUrl
+        break
+        
+      case 'slack':
+        // Configuração para Slack
+        const slackClientId = 'YOUR_SLACK_CLIENT_ID'
+        const slackScope = 'chat:write,channels:read'
+        
+        const slackAuthUrl = `https://slack.com/oauth/v2/authorize?${new URLSearchParams({
+          client_id: slackClientId,
+          redirect_uri: redirectUri,
+          scope: slackScope,
+          state,
+          user_scope: ''
+        })}`
+        
+        window.location.href = slackAuthUrl
+        break
+        
+      default:
+        throw new Error(`Tipo de integração não suportado: ${type}`)
+    }
+    
+    toast({
+      title: "Iniciando integração",
+      description: "Você será redirecionado para autorizar o acesso.",
+    })
   }
 
   const getStatusIcon = (status: string) => {
@@ -134,6 +207,15 @@ export function IntegrationsSettings() {
           Conecte sua conta com serviços externos
         </p>
       </div>
+      
+      <Alert>
+        <ShieldAlert className="h-4 w-4" />
+        <AlertTitle>Segurança de dados</AlertTitle>
+        <AlertDescription>
+          Ao conectar serviços externos, você concede permissões de acesso aos dados. 
+          Revisamos cuidadosamente cada integração, mas recomendamos verificar as permissões solicitadas.
+        </AlertDescription>
+      </Alert>
 
       <div className="space-y-4">
         {/* Google Business Profile */}
@@ -167,8 +249,14 @@ export function IntegrationsSettings() {
                 <Button 
                   variant="outline"
                   onClick={() => handleConnect('google_business')}
+                  disabled={isConnecting === 'google_business'}
                 >
-                  Conectar
+                  {isConnecting === 'google_business' ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Conectando...
+                    </>
+                  ) : 'Conectar'}
                 </Button>
               )}
             </div>
@@ -197,8 +285,14 @@ export function IntegrationsSettings() {
             <Button 
               variant="outline"
               onClick={() => handleConnect('google_analytics')}
+              disabled={isConnecting === 'google_analytics'}
             >
-              Conectar
+              {isConnecting === 'google_analytics' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Conectando...
+                </>
+              ) : 'Conectar'}
             </Button>
           </div>
         </Card>
@@ -225,8 +319,14 @@ export function IntegrationsSettings() {
             <Button 
               variant="outline"
               onClick={() => handleConnect('slack')}
+              disabled={isConnecting === 'slack'}
             >
-              Conectar
+              {isConnecting === 'slack' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Conectando...
+                </>
+              ) : 'Conectar'}
             </Button>
           </div>
         </Card>

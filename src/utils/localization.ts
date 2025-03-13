@@ -1,6 +1,7 @@
 
 // Utilitários para formatação baseada nas configurações de localização do usuário
 import { toast } from "@/hooks/use-toast";
+import { DOMPurify } from 'dompurify';
 
 export interface LocalizationSettings {
   language: string;
@@ -13,15 +14,78 @@ export interface LocalizationSettings {
   measurementUnit: string;
 }
 
+// Lista de idiomas válidos
+const VALID_LANGUAGES = ['pt-BR', 'en-US', 'es-ES'];
+const VALID_DATE_FORMATS = ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'DD.MM.YYYY', 'DD-MMM-YYYY'];
+const VALID_NUMBER_FORMATS = ['pt-BR', 'en-US', 'es-ES'];
+const VALID_CURRENCIES = ['BRL', 'USD', 'EUR'];
+const VALID_TIMEZONES = ['America/Sao_Paulo', 'America/New_York', 'Europe/Madrid', 'UTC'];
+const VALID_FIRST_DAYS = ['monday', 'sunday'];
+const VALID_MEASUREMENT_UNITS = ['metric', 'imperial'];
+
 // Evento personalizado para alterações de localização
 export const LOCALIZATION_CHANGE_EVENT = 'localization-settings-changed';
+
+// Função de validação de configurações
+function validateSettings(settings: Partial<LocalizationSettings>): boolean {
+  // Validar idioma
+  if (settings.language && !VALID_LANGUAGES.includes(settings.language)) {
+    console.error('Idioma inválido:', settings.language);
+    return false;
+  }
+  
+  // Validar formato de data
+  if (settings.dateFormat && !VALID_DATE_FORMATS.includes(settings.dateFormat)) {
+    console.error('Formato de data inválido:', settings.dateFormat);
+    return false;
+  }
+  
+  // Validar formato de número
+  if (settings.numberFormat && !VALID_NUMBER_FORMATS.includes(settings.numberFormat)) {
+    console.error('Formato de número inválido:', settings.numberFormat);
+    return false;
+  }
+  
+  // Validar moeda
+  if (settings.currency && !VALID_CURRENCIES.includes(settings.currency)) {
+    console.error('Moeda inválida:', settings.currency);
+    return false;
+  }
+  
+  // Validar fuso horário
+  if (settings.timezone && !VALID_TIMEZONES.includes(settings.timezone)) {
+    console.error('Fuso horário inválido:', settings.timezone);
+    return false;
+  }
+  
+  // Validar primeiro dia da semana
+  if (settings.firstDayOfWeek && !VALID_FIRST_DAYS.includes(settings.firstDayOfWeek)) {
+    console.error('Primeiro dia da semana inválido:', settings.firstDayOfWeek);
+    return false;
+  }
+  
+  // Validar unidade de medida
+  if (settings.measurementUnit && !VALID_MEASUREMENT_UNITS.includes(settings.measurementUnit)) {
+    console.error('Unidade de medida inválida:', settings.measurementUnit);
+    return false;
+  }
+  
+  return true;
+}
 
 // Carregar configurações de localização salvas
 export function getLocalizationSettings(): LocalizationSettings {
   try {
     const savedSettings = localStorage.getItem("localizationSettings");
     if (savedSettings) {
-      return JSON.parse(savedSettings);
+      const parsedSettings = JSON.parse(savedSettings);
+      
+      // Validar configurações recuperadas
+      if (validateSettings(parsedSettings)) {
+        return parsedSettings;
+      } else {
+        console.warn('Configurações recuperadas são inválidas, usando valores padrão');
+      }
     }
   } catch (error) {
     console.error("Erro ao carregar configurações de localização:", error);
@@ -43,6 +107,11 @@ export function getLocalizationSettings(): LocalizationSettings {
 // Salvar configurações de localização
 export function saveLocalizationSettings(settings: LocalizationSettings): void {
   try {
+    // Validar configurações antes de salvar
+    if (!validateSettings(settings)) {
+      throw new Error('Configurações inválidas');
+    }
+    
     localStorage.setItem("localizationSettings", JSON.stringify(settings));
     
     // Disparar evento para notificar sobre a mudança
@@ -72,17 +141,29 @@ export function saveLocalizationSettings(settings: LocalizationSettings): void {
 export function formatNumber(value: number, options: Intl.NumberFormatOptions = {}): string {
   const settings = getLocalizationSettings();
   
+  // Verificar se o valor é um número válido
+  if (typeof value !== 'number' || isNaN(value)) {
+    console.error("Valor inválido para formatação de número:", value);
+    return String(value);
+  }
+  
   try {
     return new Intl.NumberFormat(settings.numberFormat, options).format(value);
   } catch (error) {
     console.error("Erro ao formatar número:", error);
-    return value.toString();
+    return String(value);
   }
 }
 
 // Formatador de moeda baseado nas configurações
 export function formatCurrency(value: number): string {
   const settings = getLocalizationSettings();
+  
+  // Verificar se o valor é um número válido
+  if (typeof value !== 'number' || isNaN(value)) {
+    console.error("Valor inválido para formatação de moeda:", value);
+    return String(value);
+  }
   
   try {
     return new Intl.NumberFormat(settings.numberFormat, {
@@ -91,13 +172,15 @@ export function formatCurrency(value: number): string {
     }).format(value);
   } catch (error) {
     console.error("Erro ao formatar moeda:", error);
-    return value.toString();
+    return String(value);
   }
 }
 
 // Formatador de datas baseado nas configurações
 export function formatDate(date: Date | string | number): string {
   const settings = getLocalizationSettings();
+  
+  // Validar data
   const dateObj = date instanceof Date ? date : new Date(date);
   
   if (isNaN(dateObj.getTime())) {
@@ -209,6 +292,22 @@ const translations: Record<string, Record<string, string>> = {
 
 // Função para obter texto traduzido
 export function getTranslation(key: string, locale: string = 'pt-BR'): string {
+  // Sanitizar parâmetros
+  if (typeof key !== 'string') {
+    console.error('Chave de tradução inválida:', key);
+    return '';
+  }
+  
+  const sanitizedKey = key.trim();
+  if (sanitizedKey.length === 0) {
+    return '';
+  }
+  
+  // Verificar se o idioma é válido
+  if (!VALID_LANGUAGES.includes(locale)) {
+    locale = 'pt-BR'; // Fallback seguro
+  }
+  
   const fallbackLocale = 'pt-BR';
   
   // Se o idioma solicitado não existe, usar o fallback
@@ -217,26 +316,43 @@ export function getTranslation(key: string, locale: string = 'pt-BR'): string {
   }
   
   // Se a chave não existe no idioma, tentar no fallback
-  if (!translations[locale][key] && locale !== fallbackLocale) {
-    return translations[fallbackLocale][key] || key;
+  if (!translations[locale][sanitizedKey] && locale !== fallbackLocale) {
+    return translations[fallbackLocale][sanitizedKey] || sanitizedKey;
   }
   
-  return translations[locale][key] || key;
+  return translations[locale][sanitizedKey] || sanitizedKey;
 }
 
 // Aplicar configurações de localização em todo o sistema
 export function applyLocalizationSettings(settings?: LocalizationSettings): void {
   const currentSettings = settings || getLocalizationSettings();
   
-  // Definir idioma do documento
-  document.documentElement.lang = currentSettings.language.split('-')[0];
+  // Verificar se as configurações são válidas
+  if (!validateSettings(currentSettings)) {
+    console.error('Configurações inválidas, não aplicando');
+    return;
+  }
+  
+  // Definir idioma do documento com sanitização
+  const lang = currentSettings.language.split('-')[0];
+  if (['pt', 'en', 'es'].includes(lang)) {
+    document.documentElement.lang = lang;
+  } else {
+    document.documentElement.lang = 'pt'; // Fallback
+  }
   
   // Aplicar o tema no data attribute para ser usado no CSS
-  document.documentElement.setAttribute('data-locale', currentSettings.language);
-  document.documentElement.setAttribute('data-number-format', currentSettings.numberFormat);
-  document.documentElement.setAttribute('data-date-format', currentSettings.dateFormat);
-  document.documentElement.setAttribute('data-measurement', currentSettings.measurementUnit);
-  document.documentElement.setAttribute('data-first-day', currentSettings.firstDayOfWeek);
+  const safeLanguage = DOMPurify.sanitize(currentSettings.language);
+  const safeNumberFormat = DOMPurify.sanitize(currentSettings.numberFormat);
+  const safeDateFormat = DOMPurify.sanitize(currentSettings.dateFormat);
+  const safeMeasurement = DOMPurify.sanitize(currentSettings.measurementUnit);
+  const safeFirstDay = DOMPurify.sanitize(currentSettings.firstDayOfWeek);
+  
+  document.documentElement.setAttribute('data-locale', safeLanguage);
+  document.documentElement.setAttribute('data-number-format', safeNumberFormat);
+  document.documentElement.setAttribute('data-date-format', safeDateFormat);
+  document.documentElement.setAttribute('data-measurement', safeMeasurement);
+  document.documentElement.setAttribute('data-first-day', safeFirstDay);
   
   // Configurar o título da página de acordo com o idioma
   updatePageTitle(currentSettings.language);
@@ -253,7 +369,13 @@ function updatePageTitle(locale: string): void {
   
   let suffix = "";
   
-  switch(locale.split('-')[0]) {
+  // Verificar se o idioma é válido
+  const lang = locale.split('-')[0];
+  if (!['pt', 'en', 'es'].includes(lang)) {
+    locale = 'pt-BR'; // Fallback seguro
+  }
+  
+  switch(lang) {
     case 'pt':
       suffix = "Transforme Dados em Decisões Inteligentes";
       break;
@@ -267,7 +389,12 @@ function updatePageTitle(locale: string): void {
       suffix = "Transforme Dados em Decisões Inteligentes";
   }
   
-  document.title = `${pageTitle} | ${siteName} - ${suffix}`;
+  // Sanitizar antes de definir
+  const safeSiteName = DOMPurify.sanitize(siteName);
+  const safePageTitle = DOMPurify.sanitize(pageTitle);
+  const safeSuffix = DOMPurify.sanitize(suffix);
+  
+  document.title = `${safePageTitle} | ${safeSiteName} - ${safeSuffix}`;
 }
 
 // Inicializar configurações de localização
@@ -280,7 +407,10 @@ export function initializeLocalization(): void {
     if (event.key === 'localizationSettings') {
       try {
         const newSettings = JSON.parse(event.newValue || '');
-        applyLocalizationSettings(newSettings);
+        // Validar configurações antes de aplicar
+        if (validateSettings(newSettings)) {
+          applyLocalizationSettings(newSettings);
+        }
       } catch (error) {
         console.error("Erro ao processar mudança de configurações:", error);
       }
@@ -289,6 +419,9 @@ export function initializeLocalization(): void {
   
   // Adicionar listener para o evento personalizado
   window.addEventListener(LOCALIZATION_CHANGE_EVENT, ((event: CustomEvent<LocalizationSettings>) => {
-    applyLocalizationSettings(event.detail);
+    // Validar configurações antes de aplicar
+    if (validateSettings(event.detail)) {
+      applyLocalizationSettings(event.detail);
+    }
   }) as EventListener);
 }
