@@ -27,8 +27,10 @@ export interface NPSResponse {
   updated_at: string
 }
 
+export type QuestionType = 'nps' | 'text' | 'opcoes' | 'rating'
+
 export interface Question {
-  tipo: 'nps' | 'text' | 'opcoes' | 'rating'
+  tipo: QuestionType
   texto: string
   opcoes?: string[]
   obrigatoria?: boolean

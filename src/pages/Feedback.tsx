@@ -18,25 +18,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
-import { NPSSurvey, NPSResponse, Question, SurveySettings, SurveyStatus, SurveyType } from "@/types/feedback"
+import { NPSSurvey, NPSResponse, Question, SurveySettings, SurveyStatus, SurveyType, QuestionType } from "@/types/feedback"
+import { Json } from "@/integrations/supabase/types"
 
 type AIPromptType = 'manual' | 'recommend'
-
-type QuestionType = 'nps' | 'text' | 'opcoes' | 'rating'
-
-interface Question {
-  tipo: QuestionType
-  texto: string
-  opcoes?: string[]
-  obrigatoria?: boolean
-}
-
-// Interface para tipar corretamente os settings
-interface SurveySettings {
-  ai_suggestion?: string;
-  questions?: Question[];
-  [key: string]: any;
-}
 
 export default function Feedback() {
   const [surveys, setSurveys] = useState<NPSSurvey[]>([])
@@ -1020,3 +1005,4 @@ export default function Feedback() {
     </div>
   )
 }
+
