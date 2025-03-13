@@ -20,6 +20,12 @@
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+    --info: 221 83% 53%;
+    --info-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 267 82% 28%;
@@ -29,23 +35,29 @@
   .dark {
     --background: 240 10% 4%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 4%;
+    --card: 240 10% 6%;
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 4%;
     --popover-foreground: 0 0% 98%;
-    --primary: 267 82% 28%;
+    --primary: 267 82% 60%;
     --primary-foreground: 240 5.9% 10%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 255 92% 24%;
+    --accent: 255 92% 15%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+    --info: 221 83% 53%;
+    --info-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 267 82% 28%;
+    --ring: 267 82% 60%;
   }
 }
 
@@ -92,6 +104,13 @@
 .glass-card {
   @apply bg-white/30 dark:bg-gray-800/30 backdrop-blur-md 
          border border-purple-100/20 dark:border-purple-900/20 
+         shadow-lg hover:shadow-xl transition-all duration-300
+         dark:shadow-purple-900/30;
+}
+
+.dark .glass-card {
+  @apply bg-gray-800/30 backdrop-blur-md 
+         border border-purple-900/20 
          shadow-lg hover:shadow-xl transition-all duration-300
          dark:shadow-purple-900/30;
 }
@@ -524,3 +543,64 @@
     transform: translateY(0);
   }
 }
+
+/* Estilos específicos para tema escuro */
+.dark .glass-card {
+  @apply bg-gray-800/30 backdrop-blur-md 
+         border border-purple-900/20 
+         shadow-lg hover:shadow-xl transition-all duration-300
+         shadow-purple-900/30;
+}
+
+.dark .data-card {
+  @apply bg-gray-800/90 border-gray-700;
+}
+
+/* Efeitos de gradiente melhorados para modo escuro */
+.dark .bg-gradient-primary {
+  @apply bg-gradient-to-br from-purple-700 to-indigo-900 animate-gradient-flow;
+}
+
+/* Melhoria nos elementos interativos no modo escuro */
+.dark .interactive-element:hover {
+  @apply bg-primary/10 border-primary/30;
+}
+
+/* Cards com melhor contraste no modo escuro */
+.dark .enhanced-card {
+  @apply bg-card/95 backdrop-blur-sm border border-border/50 shadow-lg shadow-primary/5;
+}
+
+/* Melhoria no contraste de texto no modo escuro */
+.dark .subtle-text {
+  @apply text-gray-300;
+}
+
+.dark .very-subtle-text {
+  @apply text-gray-400;
+}
+
+/* Melhorias para status badges no modo escuro */
+.dark .status-active {
+  @apply bg-green-900/30 text-green-300;
+}
+
+.dark .status-pending {
+  @apply bg-yellow-900/30 text-yellow-300;
+}
+
+.dark .status-inactive {
+  @apply bg-gray-800 text-gray-300;
+}
+
+/* Ajustes para gráficos no modo escuro */
+.dark .recharts-cartesian-axis-tick-value,
+.dark .recharts-legend-item-text {
+  @apply fill-gray-300;
+}
+
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  @apply stroke-gray-700/50;
+}
+
