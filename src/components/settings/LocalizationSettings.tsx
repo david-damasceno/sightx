@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -14,7 +13,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Check, Info } from "lucide-react"
 
-// Definir os tipos de configurações de localização
 interface LocalizationConfig {
   language: string
   dateFormat: string
@@ -26,7 +24,6 @@ interface LocalizationConfig {
   measurementUnit: string
 }
 
-// Definir o esquema de validação com Zod
 const localizationSchema = z.object({
   language: z.string().min(2),
   dateFormat: z.string().min(3),
@@ -38,7 +35,6 @@ const localizationSchema = z.object({
   measurementUnit: z.string()
 })
 
-// Opções disponíveis para seleção
 const languageOptions = [
   { value: "pt-BR", label: "Português (Brasil)" },
   { value: "en-US", label: "Inglês (EUA)" },
@@ -102,11 +98,9 @@ const measurementOptions = [
 export function LocalizationSettings() {
   const { toast } = useToast()
   
-  // Estado para armazenar as configurações atuais
   const [isLoading, setIsLoading] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
   
-  // Configurações padrão
   const defaultValues: LocalizationConfig = {
     language: "pt-BR",
     dateFormat: "DD/MM/YYYY",
@@ -118,13 +112,11 @@ export function LocalizationSettings() {
     measurementUnit: "metric"
   }
   
-  // Configurar o formulário com react-hook-form e zod
   const form = useForm<LocalizationConfig>({
     resolver: zodResolver(localizationSchema),
     defaultValues
   })
   
-  // Buscar configurações salvas quando o componente montar
   useEffect(() => {
     const loadSavedSettings = () => {
       try {
@@ -141,32 +133,25 @@ export function LocalizationSettings() {
     loadSavedSettings()
   }, [form])
   
-  // Função para salvar as configurações
   const handleSave = (values: LocalizationConfig) => {
     setIsLoading(true)
     
-    // Simular tempo de processamento
     setTimeout(() => {
       try {
-        // Salvar no localStorage
         localStorage.setItem("localizationSettings", JSON.stringify(values))
         
-        // Atualizar o idioma do documento como exemplo
         document.documentElement.lang = values.language.split("-")[0]
         
-        // Aplicar o tema no data attribute para ser usado no CSS
         document.documentElement.setAttribute("data-locale", values.language)
         document.documentElement.setAttribute("data-number-format", values.numberFormat)
         document.documentElement.setAttribute("data-date-format", values.dateFormat)
         
-        // Mostrar confirmação
         toast({
           title: "Configurações salvas",
           description: "As configurações de localização foram atualizadas com sucesso.",
           variant: "success"
         })
         
-        // Indicar que foi salvo
         setIsSaved(true)
         setTimeout(() => setIsSaved(false), 3000)
       } catch (error) {

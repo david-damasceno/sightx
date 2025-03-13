@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -11,6 +12,7 @@ import PWAInstallPrompt from "@/components/PWAInstallPrompt"
 import OfflineNotification from "@/components/OfflineNotification"
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/react"
+import { useEffect } from "react"
 import Index from "./pages/Index"
 import Login from "./pages/Login"
 import Onboarding from "./pages/Onboarding"
@@ -32,6 +34,11 @@ const AppContent = () => {
   const location = useLocation()
   const isLoginPage = location.pathname === '/login'
   const isOnboardingPage = location.pathname === '/onboarding'
+
+  // Inicializar as configurações de localização quando o componente montar
+  useEffect(() => {
+    initializeLocalization();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col w-full">
