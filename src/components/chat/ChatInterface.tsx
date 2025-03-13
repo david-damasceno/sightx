@@ -52,6 +52,15 @@ export function ChatInterface({
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  // Inicializar o inputMessage se vier de fora (sugestões)
+  useEffect(() => {
+    if (window.initialInputMessage) {
+      setInputMessage(window.initialInputMessage);
+      // Limpar depois de usar
+      window.initialInputMessage = "";
+    }
+  }, [selectedChat]);
+
   const handleSendMessage = async () => {
     if (inputMessage.trim() === "" || !selectedChat || selectedChat === 'settings') return
 
@@ -80,6 +89,9 @@ export function ChatInterface({
         sender: "ai",
         text: aiResponse
       })
+      
+      // Mostrar toast de sucesso
+      toast.success("Resposta gerada com sucesso")
       
       onChatUpdated()
     } catch (error) {
