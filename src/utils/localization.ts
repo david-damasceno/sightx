@@ -1,7 +1,8 @@
 
 // Utilitários para formatação baseada nas configurações de localização do usuário
+import { toast } from "@/hooks/use-toast";
 
-interface LocalizationSettings {
+export interface LocalizationSettings {
   language: string;
   dateFormat: string;
   numberFormat: string;
@@ -11,6 +12,9 @@ interface LocalizationSettings {
   firstDayOfWeek: string;
   measurementUnit: string;
 }
+
+// Evento personalizado para alterações de localização
+export const LOCALIZATION_CHANGE_EVENT = 'localization-settings-changed';
 
 // Carregar configurações de localização salvas
 export function getLocalizationSettings(): LocalizationSettings {
@@ -34,6 +38,34 @@ export function getLocalizationSettings(): LocalizationSettings {
     firstDayOfWeek: "monday",
     measurementUnit: "metric"
   };
+}
+
+// Salvar configurações de localização
+export function saveLocalizationSettings(settings: LocalizationSettings): void {
+  try {
+    localStorage.setItem("localizationSettings", JSON.stringify(settings));
+    
+    // Disparar evento para notificar sobre a mudança
+    window.dispatchEvent(new CustomEvent(LOCALIZATION_CHANGE_EVENT, { 
+      detail: settings 
+    }));
+    
+    // Aplicar as configurações imediatamente
+    applyLocalizationSettings(settings);
+    
+    toast({
+      title: getTranslation('settingsSaved', settings.language),
+      description: getTranslation('localizationUpdated', settings.language),
+      variant: "success",
+    });
+  } catch (error) {
+    console.error("Erro ao salvar configurações de localização:", error);
+    toast({
+      title: getTranslation('errorSaving', settings.language),
+      description: String(error),
+      variant: "destructive",
+    });
+  }
 }
 
 // Formatador de números baseado nas configurações
@@ -89,10 +121,8 @@ export function formatDate(date: Date | string | number): string {
       case 'DD.MM.YYYY':
         return `${day}.${month}.${year}`;
       case 'DD-MMM-YYYY':
-        // Simplificado, não traduzido
-        const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
-                          'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-        return `${day}-${monthNames[dateObj.getMonth()]}-${year}`;
+        // Meses abreviados de acordo com o idioma
+        return formatDateWithMonthName(dateObj, settings.language);
       default:
         return `${day}/${month}/${year}`;
     }
@@ -102,30 +132,163 @@ export function formatDate(date: Date | string | number): string {
   }
 }
 
+// Formatar data com nome do mês
+function formatDateWithMonthName(date: Date, locale: string): string {
+  try {
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    const monthName = date.toLocaleString(locale, { month: 'short' });
+    
+    return `${day}-${monthName}-${year}`;
+  } catch (error) {
+    // Fallback para formato simples
+    return date.toLocaleDateString();
+  }
+}
+
+// Traduzir texto com base no idioma
+const translations: Record<string, Record<string, string>> = {
+  'pt-BR': {
+    'settingsSaved': 'Configurações salvas',
+    'localizationUpdated': 'As configurações de localização foram atualizadas com sucesso.',
+    'errorSaving': 'Erro ao salvar',
+    'home': 'Início',
+    'dashboard': 'Painel',
+    'settings': 'Configurações',
+    'profile': 'Perfil',
+    'logout': 'Sair',
+    'sales': 'Vendas',
+    'performance': 'Desempenho',
+    'reports': 'Relatórios',
+    'dataConnectors': 'Conectores de Dados',
+    'feedback': 'Feedback',
+    'aiInsights': 'Insights de IA',
+    'social': 'Social',
+    'demographics': 'Demografia',
+    // Adicione mais traduções conforme necessário
+  },
+  'en-US': {
+    'settingsSaved': 'Settings saved',
+    'localizationUpdated': 'Localization settings have been successfully updated.',
+    'errorSaving': 'Error saving',
+    'home': 'Home',
+    'dashboard': 'Dashboard',
+    'settings': 'Settings',
+    'profile': 'Profile',
+    'logout': 'Logout',
+    'sales': 'Sales',
+    'performance': 'Performance',
+    'reports': 'Reports',
+    'dataConnectors': 'Data Connectors',
+    'feedback': 'Feedback',
+    'aiInsights': 'AI Insights',
+    'social': 'Social',
+    'demographics': 'Demographics',
+    // Add more translations as needed
+  },
+  'es-ES': {
+    'settingsSaved': 'Configuración guardada',
+    'localizationUpdated': 'La configuración de localización se ha actualizado correctamente.',
+    'errorSaving': 'Error al guardar',
+    'home': 'Inicio',
+    'dashboard': 'Panel',
+    'settings': 'Configuración',
+    'profile': 'Perfil',
+    'logout': 'Cerrar sesión',
+    'sales': 'Ventas',
+    'performance': 'Rendimiento',
+    'reports': 'Informes',
+    'dataConnectors': 'Conectores de datos',
+    'feedback': 'Comentarios',
+    'aiInsights': 'Ideas de IA',
+    'social': 'Social',
+    'demographics': 'Demografía',
+    // Añadir más traducciones según sea necesario
+  },
+};
+
+// Função para obter texto traduzido
+export function getTranslation(key: string, locale: string = 'pt-BR'): string {
+  const fallbackLocale = 'pt-BR';
+  
+  // Se o idioma solicitado não existe, usar o fallback
+  if (!translations[locale]) {
+    locale = fallbackLocale;
+  }
+  
+  // Se a chave não existe no idioma, tentar no fallback
+  if (!translations[locale][key] && locale !== fallbackLocale) {
+    return translations[fallbackLocale][key] || key;
+  }
+  
+  return translations[locale][key] || key;
+}
+
 // Aplicar configurações de localização em todo o sistema
-export function applyLocalizationSettings(): void {
-  const settings = getLocalizationSettings();
+export function applyLocalizationSettings(settings?: LocalizationSettings): void {
+  const currentSettings = settings || getLocalizationSettings();
   
   // Definir idioma do documento
-  document.documentElement.lang = settings.language.split('-')[0];
+  document.documentElement.lang = currentSettings.language.split('-')[0];
   
   // Aplicar o tema no data attribute para ser usado no CSS
-  document.documentElement.setAttribute('data-locale', settings.language);
-  document.documentElement.setAttribute('data-number-format', settings.numberFormat);
-  document.documentElement.setAttribute('data-date-format', settings.dateFormat);
+  document.documentElement.setAttribute('data-locale', currentSettings.language);
+  document.documentElement.setAttribute('data-number-format', currentSettings.numberFormat);
+  document.documentElement.setAttribute('data-date-format', currentSettings.dateFormat);
+  document.documentElement.setAttribute('data-measurement', currentSettings.measurementUnit);
+  document.documentElement.setAttribute('data-first-day', currentSettings.firstDayOfWeek);
   
-  // Pode ser expandido para aplicar mais configurações conforme necessário
-  console.log("Configurações de localização aplicadas:", settings);
+  // Configurar o título da página de acordo com o idioma
+  updatePageTitle(currentSettings.language);
+  
+  console.log("Configurações de localização aplicadas:", currentSettings);
+}
+
+// Atualizar título da página com base no idioma
+function updatePageTitle(locale: string): void {
+  const siteName = "SightX";
+  const pageTitle = document.title.includes('|') 
+    ? document.title.split('|')[0].trim()
+    : document.title;
+  
+  let suffix = "";
+  
+  switch(locale.split('-')[0]) {
+    case 'pt':
+      suffix = "Transforme Dados em Decisões Inteligentes";
+      break;
+    case 'en':
+      suffix = "Transform Data into Smart Decisions";
+      break;
+    case 'es':
+      suffix = "Transforme Datos en Decisiones Inteligentes";
+      break;
+    default:
+      suffix = "Transforme Dados em Decisões Inteligentes";
+  }
+  
+  document.title = `${pageTitle} | ${siteName} - ${suffix}`;
 }
 
 // Inicializar configurações de localização
 export function initializeLocalization(): void {
-  applyLocalizationSettings();
+  const settings = getLocalizationSettings();
+  applyLocalizationSettings(settings);
   
-  // Pode adicionar listeners para mudanças de configuração, etc.
+  // Adicionar listeners para mudanças de configuração
   window.addEventListener('storage', (event) => {
     if (event.key === 'localizationSettings') {
-      applyLocalizationSettings();
+      try {
+        const newSettings = JSON.parse(event.newValue || '');
+        applyLocalizationSettings(newSettings);
+      } catch (error) {
+        console.error("Erro ao processar mudança de configurações:", error);
+      }
     }
   });
+  
+  // Adicionar listener para o evento personalizado
+  window.addEventListener(LOCALIZATION_CHANGE_EVENT, ((event: CustomEvent<LocalizationSettings>) => {
+    applyLocalizationSettings(event.detail);
+  }) as EventListener);
 }

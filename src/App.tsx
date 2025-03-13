@@ -26,7 +26,7 @@ import Performance from "./pages/Performance"
 import Profile from "./pages/Profile"
 import Settings from "./pages/Settings"
 import DataConnectors from "./pages/DataConnectors"
-import { initializeLocalization } from "@/utils/localization";
+import { initializeLocalization, getLocalizationSettings } from "@/utils/localization";
 
 const queryClient = new QueryClient()
 
@@ -37,7 +37,29 @@ const AppContent = () => {
 
   // Inicializar as configurações de localização quando o componente montar
   useEffect(() => {
+    // Inicializar localização
     initializeLocalization();
+    
+    // Configurar título da página baseado no idioma atual
+    const settings = getLocalizationSettings();
+    const siteName = "SightX";
+    let suffix = "";
+    
+    switch(settings.language.split('-')[0]) {
+      case 'pt':
+        suffix = "Transforme Dados em Decisões Inteligentes";
+        break;
+      case 'en':
+        suffix = "Transform Data into Smart Decisions";
+        break;
+      case 'es':
+        suffix = "Transforme Datos en Decisiones Inteligentes";
+        break;
+      default:
+        suffix = "Transforme Dados em Decisões Inteligentes";
+    }
+    
+    document.title = `SightX - ${suffix}`;
   }, []);
 
   return (

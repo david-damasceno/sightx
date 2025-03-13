@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -11,18 +12,10 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Check, Info } from "lucide-react"
-
-interface LocalizationConfig {
-  language: string
-  dateFormat: string
-  numberFormat: string
-  timezone: string
-  useAutoTimezone: boolean
-  currency: string
-  firstDayOfWeek: string
-  measurementUnit: string
-}
+import { Check, Info, AlertTriangle } from "lucide-react"
+import { useLocalization } from "@/hooks/use-localization"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { LocalizationSettings as LocalizationSettingsType } from "@/utils/localization"
 
 const localizationSchema = z.object({
   language: z.string().min(2),
@@ -95,76 +88,89 @@ const measurementOptions = [
   { value: "imperial", label: "Imperial (milhas, libras, °F)" },
 ]
 
+interface SettingsPreviewProps {
+  settings: LocalizationSettingsType;
+}
+
+const SettingsPreview = ({ settings }: SettingsPreviewProps) => {
+  const now = new Date();
+  const { formatDate, formatNumber, formatCurrency, t } = useLocalization();
+  
+  return (
+    <Card className="mt-4">
+      <CardContent className="pt-4">
+        <h3 className="text-sm font-medium mb-2">Visualização das configurações:</h3>
+        <div className="grid gap-2 text-sm">
+          <div className="grid grid-cols-2 gap-1">
+            <span className="text-muted-foreground">Data atual:</span>
+            <span>{formatDate(now)}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1">
+            <span className="text-muted-foreground">Número:</span>
+            <span>{formatNumber(1234.56)}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1">
+            <span className="text-muted-foreground">Moeda:</span>
+            <span>{formatCurrency(1234.56)}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1">
+            <span className="text-muted-foreground">Idioma atual:</span>
+            <span>{t('settings')}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 export function LocalizationSettings() {
-  const { toast } = useToast()
+  const { settings: currentSettings, updateSettings } = useLocalization();
+  const { toast } = useToast();
   
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSaved, setIsSaved] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [previewSettings, setPreviewSettings] = useState<LocalizationSettingsType>(currentSettings);
   
-  const defaultValues: LocalizationConfig = {
-    language: "pt-BR",
-    dateFormat: "DD/MM/YYYY",
-    numberFormat: "pt-BR",
-    timezone: "America/Sao_Paulo",
-    useAutoTimezone: true,
-    currency: "BRL",
-    firstDayOfWeek: "monday",
-    measurementUnit: "metric"
-  }
-  
-  const form = useForm<LocalizationConfig>({
+  const form = useForm<LocalizationSettingsType>({
     resolver: zodResolver(localizationSchema),
-    defaultValues
-  })
+    defaultValues: currentSettings
+  });
   
   useEffect(() => {
-    const loadSavedSettings = () => {
-      try {
-        const savedSettings = localStorage.getItem("localizationSettings")
-        if (savedSettings) {
-          const parsedSettings = JSON.parse(savedSettings)
-          form.reset(parsedSettings)
-        }
-      } catch (error) {
-        console.error("Erro ao carregar configurações de localização:", error)
-      }
-    }
-    
-    loadSavedSettings()
-  }, [form])
+    // Atualizar o formulário quando as configurações mudarem externamente
+    form.reset(currentSettings);
+  }, [currentSettings, form]);
   
-  const handleSave = (values: LocalizationConfig) => {
-    setIsLoading(true)
+  // Atualizar visualização ao mudar valores do formulário
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      setPreviewSettings(values as LocalizationSettingsType);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form]);
+  
+  const handleSave = (values: LocalizationSettingsType) => {
+    setIsLoading(true);
     
     setTimeout(() => {
       try {
-        localStorage.setItem("localizationSettings", JSON.stringify(values))
+        // Usar a função do hook para salvar as configurações
+        updateSettings(values);
         
-        document.documentElement.lang = values.language.split("-")[0]
-        
-        document.documentElement.setAttribute("data-locale", values.language)
-        document.documentElement.setAttribute("data-number-format", values.numberFormat)
-        document.documentElement.setAttribute("data-date-format", values.dateFormat)
-        
-        toast({
-          title: "Configurações salvas",
-          description: "As configurações de localização foram atualizadas com sucesso.",
-          variant: "success"
-        })
-        
-        setIsSaved(true)
-        setTimeout(() => setIsSaved(false), 3000)
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 3000);
       } catch (error) {
         toast({
           title: "Erro ao salvar",
           description: "Ocorreu um erro ao salvar as configurações. Tente novamente.",
           variant: "destructive"
-        })
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }, 800)
-  }
+    }, 800);
+  };
   
   return (
     <div className="space-y-6">
@@ -183,6 +189,7 @@ export function LocalizationSettings() {
             <TabsList className="mb-4">
               <TabsTrigger value="general">Geral</TabsTrigger>
               <TabsTrigger value="advanced">Avançado</TabsTrigger>
+              <TabsTrigger value="preview">Visualização</TabsTrigger>
             </TabsList>
             
             <TabsContent value="general" className="space-y-6">
@@ -431,6 +438,17 @@ export function LocalizationSettings() {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+            
+            <TabsContent value="preview" className="space-y-6">
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Visualize como as configurações afetarão a exibição de datas, números e moedas.
+                </AlertDescription>
+              </Alert>
+              
+              <SettingsPreview settings={previewSettings} />
             </TabsContent>
           </Tabs>
           
