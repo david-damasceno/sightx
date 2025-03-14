@@ -68,7 +68,7 @@ function ToastProvider({ children }: ProviderProps) {
     [handleAddToast, handleUpdateToast, handleDismissToast, toasts]
   )
 
-  return <context.Provider value={value}>{children}</context.Provider>
+  return React.createElement(context.Provider, { value }, children)
 }
 
 function useToast() {
