@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { supabase } from "@/integrations/supabase/client"
@@ -10,7 +10,7 @@ import { AlertTriangle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export function UsersSettings() {
-  const { toast } = useToast()
+  const { addToast } = useToast()
   const { user, currentOrganization } = useAuth()
   const [loading, setLoading] = useState(false)
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true)
@@ -20,7 +20,7 @@ export function UsersSettings() {
   
   const handleSave = async () => {
     if (!user || !currentOrganization) {
-      toast({
+      addToast({
         title: "Erro",
         description: "Você precisa estar autenticado e ter uma organização para salvar configurações de usuários.",
         variant: "destructive",
@@ -46,12 +46,15 @@ export function UsersSettings() {
         throw new Error("Você não tem permissão para alterar estas configurações")
       }
       
+      // Verificar se settings já existe na organização
+      const currentOrgSettings = currentOrganization.settings || {};
+      
       // Atualizar configurações da organização
       const { error } = await supabase
         .from('organizations')
         .update({
           settings: {
-            ...currentOrganization.settings,
+            ...currentOrgSettings,
             security: {
               twoFactorEnabled,
               passwordExpiration,
@@ -64,14 +67,14 @@ export function UsersSettings() {
       
       if (error) throw error
       
-      toast({
+      addToast({
         title: "Configurações salvas",
         description: "As configurações de usuários foram atualizadas com sucesso.",
-        variant: "success",
+        variant: "default",
       })
     } catch (error) {
       console.error("Erro ao salvar configurações:", error)
-      toast({
+      addToast({
         title: "Erro ao salvar",
         description: error.message || "Ocorreu um erro ao salvar as configurações. Tente novamente.",
         variant: "destructive",
@@ -90,7 +93,7 @@ export function UsersSettings() {
         </p>
       </div>
 
-      <Alert variant="warning">
+      <Alert variant="default">
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle>Atenção</AlertTitle>
         <AlertDescription>

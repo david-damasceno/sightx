@@ -20,7 +20,7 @@ export function ProfileAvatarEditor({ open, onClose, imageUrl, onSave, onDelete 
   const [rotate, setRotate] = useState(0)
   const [loading, setLoading] = useState(false)
   const editorRef = useRef<AvatarEditor>(null)
-  const { toast } = useToast()
+  const { addToast } = useToast()
 
   const handleSave = async () => {
     if (!editorRef.current) return
@@ -50,14 +50,14 @@ export function ProfileAvatarEditor({ open, onClose, imageUrl, onSave, onDelete 
         .getPublicUrl(filePath)
 
       onSave(publicUrl)
-      toast({
+      addToast({
         title: "Sucesso",
         description: "Foto de perfil atualizada com sucesso",
       })
       onClose()
     } catch (error) {
       console.error('Error uploading avatar:', error)
-      toast({
+      addToast({
         title: "Erro",
         description: "Não foi possível salvar a imagem. Tente novamente.",
         variant: "destructive"
@@ -71,14 +71,14 @@ export function ProfileAvatarEditor({ open, onClose, imageUrl, onSave, onDelete 
     try {
       setLoading(true)
       await onDelete()
-      toast({
+      addToast({
         title: "Sucesso",
         description: "Foto de perfil removida com sucesso",
       })
       onClose()
     } catch (error) {
       console.error('Error deleting avatar:', error)
-      toast({
+      addToast({
         title: "Erro",
         description: "Não foi possível remover a imagem. Tente novamente.",
         variant: "destructive"

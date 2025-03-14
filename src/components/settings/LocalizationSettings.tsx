@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form"
@@ -125,7 +124,7 @@ const SettingsPreview = ({ settings }: SettingsPreviewProps) => {
 
 export function LocalizationSettings() {
   const { settings: currentSettings, updateSettings } = useLocalization();
-  const { toast } = useToast();
+  const { addToast } = useToast();
   
   const [isLoading, setIsLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -137,11 +136,9 @@ export function LocalizationSettings() {
   });
   
   useEffect(() => {
-    // Atualizar o formulário quando as configurações mudarem externamente
     form.reset(currentSettings);
   }, [currentSettings, form]);
   
-  // Atualizar visualização ao mudar valores do formulário
   useEffect(() => {
     const subscription = form.watch((values) => {
       setPreviewSettings(values as LocalizationSettingsType);
@@ -155,13 +152,12 @@ export function LocalizationSettings() {
     
     setTimeout(() => {
       try {
-        // Usar a função do hook para salvar as configurações
         updateSettings(values);
         
         setIsSaved(true);
         setTimeout(() => setIsSaved(false), 3000);
       } catch (error) {
-        toast({
+        addToast({
           title: "Erro ao salvar",
           description: "Ocorreu um erro ao salvar as configurações. Tente novamente.",
           variant: "destructive"

@@ -1,12 +1,12 @@
 import { useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/integrations/supabase/client"
 
 export default function IntegrationsCallback() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const { toast } = useToast()
+  const { addToast } = useToast()
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -16,7 +16,7 @@ export default function IntegrationsCallback() {
 
       if (error) {
         console.error('OAuth error:', error)
-        toast({
+        addToast({
           title: "Erro na integração",
           description: "Não foi possível completar a integração.",
           variant: "destructive"
@@ -26,7 +26,7 @@ export default function IntegrationsCallback() {
       }
 
       if (!code || !state) {
-        toast({
+        addToast({
           title: "Erro na integração",
           description: "Parâmetros inválidos.",
           variant: "destructive"
@@ -36,7 +36,6 @@ export default function IntegrationsCallback() {
       }
 
       try {
-        // Chamar a Edge Function para trocar o código por tokens
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-business-oauth`,
           {
@@ -53,13 +52,13 @@ export default function IntegrationsCallback() {
           throw new Error('Failed to exchange code for tokens')
         }
 
-        toast({
+        addToast({
           title: "Sucesso",
           description: "Integração concluída com sucesso!",
         })
       } catch (error) {
         console.error('Error completing integration:', error)
-        toast({
+        addToast({
           title: "Erro",
           description: "Não foi possível completar a integração.",
           variant: "destructive"
@@ -70,7 +69,7 @@ export default function IntegrationsCallback() {
     }
 
     handleCallback()
-  }, [searchParams, navigate, toast])
+  }, [searchParams, navigate, addToast])
 
   return (
     <div className="flex items-center justify-center min-h-screen">

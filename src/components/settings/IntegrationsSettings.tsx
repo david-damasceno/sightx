@@ -1,7 +1,6 @@
-
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { Database } from "@/integrations/supabase/types"
@@ -15,7 +14,7 @@ type Integration = Database['public']['Tables']['integrations']['Row']
 type IntegrationType = Database['public']['Enums']['integration_type']
 
 export function IntegrationsSettings() {
-  const { toast } = useToast()
+  const { addToast } = useToast()
   const { currentOrganization } = useAuth()
   const [isConnecting, setIsConnecting] = useState<IntegrationType | null>(null)
 
@@ -45,18 +44,15 @@ export function IntegrationsSettings() {
         throw new Error('Organização não selecionada')
       }
 
-      // Verificar se já existe uma integração pendente
       const existingIntegration = integrations?.find(i => 
         i.integration_type === type && i.status === 'pending'
       )
       
       if (existingIntegration) {
-        // Se já existe uma integração pendente, use-a
         initiateOAuthFlow(type, existingIntegration.id, currentOrganization.id)
         return
       }
 
-      // Criar registro de integração
       const { data: integration, error: integrationError } = await supabase
         .from('integrations')
         .insert({
@@ -69,11 +65,10 @@ export function IntegrationsSettings() {
 
       if (integrationError) throw integrationError
       
-      // Iniciar fluxo OAuth com o ID da integração criada
       initiateOAuthFlow(type, integration.id, currentOrganization.id)
     } catch (error) {
       console.error('Error starting integration:', error)
-      toast({
+      addToast({
         title: "Erro",
         description: "Não foi possível iniciar a integração. Tente novamente mais tarde.",
         variant: "destructive"
@@ -83,20 +78,15 @@ export function IntegrationsSettings() {
   }
   
   const initiateOAuthFlow = (type: IntegrationType, integrationId: string, organizationId: string) => {
-    // Parâmetros OAuth comuns sanitizados
     const state = `${integrationId}|${organizationId}`
     
-    // Construir URL de redirecionamento para callback seguro
     const redirectUri = `${window.location.origin}/settings/integrations/callback`
     
-    // Configurar parâmetros específicos por tipo de integração
     switch (type) {
       case 'google_business':
-        // Informações da API do Google Business Profile
-        const clientId = 'YOUR_GOOGLE_CLIENT_ID' // Substituir pelo cliente real
+        const clientId = 'YOUR_GOOGLE_CLIENT_ID'
         const scope = 'https://www.googleapis.com/auth/business.manage'
         
-        // Construir URL de autorização
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
           client_id: clientId,
           redirect_uri: redirectUri,
@@ -107,12 +97,10 @@ export function IntegrationsSettings() {
           prompt: 'consent'
         })}`
         
-        // Redirecionar para página de autorização do Google
         window.location.href = authUrl
         break
         
       case 'google_analytics':
-        // Configuração para Google Analytics
         const gaClientId = 'YOUR_GA_CLIENT_ID'
         const gaScope = 'https://www.googleapis.com/auth/analytics.readonly'
         
@@ -130,7 +118,6 @@ export function IntegrationsSettings() {
         break
         
       case 'slack':
-        // Configuração para Slack
         const slackClientId = 'YOUR_SLACK_CLIENT_ID'
         const slackScope = 'chat:write,channels:read'
         
@@ -149,7 +136,7 @@ export function IntegrationsSettings() {
         throw new Error(`Tipo de integração não suportado: ${type}`)
     }
     
-    toast({
+    addToast({
       title: "Iniciando integração",
       description: "Você será redirecionado para autorizar o acesso.",
     })
@@ -218,7 +205,6 @@ export function IntegrationsSettings() {
       </Alert>
 
       <div className="space-y-4">
-        {/* Google Business Profile */}
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -263,7 +249,6 @@ export function IntegrationsSettings() {
           </div>
         </Card>
 
-        {/* Google Analytics */}
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -297,7 +282,6 @@ export function IntegrationsSettings() {
           </div>
         </Card>
 
-        {/* Slack */}
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">

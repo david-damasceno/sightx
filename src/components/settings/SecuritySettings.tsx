@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ShieldCheck, AlertTriangle, Key, FileDigit } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Translate } from "@/components/Translate";
@@ -19,7 +19,7 @@ interface SecuritySettings {
 }
 
 export function SecuritySettings() {
-  const { toast } = useToast();
+  const { addToast } = useToast();
   const { t } = useLocalization();
   const [settings, setSettings] = useState<SecuritySettings>({
     ipWhitelisting: false,
@@ -44,8 +44,17 @@ export function SecuritySettings() {
 
         if (error) throw error;
 
-        if (data?.settings?.security) {
-          setSettings(data.settings.security);
+        if (data?.settings) {
+          // Verificar se settings existe e se security existe dentro de settings
+          const securitySettings = typeof data.settings === 'object' && 
+                                   data.settings !== null && 
+                                   'security' in data.settings ? 
+                                   data.settings.security as SecuritySettings : 
+                                   null;
+          
+          if (securitySettings) {
+            setSettings(securitySettings);
+          }
         }
       } catch (error) {
         console.error("Erro ao carregar configurações de segurança:", error);
@@ -71,8 +80,12 @@ export function SecuritySettings() {
       if (fetchError) throw fetchError;
 
       // Mesclar configurações atuais com novas configurações de segurança
+      const currentSettings = typeof currentProfile?.settings === 'object' ? 
+                             currentProfile?.settings || {} : 
+                             {};
+                             
       const updatedSettings = {
-        ...(currentProfile?.settings || {}),
+        ...currentSettings,
         security: settings
       };
 
@@ -85,14 +98,14 @@ export function SecuritySettings() {
 
       if (error) throw error;
 
-      toast({
+      addToast({
         title: t("Configurações salvas"),
         description: t("Configurações de segurança atualizadas com sucesso"),
-        variant: "success",
+        variant: "default",
       });
     } catch (error) {
       console.error("Erro ao salvar configurações de segurança:", error);
-      toast({
+      addToast({
         title: t("Erro"),
         description: t("Não foi possível salvar as configurações"),
         variant: "destructive",

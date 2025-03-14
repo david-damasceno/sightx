@@ -17,17 +17,19 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
 
   useEffect(() => {
     let mounted = true
-    let controller = new AbortController()
+    const controller = new AbortController()
 
     async function checkOnboardingStatus() {
       if (session?.user && checkOnboarding) {
         try {
+          const signal = controller.signal
           const { data, error } = await supabase
             .from('profiles')
             .select('onboarded')
             .eq('id', session.user.id)
             .maybeSingle()
-            .abortSignal(controller.signal)
+            // A API atual do Supabase não suporta abortSignal diretamente desta forma
+            // Removeremos esta linha problemática
 
           if (error) throw error
           if (mounted) setIsOnboarded(data?.onboarded ?? false)

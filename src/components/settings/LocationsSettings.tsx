@@ -2,13 +2,13 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 export function LocationsSettings() {
-  const { toast } = useToast()
+  const { addToast } = useToast()
   
   const handleSave = () => {
-    toast({
+    addToast({
       title: "Configurações salvas",
       description: "As configurações de localização foram atualizadas com sucesso.",
     })

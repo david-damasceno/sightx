@@ -1,4 +1,3 @@
-
 import DOMPurify from 'dompurify';
 
 /**
@@ -12,7 +11,7 @@ export const security = {
    * @returns String HTML sanitizada
    */
   sanitizeHtml: (html: string, options?: DOMPurify.Config): string => {
-    return DOMPurify.sanitize(html, options);
+    return DOMPurify.sanitize(html, options) as string;
   },
 
   /**
@@ -22,7 +21,7 @@ export const security = {
    */
   sanitizeInput: (input: string): string => {
     // Remove tags HTML e caracteres potencialmente perigosos
-    return DOMPurify.sanitize(input, { ALLOWED_TAGS: [] });
+    return DOMPurify.sanitize(input, { ALLOWED_TAGS: [] }) as string;
   },
 
   /**
@@ -64,7 +63,7 @@ export const security = {
    */
   formatSafe: (template: string, params: Record<string, string | number>): string => {
     return Object.entries(params).reduce((result, [key, value]) => {
-      const safeValue = DOMPurify.sanitize(String(value), { ALLOWED_TAGS: [] });
+      const safeValue = DOMPurify.sanitize(String(value), { ALLOWED_TAGS: [] }) as string;
       return result.replace(new RegExp(`{${key}}`, 'g'), safeValue);
     }, template);
   }
