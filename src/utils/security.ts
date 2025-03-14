@@ -11,7 +11,8 @@ export const security = {
    * @returns String HTML sanitizada
    */
   sanitizeHtml: (html: string, options?: DOMPurify.Config): string => {
-    return DOMPurify.sanitize(html, options) as string;
+    const result = DOMPurify.sanitize(html, options);
+    return typeof result === 'string' ? result : result.toString();
   },
 
   /**
@@ -21,7 +22,8 @@ export const security = {
    */
   sanitizeInput: (input: string): string => {
     // Remove tags HTML e caracteres potencialmente perigosos
-    return DOMPurify.sanitize(input, { ALLOWED_TAGS: [] }) as string;
+    const result = DOMPurify.sanitize(input, { ALLOWED_TAGS: [] });
+    return typeof result === 'string' ? result : result.toString();
   },
 
   /**

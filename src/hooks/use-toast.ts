@@ -1,7 +1,16 @@
 
 import { useToast as useToastInternal } from "@/components/ui/use-toast"
+import { ToastProps } from "@/components/ui/use-toast"
 
-export const useToast = useToastInternal
+export const useToast = () => {
+  const internalToast = useToastInternal();
+  
+  return {
+    ...internalToast,
+    // Adicionamos 'toast' como alias para 'addToast' para compatibilidade
+    toast: internalToast.addToast
+  };
+}
 
 // Criar um objeto toast que pode ser usado sem hooks
 export const toast = {

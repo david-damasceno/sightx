@@ -5,10 +5,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 
 export function SupportSettings() {
-  const { addToast } = useToast()
+  const { addToast, toast } = useToast()
   
   const handleSave = () => {
-    addToast({
+    toast({
       title: "Settings saved",
       description: "Support settings have been updated successfully.",
     })

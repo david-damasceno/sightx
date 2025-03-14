@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, useRef } from "react"
 import { Session, User } from "@supabase/supabase-js"
 import { supabase } from "@/integrations/supabase/client"
@@ -38,12 +37,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profileLoading, setProfileLoading] = useState(true)
   const [organizationLoading, setOrganizationLoading] = useState(true)
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null)
-  const { toast } = useToast()
+  const { toast, addToast } = useToast()
   
-  // Usar useRef para controlar o cancelamento de solicitações quando o componente for desmontado
   const mountedRef = useRef(true)
 
-  // Limpar a referência quando o componente for desmontado
   useEffect(() => {
     return () => { mountedRef.current = false }
   }, [])
@@ -82,7 +79,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     initializeAuth()
   }, [])
 
-  // Load user profile
   useEffect(() => {
     const loadProfile = async () => {
       setProfileLoading(true)
@@ -105,16 +101,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (error) {
           console.error('Error loading profile:', error)
           
-          // Se o perfil não existir, criamos automaticamente
           if (error.code === 'PGRST116') {
             console.log('Profile not found, creating one')
             const currentTime = new Date().toISOString()
             
-            // Buscar dados do usuário
             const { data: userData } = await supabase.auth.getUser()
             if (!userData?.user) throw new Error('Usuário não encontrado')
             
-            // Inserir novo perfil
             const { data: newProfile, error: insertError } = await supabase
               .from('profiles')
               .insert({
@@ -158,7 +151,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     loadProfile()
   }, [user, toast])
 
-  // Load default organization
   useEffect(() => {
     const loadDefaultOrganization = async () => {
       setOrganizationLoading(true)

@@ -18,8 +18,14 @@ interface SecuritySettings {
   apiKeySet: boolean;
 }
 
+// Interface para tipar corretamente o objeto de configurações
+interface ProfileSettings {
+  security?: SecuritySettings;
+  [key: string]: any;
+}
+
 export function SecuritySettings() {
-  const { addToast } = useToast();
+  const { addToast, toast } = useToast();
   const { t } = useLocalization();
   const [settings, setSettings] = useState<SecuritySettings>({
     ipWhitelisting: false,
@@ -46,14 +52,15 @@ export function SecuritySettings() {
 
         if (data?.settings) {
           // Verificar se settings existe e se security existe dentro de settings
-          const securitySettings = typeof data.settings === 'object' && 
-                                   data.settings !== null && 
-                                   'security' in data.settings ? 
-                                   data.settings.security as SecuritySettings : 
-                                   null;
+          const userSettings = data.settings as ProfileSettings;
           
-          if (securitySettings) {
-            setSettings(securitySettings);
+          if (userSettings.security) {
+            setSettings({
+              ipWhitelisting: !!userSettings.security.ipWhitelisting,
+              auditLogging: userSettings.security.auditLogging !== false, // default true
+              twoFactorAuth: !!userSettings.security.twoFactorAuth,
+              apiKeySet: !!userSettings.security.apiKeySet
+            });
           }
         }
       } catch (error) {
@@ -80,9 +87,7 @@ export function SecuritySettings() {
       if (fetchError) throw fetchError;
 
       // Mesclar configurações atuais com novas configurações de segurança
-      const currentSettings = typeof currentProfile?.settings === 'object' ? 
-                             currentProfile?.settings || {} : 
-                             {};
+      const currentSettings = currentProfile?.settings as ProfileSettings || {};
                              
       const updatedSettings = {
         ...currentSettings,
@@ -92,20 +97,20 @@ export function SecuritySettings() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          settings: updatedSettings
+          settings: updatedSettings as any // Usamos any aqui para contornar limitações do tipo Json do Supabase
         })
         .eq('id', user.id);
 
       if (error) throw error;
 
-      addToast({
+      toast({
         title: t("Configurações salvas"),
         description: t("Configurações de segurança atualizadas com sucesso"),
         variant: "default",
       });
     } catch (error) {
       console.error("Erro ao salvar configurações de segurança:", error);
-      addToast({
+      toast({
         title: t("Erro"),
         description: t("Não foi possível salvar as configurações"),
         variant: "destructive",

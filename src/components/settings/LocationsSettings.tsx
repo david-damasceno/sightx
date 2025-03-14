@@ -5,10 +5,10 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 
 export function LocationsSettings() {
-  const { addToast } = useToast()
+  const { addToast, toast } = useToast()
   
   const handleSave = () => {
-    addToast({
+    toast({
       title: "Configurações salvas",
       description: "As configurações de localização foram atualizadas com sucesso.",
     })

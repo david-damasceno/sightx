@@ -10,7 +10,7 @@ import { AlertTriangle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export function UsersSettings() {
-  const { addToast } = useToast()
+  const { addToast, toast } = useToast()
   const { user, currentOrganization } = useAuth()
   const [loading, setLoading] = useState(false)
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true)
@@ -20,7 +20,7 @@ export function UsersSettings() {
   
   const handleSave = async () => {
     if (!user || !currentOrganization) {
-      addToast({
+      toast({
         title: "Erro",
         description: "Você precisa estar autenticado e ter uma organização para salvar configurações de usuários.",
         variant: "destructive",
@@ -49,32 +49,35 @@ export function UsersSettings() {
       // Verificar se settings já existe na organização
       const currentOrgSettings = currentOrganization.settings || {};
       
+      // Tipagem segura para o objeto de configurações
+      const securitySettings = {
+        twoFactorEnabled,
+        passwordExpiration,
+        sessionTimeout,
+        maxLoginAttempts
+      };
+      
       // Atualizar configurações da organização
       const { error } = await supabase
         .from('organizations')
         .update({
           settings: {
             ...currentOrgSettings,
-            security: {
-              twoFactorEnabled,
-              passwordExpiration,
-              sessionTimeout,
-              maxLoginAttempts
-            }
+            security: securitySettings
           }
         })
         .eq('id', currentOrganization.id)
       
       if (error) throw error
       
-      addToast({
+      toast({
         title: "Configurações salvas",
         description: "As configurações de usuários foram atualizadas com sucesso.",
         variant: "default",
       })
     } catch (error) {
       console.error("Erro ao salvar configurações:", error)
-      addToast({
+      toast({
         title: "Erro ao salvar",
         description: error.message || "Ocorreu um erro ao salvar as configurações. Tente novamente.",
         variant: "destructive",

@@ -1,13 +1,14 @@
+
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 
 export function ReportsSettings() {
-  const { addToast } = useToast()
+  const { addToast, toast } = useToast()
   
   const handleSave = () => {
-    addToast({
+    toast({
       title: "Settings saved",
       description: "Report settings have been updated successfully.",
     })
