@@ -79,8 +79,11 @@ function useToast() {
   }
 
   const addToast = (props: ToastProps) => {
-    // Corrigindo a linha problemática para garantir que o título seja uma string válida
-    const id = props.title ? (typeof props.title === "string" ? props.title : String(props.title)) : "toast-" + Date.now()
+    const id = props.title 
+      ? (typeof props.title === "string" 
+          ? props.title 
+          : String(props.title)) 
+      : "toast-" + Date.now();
 
     toast.addToast({
       ...props,
