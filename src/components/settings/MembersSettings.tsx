@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,33 +18,55 @@ import { Users, UserPlus, Mail, Shield, Building, Loader2 } from "lucide-react"
 import { useOrganization } from "@/hooks/useOrganization"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { supabase } from "@/integrations/supabase/client"
 
 export function MembersSettings() {
   const [inviteEmail, setInviteEmail] = useState("")
+  const [isInviting, setIsInviting] = useState(false)
   const { toast } = useToast()
   const { 
     loading, 
     currentOrganization, 
-    members, 
-    inviteMember 
+    members,
+    fetchMembers
   } = useOrganization()
 
   const handleInvite = async () => {
     if (!inviteEmail || !currentOrganization) return
-
+    
     try {
-      await inviteMember(currentOrganization.id, inviteEmail, 'member')
+      setIsInviting(true)
+      
+      // Chamar a edge function para processar o convite
+      const { data, error } = await supabase.functions.invoke('process-invite', {
+        body: {
+          email: inviteEmail,
+          organizationId: currentOrganization.id,
+          role: 'member'
+        }
+      })
+      
+      if (error) throw error
+      
+      // Recarregar a lista de membros se um usuário existente foi adicionado
+      if (data.userExists) {
+        await fetchMembers(currentOrganization.id)
+      }
+      
       setInviteEmail("")
       toast({
         title: "Convite enviado",
         description: `Um convite foi enviado para ${inviteEmail}`,
       })
     } catch (error) {
+      console.error("Erro ao enviar convite:", error)
       toast({
         title: "Erro",
         description: "Não foi possível enviar o convite",
         variant: "destructive",
       })
+    } finally {
+      setIsInviting(false)
     }
   }
 
@@ -99,8 +122,8 @@ export function MembersSettings() {
                 </div>
               </div>
               <div className="flex items-end">
-                <Button onClick={handleInvite} disabled={loading || !inviteEmail}>
-                  {loading ? (
+                <Button onClick={handleInvite} disabled={loading || isInviting || !inviteEmail}>
+                  {isInviting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Enviando...

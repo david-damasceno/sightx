@@ -152,22 +152,21 @@ export function useOrganization() {
   const inviteMember = async (organizationId: string, email: string, role: 'member' | 'admin') => {
     try {
       setLoading(true)
-      const token = crypto.randomUUID()
-      const expiresAt = new Date()
-      expiresAt.setDate(expiresAt.getDate() + 7)
-
-      const { error } = await supabase
-        .from('organization_invites')
-        .insert({
-          organization_id: organizationId,
+      // Invocamos a nova edge function para processar o convite
+      const { data, error } = await supabase.functions.invoke('process-invite', {
+        body: {
           email,
-          role,
-          token,
-          invited_by: (await supabase.auth.getUser()).data.user?.id,
-          expires_at: expiresAt.toISOString()
-        })
+          organizationId,
+          role
+        }
+      })
 
       if (error) throw error
+
+      // Se o usuário já existia e foi adicionado diretamente, atualizar a lista de membros
+      if (data.userExists) {
+        await fetchMembers(organizationId)
+      }
 
       toast({
         title: "Sucesso",
@@ -203,6 +202,7 @@ export function useOrganization() {
     setCurrentOrganization,
     members,
     createOrganization,
-    inviteMember
+    inviteMember,
+    fetchMembers  // Expomos a função para que possa ser usada
   }
 }
