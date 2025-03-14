@@ -90,7 +90,7 @@ function useToast() {
       title: id,
     })
 
-    setTimeout(() => toast.dismissToast(id), TOAST_REMOVE_DELAY)
+    setTimeout(() => toast.dismissToast(id), props.duration || TOAST_REMOVE_DELAY)
   }
 
   return {
@@ -100,3 +100,4 @@ function useToast() {
 }
 
 export { ToastProvider, useToast }
+export type { ToastProps }

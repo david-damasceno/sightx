@@ -2,13 +2,13 @@
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 export function AlertsSettings() {
-  const { toast } = useToast()
+  const { addToast } = useToast()
   
   const handleSave = () => {
-    toast({
+    addToast({
       title: "Configurações salvas",
       description: "As configurações de alerta foram atualizadas com sucesso.",
     })

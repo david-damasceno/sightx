@@ -1,7 +1,6 @@
-
 // Utilitários para formatação baseada nas configurações de localização do usuário
 import { toast } from "@/hooks/use-toast";
-import { DOMPurify } from 'dompurify';
+import DOMPurify from 'dompurify';
 
 export interface LocalizationSettings {
   language: string;
@@ -122,14 +121,14 @@ export function saveLocalizationSettings(settings: LocalizationSettings): void {
     // Aplicar as configurações imediatamente
     applyLocalizationSettings(settings);
     
-    toast({
+    toast.toast({
       title: getTranslation('settingsSaved', settings.language),
       description: getTranslation('localizationUpdated', settings.language),
       variant: "success",
     });
   } catch (error) {
     console.error("Erro ao salvar configurações de localização:", error);
-    toast({
+    toast.toast({
       title: getTranslation('errorSaving', settings.language),
       description: String(error),
       variant: "destructive",
