@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState, useRef } from "react"
+
+import { createContext, useContext, useEffect, useState } from "react"
 import { Session, User } from "@supabase/supabase-js"
 import { supabase } from "@/integrations/supabase/client"
 import { Database } from "@/integrations/supabase/types"
@@ -37,27 +38,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profileLoading, setProfileLoading] = useState(true)
   const [organizationLoading, setOrganizationLoading] = useState(true)
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null)
-  const { toast, addToast } = useToast()
-  
-  const mountedRef = useRef(true)
+  const { toast } = useToast()
 
   useEffect(() => {
-    return () => { mountedRef.current = false }
-  }, [])
+    let mounted = true
 
-  useEffect(() => {
     const initializeAuth = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession()
         
-        if (mountedRef.current) {
+        if (mounted) {
           setSession(currentSession)
           setUser(currentSession?.user ?? null)
           setLoading(false)
         }
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-          if (mountedRef.current) {
+          if (mounted) {
             console.log('Auth state changed:', { event: _event, hasSession: !!session })
             setSession(session)
             setUser(session?.user ?? null)
@@ -70,20 +67,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
-        if (mountedRef.current) {
+        if (mounted) {
           setLoading(false)
         }
       }
     }
 
     initializeAuth()
+
+    return () => {
+      mounted = false
+    }
   }, [])
 
+  // Load user profile
   useEffect(() => {
+    let mounted = true
+
     const loadProfile = async () => {
       setProfileLoading(true)
       if (!user) {
-        if (mountedRef.current) {
+        if (mounted) {
           setProfile(null)
           setProfileLoading(false)
         }
@@ -101,18 +105,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (error) {
           console.error('Error loading profile:', error)
           
+          // Se o perfil não existir, criamos automaticamente
           if (error.code === 'PGRST116') {
             console.log('Profile not found, creating one')
             const currentTime = new Date().toISOString()
-            
-            const { data: userData } = await supabase.auth.getUser()
-            if (!userData?.user) throw new Error('Usuário não encontrado')
-            
             const { data: newProfile, error: insertError } = await supabase
               .from('profiles')
               .insert({
-                id: userData.user.id,
-                email: userData.user.email,
+                id: user.id,
+                email: user.email,
                 updated_at: currentTime,
                 onboarded: false,
                 default_organization_id: null
@@ -125,37 +126,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               throw insertError
             }
 
-            if (mountedRef.current) setProfile(newProfile)
+            if (mounted) setProfile(newProfile)
           } else {
             throw error
           }
         } else {
           console.log('Profile loaded successfully:', data)
-          if (mountedRef.current) setProfile(data)
+          if (mounted) setProfile(data)
         }
       } catch (error) {
-        if (error.name !== 'AbortError') {
-          console.error('Error in profile flow:', error)
-          toast({
-            title: "Erro",
-            description: "Não foi possível carregar seu perfil. Tente recarregar a página.",
-            variant: "destructive"
-          })
-          if (mountedRef.current) setProfile(null)
-        }
+        console.error('Error in profile flow:', error)
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar seu perfil. Tente recarregar a página.",
+          variant: "destructive"
+        })
+        if (mounted) setProfile(null)
       } finally {
-        if (mountedRef.current) setProfileLoading(false)
+        if (mounted) setProfileLoading(false)
       }
     }
 
     loadProfile()
+
+    return () => {
+      mounted = false
+    }
   }, [user, toast])
 
+  // Load default organization - Modificado para resolver o problema
   useEffect(() => {
+    let mounted = true
+
     const loadDefaultOrganization = async () => {
       setOrganizationLoading(true)
       if (!user) {
-        if (mountedRef.current) {
+        if (mounted) {
           setCurrentOrganization(null)
           setOrganizationLoading(false)
         }
@@ -172,7 +178,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (memberError) {
           console.error('Error loading organization membership:', memberError)
-          if (mountedRef.current) setCurrentOrganization(null)
+          if (mounted) setCurrentOrganization(null)
         } else if (memberData?.organization_id) {
           console.log('Found organization membership:', memberData.organization_id)
           const { data: org, error: orgError } = await supabase
@@ -183,27 +189,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
           if (orgError) {
             console.error('Error loading organization details:', orgError)
-            if (mountedRef.current) setCurrentOrganization(null)
+            if (mounted) setCurrentOrganization(null)
           } else {
             console.log('Organization loaded:', org)
-            if (mountedRef.current && org) setCurrentOrganization(org)
-            else if (mountedRef.current) setCurrentOrganization(null)
+            if (mounted && org) setCurrentOrganization(org)
+            else if (mounted) setCurrentOrganization(null)
           }
         } else {
           console.log('No organization found for user')
-          if (mountedRef.current) setCurrentOrganization(null)
+          if (mounted) setCurrentOrganization(null)
         }
       } catch (error) {
-        if (error.name !== 'AbortError') {
-          console.error('Error loading default organization:', error)
-          if (mountedRef.current) setCurrentOrganization(null)
-        }
+        console.error('Error loading default organization:', error)
+        if (mounted) setCurrentOrganization(null)
       } finally {
-        if (mountedRef.current) setOrganizationLoading(false)
+        if (mounted) setOrganizationLoading(false)
       }
     }
 
     loadDefaultOrganization()
+
+    return () => {
+      mounted = false
+    }
   }, [user])
 
   return (

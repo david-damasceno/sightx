@@ -6,7 +6,7 @@ export function useAvatar() {
   const [loading, setLoading] = useState(false)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
-  const { addToast } = useToast()
+  const { toast } = useToast()
 
   const handleAvatarClick = (currentAvatarUrl: string | null) => {
     if (currentAvatarUrl) {
@@ -44,14 +44,14 @@ export function useAvatar() {
 
       if (updateError) throw updateError
 
-      addToast({
+      toast({
         title: "Sucesso",
         description: "Foto de perfil atualizada com sucesso",
       })
       return url
     } catch (error) {
       console.error('Error updating avatar:', error)
-      addToast({
+      toast({
         title: "Erro",
         description: "Erro ao atualizar a foto de perfil.",
         variant: "destructive"
@@ -75,7 +75,7 @@ export function useAvatar() {
 
       if (updateError) throw updateError
 
-      addToast({
+      toast({
         title: "Sucesso",
         description: "Foto de perfil removida com sucesso",
       })

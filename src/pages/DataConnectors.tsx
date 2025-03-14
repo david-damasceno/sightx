@@ -640,7 +640,7 @@ export default function DataConnectors() {
               <Input
                 type="search"
                 placeholder="Pesquisar conectores..."
-                className="pl-10 h-12 text-base bg-background/70 backdrop-blur-sm border-muted focus-within:border-primary transition-all focus-visible:ring-1 focus-visible:ring-primary/30"
+                className="pl-10 h-12 text-base bg-background/70 backdrop-blur-sm border-muted focus-within:border-primary/50 transition-all focus-visible:ring-1 focus-visible:ring-primary/30"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />

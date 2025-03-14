@@ -3,19 +3,13 @@ import { Auth } from "@supabase/auth-ui-react"
 import { ThemeSupa } from "@supabase/auth-ui-shared"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate } from "react-router-dom"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
-import DOMPurify from 'dompurify'
 
 export default function Login() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(true)
-  const mountedRef = useRef(true)
-
-  useEffect(() => {
-    return () => { mountedRef.current = false }
-  }, [])
 
   useEffect(() => {
     const checkSession = async () => {
@@ -23,42 +17,19 @@ export default function Login() {
         setIsLoading(true)
         const { data: { session } } = await supabase.auth.getSession()
         
-        if (session && mountedRef.current) {
+        if (session) {
           console.log("Sessão existente encontrada, redirecionando")
-          
-          // Verificar expiração do token
-          const tokenExpiry = new Date(session.expires_at * 1000)
-          const now = new Date()
-          
-          if (tokenExpiry > now) {
-            navigate("/")
-          } else {
-            // Token expirado
-            console.log("Token expirado, renovando sessão")
-            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession()
-            
-            if (refreshError) {
-              throw refreshError
-            }
-            
-            if (refreshData.session && mountedRef.current) {
-              navigate("/")
-            }
-          }
+          navigate("/")
         }
       } catch (error) {
         console.error("Erro ao verificar sessão:", error)
-        if (mountedRef.current) {
-          toast({
-            title: "Erro",
-            description: "Erro ao verificar sessão. Tente novamente.",
-            variant: "destructive"
-          })
-        }
+        toast({
+          title: "Erro",
+          description: "Erro ao verificar sessão. Tente novamente.",
+          variant: "destructive"
+        })
       } finally {
-        if (mountedRef.current) {
-          setIsLoading(false)
-        }
+        setIsLoading(false)
       }
     }
 
@@ -67,28 +38,14 @@ export default function Login() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state change:", event, !!session)
       
-      if (event === 'SIGNED_IN' && session && mountedRef.current) {
+      if (event === 'SIGNED_IN' && session) {
         console.log("Usuário logado, redirecionando")
-        
-        // Garantir que redirecionamos para a página inicial ou para a página de origem
-        const returnTo = sessionStorage.getItem('returnTo') || "/"
-        sessionStorage.removeItem('returnTo') // Limpar após uso
-        
-        // Limitar redirecionamentos apenas para URLs dentro do site (prevenção contra Open Redirect)
-        const isInternalUrl = !returnTo.startsWith('http') && !returnTo.startsWith('//')
-        const destination = isInternalUrl ? returnTo : "/"
-        
-        setTimeout(() => navigate(destination), 500)
+        setTimeout(() => navigate("/"), 500)
       }
     })
 
     return () => subscription.unsubscribe()
   }, [navigate, toast])
-
-  // Garantir que URLs e strings de HTML são sanitizadas
-  const sanitizeHtml = (html) => {
-    return DOMPurify.sanitize(html)
-  }
 
   if (isLoading) {
     return (

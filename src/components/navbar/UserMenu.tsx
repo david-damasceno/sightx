@@ -3,7 +3,7 @@ import { LogOut, Settings, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { supabase } from "@/integrations/supabase/client"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +22,7 @@ interface UserMenuProps {
 
 export function UserMenu({ profile }: UserMenuProps) {
   const navigate = useNavigate()
-  const { addToast } = useToast()
+  const { toast } = useToast()
 
   const getInitials = (name: string) => {
     if (!name) return ""
@@ -39,15 +39,16 @@ export function UserMenu({ profile }: UserMenuProps) {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
       
-      addToast({
+      toast({
         title: "Logout realizado",
         description: "Você foi desconectado com sucesso",
       })
       
+      // Usar navigate ao invés de window.location.href
       navigate('/login')
     } catch (error) {
       console.error("Erro ao fazer logout:", error)
-      addToast({
+      toast({
         variant: "destructive",
         title: "Erro ao sair",
         description: "Não foi possível fazer logout. Tente novamente.",

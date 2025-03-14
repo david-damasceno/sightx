@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import { useQuery } from "@tanstack/react-query"
 import { supabase } from "@/integrations/supabase/client"
 import { Database } from "@/integrations/supabase/types"
@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext"
 type Integration = Database['public']['Tables']['integrations']['Row']
 
 export function IntegrationsPanel() {
-  const { addToast } = useToast()
+  const { toast } = useToast()
   const { currentOrganization } = useAuth()
 
   const { data: integrations, isLoading } = useQuery({
@@ -29,7 +29,7 @@ export function IntegrationsPanel() {
   })
 
   const handleConnect = async (type: string) => {
-    addToast({
+    toast({
       title: "Iniciando integração",
       description: "Você será redirecionado para autorizar o acesso.",
     })

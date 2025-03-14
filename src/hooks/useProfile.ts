@@ -16,7 +16,7 @@ export interface Profile {
 }
 
 export function useProfile() {
-  const { addToast } = useToast()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [profile, setProfile] = useState<Profile>({
     id: "",
@@ -37,7 +37,7 @@ export function useProfile() {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        addToast({
+        toast({
           title: "Erro",
           description: "Usuário não autenticado",
           variant: "destructive"
@@ -90,7 +90,7 @@ export function useProfile() {
       }
     } catch (error) {
       console.error('Error loading profile:', error)
-      addToast({
+      toast({
         title: "Erro",
         description: "Não foi possível carregar o perfil.",
         variant: "destructive"
@@ -106,7 +106,7 @@ export function useProfile() {
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
-        addToast({
+        toast({
           title: "Erro",
           description: "Usuário não autenticado",
           variant: "destructive"
@@ -125,13 +125,13 @@ export function useProfile() {
       if (error) throw error
 
       setProfile(newProfile)
-      addToast({
+      toast({
         title: "Perfil atualizado",
         description: "Suas informações foram salvas com sucesso.",
       })
     } catch (error) {
       console.error('Error updating profile:', error)
-      addToast({
+      toast({
         title: "Erro",
         description: "Erro ao atualizar o perfil.",
         variant: "destructive"

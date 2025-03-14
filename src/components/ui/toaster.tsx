@@ -1,4 +1,4 @@
-
+import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
   ToastClose,
@@ -7,30 +7,15 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
-import { useToast } from "@/components/ui/use-toast"
-import { useEffect } from "react"
 
 export function Toaster() {
-  const { toasts, addToast } = useToast()
-
-  // Capturar eventos toast globais
-  useEffect(() => {
-    const handleToast = (event: CustomEvent) => {
-      addToast(event.detail);
-    };
-
-    window.addEventListener('toast' as any, handleToast as EventListener);
-    
-    return () => {
-      window.removeEventListener('toast' as any, handleToast as EventListener);
-    };
-  }, [addToast]);
+  const { toasts } = useToast()
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ title, description, action, ...props }) {
+      {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
-          <Toast key={String(title)} {...props}>
+          <Toast key={id} {...props}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (

@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge"
 
 export function MembersSettings() {
   const [inviteEmail, setInviteEmail] = useState("")
-  const { addToast, toast } = useToast()
+  const { toast } = useToast()
   const { 
     loading, 
     currentOrganization, 
