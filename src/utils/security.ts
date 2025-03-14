@@ -12,7 +12,8 @@ export const security = {
    */
   sanitizeHtml: (html: string, options?: DOMPurify.Config): string => {
     const result = DOMPurify.sanitize(html, options);
-    return typeof result === 'string' ? result : result.toString();
+    // Garantir que o resultado seja uma string
+    return typeof result === 'string' ? result : String(result);
   },
 
   /**
@@ -23,7 +24,7 @@ export const security = {
   sanitizeInput: (input: string): string => {
     // Remove tags HTML e caracteres potencialmente perigosos
     const result = DOMPurify.sanitize(input, { ALLOWED_TAGS: [] });
-    return typeof result === 'string' ? result : result.toString();
+    return typeof result === 'string' ? result : String(result);
   },
 
   /**

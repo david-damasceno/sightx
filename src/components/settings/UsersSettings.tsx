@@ -10,7 +10,7 @@ import { AlertTriangle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export function UsersSettings() {
-  const { addToast, toast } = useToast()
+  const { toast } = useToast()
   const { user, currentOrganization } = useAuth()
   const [loading, setLoading] = useState(false)
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true)
@@ -57,12 +57,17 @@ export function UsersSettings() {
         maxLoginAttempts
       };
       
+      // Utilizar type assertion para garantir que currentOrgSettings é um objeto
+      const settingsObject = typeof currentOrgSettings === 'object' && currentOrgSettings !== null 
+        ? currentOrgSettings 
+        : {};
+      
       // Atualizar configurações da organização
       const { error } = await supabase
         .from('organizations')
         .update({
           settings: {
-            ...currentOrgSettings,
+            ...settingsObject,
             security: securitySettings
           }
         })
