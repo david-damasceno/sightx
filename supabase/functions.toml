@@ -36,8 +36,3 @@ verify_jwt = false
 [[functions]]
 name = "process-invite"
 verify_jwt = false
-
-[[functions]]
-name = "facebook-oauth-callback"
-verify_jwt = false
-
