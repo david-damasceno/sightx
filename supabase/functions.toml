@@ -1,4 +1,5 @@
 
+
 # This file lists Edge Functions that should be built along with the database.
 # When this file is present, the CLI will look for each Edge Function's entrypoint in 
 # the ./functions/<name>/index.ts or ./functions/<name>/index.js file.
@@ -36,3 +37,8 @@ verify_jwt = false
 [[functions]]
 name = "process-invite"
 verify_jwt = false
+
+[[functions]]
+name = "facebook-oauth-callback"
+verify_jwt = false
+
