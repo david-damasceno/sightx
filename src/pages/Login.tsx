@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client"
 import { useNavigate, Link } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
-import { CheckCircle2, EyeIcon, EyeOffIcon, AlertTriangle, LockIcon, UserIcon, MailIcon, InfoIcon, ShieldIcon } from "lucide-react"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -50,7 +49,7 @@ export default function Login() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background/95 to-background">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-background/95">
         <div className="animate-pulse flex items-center gap-2">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
           <p className="text-sm text-muted-foreground">Verificando sessão...</p>
@@ -60,70 +59,13 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-indigo-50 via-background to-purple-50 dark:from-indigo-950/20 dark:via-background dark:to-purple-950/20">
-      {/* Elementos decorativos aprimorados */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-40 pointer-events-none">
-        <div className="absolute top-20 left-[10%] w-72 h-72 bg-purple-300/30 dark:bg-purple-600/10 rounded-full blur-3xl animate-pulse duration-10000"></div>
-        <div className="absolute bottom-20 right-[10%] w-72 h-72 bg-indigo-300/30 dark:bg-indigo-600/10 rounded-full blur-3xl animate-pulse delay-1000 duration-8000"></div>
-        <div className="absolute top-[40%] right-[20%] w-48 h-48 bg-green-300/20 dark:bg-green-600/10 rounded-full blur-3xl animate-pulse delay-2000 duration-9000"></div>
-        
-        <div className="absolute -top-20 -left-20 w-96 h-96 bg-gradient-to-br from-primary/10 to-primary/20 rounded-full animate-pulse duration-7000"></div>
-        <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-gradient-to-br from-primary/10 to-primary/20 rounded-full animate-pulse delay-1000 duration-7000"></div>
-        
-        {/* Formas adicionais para visual mais interessante */}
-        <div className="absolute top-[30%] left-[30%] w-24 h-24 bg-blue-300/20 dark:bg-blue-600/10 rounded-full blur-xl animate-pulse delay-500 duration-5000"></div>
-        <div className="absolute bottom-[30%] left-[20%] w-32 h-32 bg-pink-300/20 dark:bg-pink-600/10 rounded-full blur-xl animate-pulse delay-1500 duration-6000"></div>
-        <div className="absolute top-[70%] right-[35%] w-20 h-20 bg-yellow-300/20 dark:bg-yellow-600/10 rounded-full blur-xl animate-pulse delay-2500 duration-8000"></div>
-      </div>
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-background to-background/95">
+      <div className="absolute -top-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-pulse delay-700"></div>
       
-      <div className="container relative min-h-screen mx-auto flex flex-col md:flex-row items-center justify-center px-4 py-10 gap-10">
-        <div className="w-full max-w-md md:max-w-xl md:w-1/2 md:pr-8 order-2 md:order-1">
-          <div className="text-center md:text-left space-y-6 mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 leading-tight">
-              Transforme Dados em Decisões Inteligentes
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              A SightX integra múltiplas fontes de dados para fornecer insights acionáveis e personalizados para sua empresa.
-            </p>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-              <div className="bg-white/50 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-5 shadow-sm border border-border/50 flex flex-col items-center md:items-start transform transition-all duration-300 hover:translate-y-[-5px] hover:shadow-md">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30 flex items-center justify-center mb-3 shadow-sm">
-                  <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-500" />
-                </div>
-                <h3 className="text-base font-medium mb-2">Análises em Tempo Real</h3>
-                <p className="text-sm text-muted-foreground text-center md:text-left">Visualize tendências e métricas atualizadas instantaneamente</p>
-              </div>
-              
-              <div className="bg-white/50 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-5 shadow-sm border border-border/50 flex flex-col items-center md:items-start transform transition-all duration-300 hover:translate-y-[-5px] hover:shadow-md">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 flex items-center justify-center mb-3 shadow-sm">
-                  <ShieldIcon className="h-6 w-6 text-blue-600 dark:text-blue-500" />
-                </div>
-                <h3 className="text-base font-medium mb-2">Segurança de Dados</h3>
-                <p className="text-sm text-muted-foreground text-center md:text-left">Proteção avançada para todas suas informações confidenciais</p>
-              </div>
-              
-              <div className="bg-white/50 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-5 shadow-sm border border-border/50 flex flex-col items-center md:items-start transform transition-all duration-300 hover:translate-y-[-5px] hover:shadow-md">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 flex items-center justify-center mb-3 shadow-sm">
-                  <InfoIcon className="h-6 w-6 text-purple-600 dark:text-purple-500" />
-                </div>
-                <h3 className="text-base font-medium mb-2">Inteligência Artificial</h3>
-                <p className="text-sm text-muted-foreground text-center md:text-left">IA avançada para análises preditivas personalizadas</p>
-              </div>
-              
-              <div className="bg-white/50 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-5 shadow-sm border border-border/50 flex flex-col items-center md:items-start transform transition-all duration-300 hover:translate-y-[-5px] hover:shadow-md">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-pink-100 to-pink-200 dark:from-pink-900/30 dark:to-pink-800/30 flex items-center justify-center mb-3 shadow-sm">
-                  <UserIcon className="h-6 w-6 text-pink-600 dark:text-pink-500" />
-                </div>
-                <h3 className="text-base font-medium mb-2">Experiência Personalizada</h3>
-                <p className="text-sm text-muted-foreground text-center md:text-left">Dashboard adaptado às necessidades específicas do seu negócio</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="w-full max-w-md order-1 md:order-2 md:w-1/2">
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-border/50 shadow-xl p-8 space-y-6 transform transition-all duration-300 hover:shadow-2xl">
+      <div className="container relative min-h-screen mx-auto flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="bg-card/50 backdrop-blur-xl rounded-2xl border border-border/50 shadow-xl p-6 space-y-6">
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <svg 
@@ -183,11 +125,11 @@ export default function Login() {
                 </h1>
               </div>
               <div className="space-y-1">
-                <h2 className="text-2xl font-semibold text-foreground">
-                  Acesse sua conta
+                <h2 className="text-xl font-semibold text-foreground">
+                  Bem-vindo de volta
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Entre com suas credenciais para acessar o dashboard
+                  Use suas credenciais para acessar sua conta
                 </p>
               </div>
             </div>
@@ -228,7 +170,7 @@ export default function Login() {
                 },
                 className: {
                   container: 'space-y-4',
-                  button: 'w-full px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg shadow-sm hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-2',
+                  button: 'w-full px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg shadow-sm hover:bg-primary/90 transition-colors duration-200',
                   input: 'w-full px-3 py-2 bg-background border border-input rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-200',
                   label: 'block text-sm font-medium text-foreground mb-1.5',
                   message: 'text-sm text-muted-foreground mt-1',
@@ -269,8 +211,8 @@ export default function Login() {
                 },
               }}
               view="sign_in"
-              providers={['google']}
-              socialLayout="vertical"
+              providers={['facebook']}
+              socialLayout="horizontal"
             />
 
             <div className="mt-6 text-center text-xs text-muted-foreground">
@@ -297,33 +239,38 @@ export default function Login() {
             </div>
           </div>
 
-          <div className="mt-8 flex justify-center gap-6 text-sm text-muted-foreground">
+          <div className="mt-6 flex justify-center gap-4 text-sm text-muted-foreground">
             <Link 
               to="/support" 
-              className="hover:text-foreground transition-colors flex items-center gap-1"
+              className="hover:text-foreground transition-colors"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <AlertTriangle className="h-3.5 w-3.5" />
-              <span>Suporte</span>
+              Suporte
             </Link>
             <Link 
               to="/privacy-policy" 
-              className="hover:text-foreground transition-colors flex items-center gap-1"
+              className="hover:text-foreground transition-colors"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <ShieldIcon className="h-3.5 w-3.5" />
-              <span>Privacidade</span>
+              Privacidade
+            </Link>
+            <Link 
+              to="/terms-of-service" 
+              className="hover:text-foreground transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Termos
             </Link>
             <Link 
               to="/data-usage-policy" 
-              className="hover:text-foreground transition-colors flex items-center gap-1"
+              className="hover:text-foreground transition-colors"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <InfoIcon className="h-3.5 w-3.5" />
-              <span>Uso de Dados</span>
+              Uso de Dados
             </Link>
           </div>
         </div>
