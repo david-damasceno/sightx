@@ -2,7 +2,7 @@
 import { Auth } from "@supabase/auth-ui-react"
 import { ThemeSupa } from "@supabase/auth-ui-shared"
 import { supabase } from "@/integrations/supabase/client"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -214,6 +214,64 @@ export default function Login() {
               providers={['facebook']}
               socialLayout="horizontal"
             />
+
+            <div className="mt-6 text-center text-xs text-muted-foreground">
+              <p>Ao continuar, você concorda com nossos</p>
+              <div className="flex justify-center gap-2 mt-1">
+                <Link 
+                  to="/terms-of-service" 
+                  className="text-primary hover:text-primary/90 hover:underline transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Termos de Serviço
+                </Link>
+                <span>e</span>
+                <Link 
+                  to="/privacy-policy" 
+                  className="text-primary hover:text-primary/90 hover:underline transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Política de Privacidade
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-center gap-4 text-sm text-muted-foreground">
+            <Link 
+              to="/support" 
+              className="hover:text-foreground transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Suporte
+            </Link>
+            <Link 
+              to="/privacy-policy" 
+              className="hover:text-foreground transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Privacidade
+            </Link>
+            <Link 
+              to="/terms-of-service" 
+              className="hover:text-foreground transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Termos
+            </Link>
+            <Link 
+              to="/data-usage-policy" 
+              className="hover:text-foreground transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Uso de Dados
+            </Link>
           </div>
         </div>
       </div>

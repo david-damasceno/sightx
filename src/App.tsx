@@ -26,6 +26,10 @@ import Performance from "./pages/Performance"
 import Profile from "./pages/Profile"
 import Settings from "./pages/Settings"
 import DataConnectors from "./pages/DataConnectors"
+import PrivacyPolicy from "./pages/PrivacyPolicy"
+import TermsOfService from "./pages/TermsOfService"
+import Support from "./pages/Support"
+import DataUsagePolicy from "./pages/DataUsagePolicy"
 import { initializeLocalization, getLocalizationSettings } from "@/utils/localization";
 
 const queryClient = new QueryClient()
@@ -34,6 +38,7 @@ const AppContent = () => {
   const location = useLocation()
   const isLoginPage = location.pathname === '/login'
   const isOnboardingPage = location.pathname === '/onboarding'
+  const isLegalPage = ['/privacy-policy', '/terms-of-service', '/support', '/data-usage-policy'].includes(location.pathname)
 
   // Inicializar as configurações de localização quando o componente montar
   useEffect(() => {
@@ -64,12 +69,16 @@ const AppContent = () => {
 
   return (
     <div className="min-h-screen flex flex-col w-full">
-      {!isLoginPage && !isOnboardingPage && <AppNavbar />}
+      {!isLoginPage && !isOnboardingPage && !isLegalPage && <AppNavbar />}
       <PWAInstallPrompt />
       <OfflineNotification />
-      <main className={`flex-1 ${!isLoginPage && !isOnboardingPage ? 'pt-16' : ''} pb-16 md:pb-0`}>
+      <main className={`flex-1 ${!isLoginPage && !isOnboardingPage && !isLegalPage ? 'pt-16' : ''} pb-16 md:pb-0`}>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/data-usage-policy" element={<DataUsagePolicy />} />
           <Route
             path="/onboarding"
             element={
