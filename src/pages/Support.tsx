@@ -223,17 +223,17 @@ export default function Support() {
               <CardContent className="space-y-4">
                 <div>
                   <h4 className="font-medium">Como posso alterar meu plano?</h4>
-                  <p className="text-sm text-muted-foreground">Acesse "Configurações > Faturamento" e selecione a opção "Alterar plano".</p>
+                  <p className="text-sm text-muted-foreground">Acesse "Configurações {'>'} Faturamento" e selecione a opção "Alterar plano".</p>
                 </div>
                 
                 <div>
                   <h4 className="font-medium">Como integrar com outras ferramentas?</h4>
-                  <p className="text-sm text-muted-foreground">Vá para "Configurações > Integrações" e siga as instruções para cada ferramenta.</p>
+                  <p className="text-sm text-muted-foreground">Vá para "Configurações {'>'} Integrações" e siga as instruções para cada ferramenta.</p>
                 </div>
                 
                 <div>
                   <h4 className="font-medium">Como adicionar novos usuários?</h4>
-                  <p className="text-sm text-muted-foreground">Acesse "Configurações > Usuários" e clique em "Convidar usuário".</p>
+                  <p className="text-sm text-muted-foreground">Acesse "Configurações {'>'} Usuários" e clique em "Convidar usuário".</p>
                 </div>
 
                 <Button variant="outline" className="w-full mt-2">Ver todas as perguntas</Button>
