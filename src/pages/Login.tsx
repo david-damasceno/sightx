@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { useNavigate, Link } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
-import { CheckCircle2, EyeIcon, EyeOffIcon, AlertTriangle, LockIcon, UserIcon, MailIcon, InfoIcon, ShieldIcon } from "lucide-react"
+import { CheckCircle2, EyeIcon, EyeOffIcon, AlertTriangle, UserIcon, MailIcon, InfoIcon, ShieldIcon, Facebook } from "lucide-react"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -76,9 +76,9 @@ export default function Login() {
         <div className="absolute top-[70%] right-[35%] w-20 h-20 bg-yellow-300/20 dark:bg-yellow-600/10 rounded-full blur-xl animate-pulse delay-2500 duration-8000"></div>
       </div>
       
-      <div className="container relative min-h-screen mx-auto flex flex-col md:flex-row items-center justify-center px-4 py-10 gap-10">
+      <div className="container relative min-h-screen mx-auto flex flex-col md:flex-row items-center justify-center px-4 py-8 gap-10">
         <div className="w-full max-w-md md:max-w-xl md:w-1/2 md:pr-8 order-2 md:order-1">
-          <div className="text-center md:text-left space-y-6 mb-8">
+          <div className="text-center md:text-left space-y-5 mb-6">
             <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 leading-tight">
               Transforme Dados em Decisões Inteligentes
             </h1>
@@ -123,13 +123,13 @@ export default function Login() {
         </div>
         
         <div className="w-full max-w-md order-1 md:order-2 md:w-1/2">
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-border/50 shadow-xl p-8 space-y-6 transform transition-all duration-300 hover:shadow-2xl">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-border/50 shadow-xl p-6 space-y-5 transform transition-all duration-300 hover:shadow-2xl">
             <div className="text-center space-y-2">
-              <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="flex items-center justify-center gap-3 mb-3">
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
-                  width="60" 
-                  height="40" 
+                  width="50" 
+                  height="36" 
                   viewBox="0 0 300 187.499995" 
                   className="text-primary transition-all hover:scale-105"
                   preserveAspectRatio="xMidYMid meet"
@@ -178,15 +178,15 @@ export default function Login() {
                     </g>
                   </g>
                 </svg>
-                <h1 className="text-3xl font-bold text-foreground">
+                <h1 className="text-2xl font-bold text-foreground">
                   SightX
                 </h1>
               </div>
               <div className="space-y-1">
-                <h2 className="text-2xl font-semibold text-foreground">
+                <h2 className="text-xl font-semibold text-foreground">
                   Acesse sua conta
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Entre com suas credenciais para acessar o dashboard
                 </p>
               </div>
@@ -227,13 +227,13 @@ export default function Login() {
                   },
                 },
                 className: {
-                  container: 'space-y-4',
-                  button: 'w-full px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg shadow-sm hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-2',
+                  container: 'space-y-3',
+                  button: 'w-full px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg shadow-sm hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-2',
                   input: 'w-full px-3 py-2 bg-background border border-input rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-200',
-                  label: 'block text-sm font-medium text-foreground mb-1.5',
+                  label: 'block text-sm font-medium text-foreground mb-1',
                   message: 'text-sm text-muted-foreground mt-1',
                   anchor: 'text-primary hover:text-primary/90 font-medium transition-colors',
-                  divider: 'my-4',
+                  divider: 'my-3',
                 },
               }}
               localization={{
@@ -269,11 +269,11 @@ export default function Login() {
                 },
               }}
               view="sign_in"
-              providers={['google']}
+              providers={['google', 'facebook']}
               socialLayout="vertical"
             />
 
-            <div className="mt-6 text-center text-xs text-muted-foreground">
+            <div className="mt-4 text-center text-xs text-muted-foreground">
               <p>Ao continuar, você concorda com nossos</p>
               <div className="flex justify-center gap-2 mt-1">
                 <Link 
@@ -295,36 +295,6 @@ export default function Login() {
                 </Link>
               </div>
             </div>
-          </div>
-
-          <div className="mt-8 flex justify-center gap-6 text-sm text-muted-foreground">
-            <Link 
-              to="/support" 
-              className="hover:text-foreground transition-colors flex items-center gap-1"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <AlertTriangle className="h-3.5 w-3.5" />
-              <span>Suporte</span>
-            </Link>
-            <Link 
-              to="/privacy-policy" 
-              className="hover:text-foreground transition-colors flex items-center gap-1"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <ShieldIcon className="h-3.5 w-3.5" />
-              <span>Privacidade</span>
-            </Link>
-            <Link 
-              to="/data-usage-policy" 
-              className="hover:text-foreground transition-colors flex items-center gap-1"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <InfoIcon className="h-3.5 w-3.5" />
-              <span>Uso de Dados</span>
-            </Link>
           </div>
         </div>
       </div>
