@@ -1,11 +1,35 @@
-
 import { Auth } from "@supabase/auth-ui-react"
 import { ThemeSupa } from "@supabase/auth-ui-shared"
 import { supabase } from "@/integrations/supabase/client"
 import { useNavigate, Link } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
-import { CheckCircle2, EyeIcon, EyeOffIcon, AlertTriangle, LockIcon, UserIcon, MailIcon, InfoIcon, ShieldIcon } from "lucide-react"
+import { 
+  CheckCircle2, 
+  EyeIcon, 
+  EyeOffIcon, 
+  AlertTriangle, 
+  UserIcon, 
+  MailIcon, 
+  InfoIcon, 
+  ShieldIcon, 
+  Facebook,
+  BrainCircuit,
+  BarChartBig,
+  Bot,
+  TrendingUp,
+  Lightbulb,
+  Sparkles,
+  Zap
+} from "lucide-react"
+import { 
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext
+} from "@/components/ui/carousel"
+import { Card, CardContent } from "@/components/ui/card"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -59,77 +83,121 @@ export default function Login() {
     )
   }
 
+  const solutionCards = [
+    {
+      title: "Análise de dados avançada",
+      description: "A SightX integra múltiplas fontes de dados para oferecer insights completos e relevantes para o seu negócio.",
+      icon: <BarChartBig className="h-10 w-10 text-purple-500" />,
+      gradient: "from-purple-500/20 via-purple-400/10 to-transparent",
+      animation: "animate-float"
+    },
+    {
+      title: "Transforme seus dados em decisões estratégicas",
+      description: "A SightX é uma plataforma inteligente que transforma informações dispersas em insights estratégicos para PMEs. Pare de perder tempo analisando manualmente seus dados.",
+      icon: <BrainCircuit className="h-10 w-10 text-blue-500" />,
+      gradient: "from-blue-500/20 via-blue-400/10 to-transparent",
+      animation: "animate-float-delay-1"
+    },
+    {
+      title: "Experimente o poder da Donna em ação",
+      description: "Mais que uma I.A., Donna é sua parceira de negócios 24/7, analisando dados, criando estratégias e gerando alertas importantes para impulsionar seu crescimento.",
+      icon: <Bot className="h-10 w-10 text-emerald-500" />,
+      gradient: "from-emerald-500/20 via-emerald-400/10 to-transparent",
+      animation: "animate-float-delay-2"
+    }
+  ]
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-indigo-50 via-background to-purple-50 dark:from-indigo-950/20 dark:via-background dark:to-purple-950/20">
-      {/* Elementos decorativos aprimorados */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-40 pointer-events-none">
         <div className="absolute top-20 left-[10%] w-72 h-72 bg-purple-300/30 dark:bg-purple-600/10 rounded-full blur-3xl animate-pulse duration-10000"></div>
         <div className="absolute bottom-20 right-[10%] w-72 h-72 bg-indigo-300/30 dark:bg-indigo-600/10 rounded-full blur-3xl animate-pulse delay-1000 duration-8000"></div>
-        <div className="absolute top-[40%] right-[20%] w-48 h-48 bg-green-300/20 dark:bg-green-600/10 rounded-full blur-3xl animate-pulse delay-2000 duration-9000"></div>
+        <div className="absolute top-[40%] right-[20%] w-48 h-48 bg-emerald-300/20 dark:bg-emerald-600/10 rounded-full blur-3xl animate-pulse delay-2000 duration-9000"></div>
         
-        <div className="absolute -top-20 -left-20 w-96 h-96 bg-gradient-to-br from-primary/10 to-primary/20 rounded-full animate-pulse duration-7000"></div>
-        <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-gradient-to-br from-primary/10 to-primary/20 rounded-full animate-pulse delay-1000 duration-7000"></div>
-        
-        {/* Formas adicionais para visual mais interessante */}
         <div className="absolute top-[30%] left-[30%] w-24 h-24 bg-blue-300/20 dark:bg-blue-600/10 rounded-full blur-xl animate-pulse delay-500 duration-5000"></div>
         <div className="absolute bottom-[30%] left-[20%] w-32 h-32 bg-pink-300/20 dark:bg-pink-600/10 rounded-full blur-xl animate-pulse delay-1500 duration-6000"></div>
         <div className="absolute top-[70%] right-[35%] w-20 h-20 bg-yellow-300/20 dark:bg-yellow-600/10 rounded-full blur-xl animate-pulse delay-2500 duration-8000"></div>
       </div>
       
-      <div className="container relative min-h-screen mx-auto flex flex-col md:flex-row items-center justify-center px-4 py-10 gap-10">
-        <div className="w-full max-w-md md:max-w-xl md:w-1/2 md:pr-8 order-2 md:order-1">
-          <div className="text-center md:text-left space-y-6 mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 leading-tight">
-              Transforme Dados em Decisões Inteligentes
+      <div className="container relative min-h-screen mx-auto flex flex-col lg:flex-row items-center justify-center px-4 py-6 gap-8">
+        <div className="w-full lg:w-1/2 space-y-6 order-2 lg:order-1">
+          <div className="text-center lg:text-left mb-4">
+            <h1 className="text-4xl lg:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 leading-tight">
+              Transforme Dados em <br className="hidden lg:block"/> Decisões Inteligentes
             </h1>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-muted-foreground mt-3">
               A SightX integra múltiplas fontes de dados para fornecer insights acionáveis e personalizados para sua empresa.
             </p>
+          </div>
+
+          <div className="lg:hidden w-full">
+            <Carousel className="w-full">
+              <CarouselContent>
+                {solutionCards.map((card, index) => (
+                  <CarouselItem key={index} className="pl-1 md:basis-2/3 lg:basis-1/2">
+                    <Card className={`overflow-hidden h-full bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-xl shadow-lg ${card.animation}`}>
+                      <CardContent className="p-6 relative h-full">
+                        <div className={`absolute inset-0 bg-gradient-radial ${card.gradient} opacity-30`}></div>
+                        <div className="relative z-10 flex flex-col h-full">
+                          <div className="rounded-full p-2 bg-white/80 dark:bg-gray-700/80 w-fit mb-4">
+                            {card.icon}
+                          </div>
+                          <h3 className="text-xl font-semibold mb-2">{card.title}</h3>
+                          <p className="text-sm text-muted-foreground">{card.description}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="left-1" />
+              <CarouselNext className="right-1" />
+            </Carousel>
+          </div>
+
+          <div className="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {solutionCards.map((card, index) => (
+              <Card 
+                key={index} 
+                className={`overflow-hidden bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${card.animation}`}
+              >
+                <CardContent className="p-6 relative">
+                  <div className={`absolute inset-0 bg-gradient-radial ${card.gradient} opacity-30`}></div>
+                  <div className="relative z-10">
+                    <div className="rounded-full p-2 bg-white/80 dark:bg-gray-700/80 w-fit mb-4">
+                      {card.icon}
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">{card.title}</h3>
+                    <p className="text-sm text-muted-foreground">{card.description}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-              <div className="bg-white/50 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-5 shadow-sm border border-border/50 flex flex-col items-center md:items-start transform transition-all duration-300 hover:translate-y-[-5px] hover:shadow-md">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30 flex items-center justify-center mb-3 shadow-sm">
-                  <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-500" />
+            <Card className="overflow-hidden col-span-full bg-gradient-to-r from-primary/10 to-purple-600/10 backdrop-blur-lg border border-primary/20 dark:border-primary/20 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 animate-float-delay-3">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-full p-2 bg-primary/20 w-fit">
+                    <Sparkles className="h-8 w-8 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">Destaque-se com análises avançadas</h3>
+                    <p className="text-sm text-muted-foreground">Acesse métricas e visualizações que transformarão a maneira como você toma decisões. A SightX coloca o poder dos dados na palma da sua mão.</p>
+                  </div>
                 </div>
-                <h3 className="text-base font-medium mb-2">Análises em Tempo Real</h3>
-                <p className="text-sm text-muted-foreground text-center md:text-left">Visualize tendências e métricas atualizadas instantaneamente</p>
-              </div>
-              
-              <div className="bg-white/50 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-5 shadow-sm border border-border/50 flex flex-col items-center md:items-start transform transition-all duration-300 hover:translate-y-[-5px] hover:shadow-md">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 flex items-center justify-center mb-3 shadow-sm">
-                  <ShieldIcon className="h-6 w-6 text-blue-600 dark:text-blue-500" />
-                </div>
-                <h3 className="text-base font-medium mb-2">Segurança de Dados</h3>
-                <p className="text-sm text-muted-foreground text-center md:text-left">Proteção avançada para todas suas informações confidenciais</p>
-              </div>
-              
-              <div className="bg-white/50 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-5 shadow-sm border border-border/50 flex flex-col items-center md:items-start transform transition-all duration-300 hover:translate-y-[-5px] hover:shadow-md">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 flex items-center justify-center mb-3 shadow-sm">
-                  <InfoIcon className="h-6 w-6 text-purple-600 dark:text-purple-500" />
-                </div>
-                <h3 className="text-base font-medium mb-2">Inteligência Artificial</h3>
-                <p className="text-sm text-muted-foreground text-center md:text-left">IA avançada para análises preditivas personalizadas</p>
-              </div>
-              
-              <div className="bg-white/50 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl p-5 shadow-sm border border-border/50 flex flex-col items-center md:items-start transform transition-all duration-300 hover:translate-y-[-5px] hover:shadow-md">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-pink-100 to-pink-200 dark:from-pink-900/30 dark:to-pink-800/30 flex items-center justify-center mb-3 shadow-sm">
-                  <UserIcon className="h-6 w-6 text-pink-600 dark:text-pink-500" />
-                </div>
-                <h3 className="text-base font-medium mb-2">Experiência Personalizada</h3>
-                <p className="text-sm text-muted-foreground text-center md:text-left">Dashboard adaptado às necessidades específicas do seu negócio</p>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
         
-        <div className="w-full max-w-md order-1 md:order-2 md:w-1/2">
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-border/50 shadow-xl p-8 space-y-6 transform transition-all duration-300 hover:shadow-2xl">
+        <div className="w-full max-w-md lg:w-1/3 order-1 lg:order-2">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-border/50 shadow-xl p-6 space-y-4 transform transition-all duration-300 hover:shadow-2xl">
             <div className="text-center space-y-2">
-              <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="flex items-center justify-center gap-3 mb-3">
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
-                  width="60" 
-                  height="40" 
+                  width="40" 
+                  height="32" 
                   viewBox="0 0 300 187.499995" 
                   className="text-primary transition-all hover:scale-105"
                   preserveAspectRatio="xMidYMid meet"
@@ -178,15 +246,15 @@ export default function Login() {
                     </g>
                   </g>
                 </svg>
-                <h1 className="text-3xl font-bold text-foreground">
+                <h1 className="text-2xl font-bold text-foreground">
                   SightX
                 </h1>
               </div>
               <div className="space-y-1">
-                <h2 className="text-2xl font-semibold text-foreground">
+                <h2 className="text-xl font-semibold text-foreground">
                   Acesse sua conta
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Entre com suas credenciais para acessar o dashboard
                 </p>
               </div>
@@ -227,13 +295,13 @@ export default function Login() {
                   },
                 },
                 className: {
-                  container: 'space-y-4',
-                  button: 'w-full px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg shadow-sm hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-2',
+                  container: 'space-y-3',
+                  button: 'w-full px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg shadow-sm hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-2',
                   input: 'w-full px-3 py-2 bg-background border border-input rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-200',
-                  label: 'block text-sm font-medium text-foreground mb-1.5',
+                  label: 'block text-sm font-medium text-foreground mb-1',
                   message: 'text-sm text-muted-foreground mt-1',
                   anchor: 'text-primary hover:text-primary/90 font-medium transition-colors',
-                  divider: 'my-4',
+                  divider: 'my-3',
                 },
               }}
               localization={{
@@ -269,11 +337,11 @@ export default function Login() {
                 },
               }}
               view="sign_in"
-              providers={['google']}
+              providers={['google', 'facebook']}
               socialLayout="vertical"
             />
 
-            <div className="mt-6 text-center text-xs text-muted-foreground">
+            <div className="mt-4 text-center text-xs text-muted-foreground">
               <p>Ao continuar, você concorda com nossos</p>
               <div className="flex justify-center gap-2 mt-1">
                 <Link 
@@ -296,38 +364,13 @@ export default function Login() {
               </div>
             </div>
           </div>
-
-          <div className="mt-8 flex justify-center gap-6 text-sm text-muted-foreground">
-            <Link 
-              to="/support" 
-              className="hover:text-foreground transition-colors flex items-center gap-1"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <AlertTriangle className="h-3.5 w-3.5" />
-              <span>Suporte</span>
-            </Link>
-            <Link 
-              to="/privacy-policy" 
-              className="hover:text-foreground transition-colors flex items-center gap-1"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <ShieldIcon className="h-3.5 w-3.5" />
-              <span>Privacidade</span>
-            </Link>
-            <Link 
-              to="/data-usage-policy" 
-              className="hover:text-foreground transition-colors flex items-center gap-1"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <InfoIcon className="h-3.5 w-3.5" />
-              <span>Uso de Dados</span>
-            </Link>
-          </div>
         </div>
+      </div>
+      
+      <div className="absolute bottom-0 w-full py-3 text-center text-xs text-muted-foreground bg-background/30 backdrop-blur-sm border-t border-border/10">
+        <p>© 2023 SightX. Todos os direitos reservados.</p>
       </div>
     </div>
   )
 }
+
