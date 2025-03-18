@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client"
 import { useNavigate, Link } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { useToast } from "@/hooks/use-toast"
+import { CheckCircle2, EyeIcon, EyeOffIcon, AlertTriangle } from "lucide-react"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -49,7 +50,7 @@ export default function Login() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-background/95">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background/95 to-background">
         <div className="animate-pulse flex items-center gap-2">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
           <p className="text-sm text-muted-foreground">Verificando sessão...</p>
@@ -59,13 +60,49 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-background to-background/95">
-      <div className="absolute -top-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-pulse delay-700"></div>
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-indigo-50 via-background to-purple-50 dark:from-indigo-950/20 dark:via-background dark:to-purple-950/20">
+      {/* Elementos decorativos */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-40 pointer-events-none">
+        <div className="absolute top-20 left-[10%] w-64 h-64 bg-purple-300/30 dark:bg-purple-600/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-[10%] w-64 h-64 bg-indigo-300/30 dark:bg-indigo-600/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-[40%] right-[20%] w-40 h-40 bg-green-300/20 dark:bg-green-600/10 rounded-full blur-3xl"></div>
+        
+        <div className="absolute -top-20 -left-20 w-80 h-80 bg-gradient-to-br from-primary/5 to-primary/10 rounded-full animate-pulse duration-7000"></div>
+        <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-gradient-to-br from-primary/5 to-primary/10 rounded-full animate-pulse delay-1000 duration-7000"></div>
+      </div>
       
-      <div className="container relative min-h-screen mx-auto flex items-center justify-center px-4">
-        <div className="w-full max-w-md">
-          <div className="bg-card/50 backdrop-blur-xl rounded-2xl border border-border/50 shadow-xl p-6 space-y-6">
+      <div className="container relative min-h-screen mx-auto flex flex-col md:flex-row items-center justify-center px-4 py-10 gap-8">
+        <div className="w-full max-w-md md:max-w-xl md:w-1/2 md:pr-8 order-2 md:order-1">
+          <div className="text-center md:text-left space-y-6 mb-8">
+            <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 leading-tight">
+              Transforme Dados em Decisões Inteligentes
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              A SightX integra múltiplas fontes de dados para fornecer insights acionáveis e personalizados para sua empresa.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+              <div className="bg-card/50 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-border/50 flex flex-col items-center md:items-start">
+                <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-500" />
+                </div>
+                <h3 className="text-base font-medium">Análises em Tempo Real</h3>
+                <p className="text-sm text-muted-foreground text-center md:text-left">Visualize tendências e métricas atualizadas instantaneamente</p>
+              </div>
+              
+              <div className="bg-card/50 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-border/50 flex flex-col items-center md:items-start">
+                <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-3">
+                  <CheckCircle2 className="h-5 w-5 text-blue-600 dark:text-blue-500" />
+                </div>
+                <h3 className="text-base font-medium">Inteligência Artificial</h3>
+                <p className="text-sm text-muted-foreground text-center md:text-left">IA avançada para análises preditivas personalizadas</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="w-full max-w-md order-1 md:order-2 md:w-1/2">
+          <div className="bg-card/80 backdrop-blur-xl rounded-2xl border border-border/50 shadow-xl p-8 space-y-6">
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <svg 
@@ -125,11 +162,11 @@ export default function Login() {
                 </h1>
               </div>
               <div className="space-y-1">
-                <h2 className="text-xl font-semibold text-foreground">
-                  Bem-vindo de volta
+                <h2 className="text-2xl font-semibold text-foreground">
+                  Acesse sua conta
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Use suas credenciais para acessar sua conta
+                  Entre com suas credenciais para acessar o dashboard
                 </p>
               </div>
             </div>
@@ -170,7 +207,7 @@ export default function Login() {
                 },
                 className: {
                   container: 'space-y-4',
-                  button: 'w-full px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg shadow-sm hover:bg-primary/90 transition-colors duration-200',
+                  button: 'w-full px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg shadow-sm hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-2',
                   input: 'w-full px-3 py-2 bg-background border border-input rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-200',
                   label: 'block text-sm font-medium text-foreground mb-1.5',
                   message: 'text-sm text-muted-foreground mt-1',
@@ -211,8 +248,9 @@ export default function Login() {
                 },
               }}
               view="sign_in"
-              providers={['facebook']}
-              socialLayout="horizontal"
+              providers={['facebook', 'google']}
+              socialLayout="vertical"
+              socialButtonSize="large"
             />
 
             <div className="mt-6 text-center text-xs text-muted-foreground">
@@ -239,7 +277,7 @@ export default function Login() {
             </div>
           </div>
 
-          <div className="mt-6 flex justify-center gap-4 text-sm text-muted-foreground">
+          <div className="mt-8 flex justify-center gap-4 text-sm text-muted-foreground">
             <Link 
               to="/support" 
               className="hover:text-foreground transition-colors"
