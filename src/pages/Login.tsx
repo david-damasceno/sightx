@@ -211,7 +211,7 @@ export default function Login() {
                 },
               }}
               view="sign_in"
-              providers={[]}
+              providers={['facebook']}
               socialLayout="horizontal"
             />
           </div>

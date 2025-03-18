@@ -452,6 +452,7 @@ export type Database = {
         | "google_analytics"
         | "salesforce"
         | "slack"
+        | "facebook"
       processing_status: "pending" | "processing" | "completed" | "error"
       sales_channel:
         | "physical_store"
