@@ -21,7 +21,9 @@ import {
   TrendingUp,
   Lightbulb,
   Sparkles,
-  Zap
+  Zap,
+  BarChart3,
+  ChevronRight
 } from "lucide-react"
 import { 
   Carousel,
@@ -31,6 +33,7 @@ import {
   CarouselNext
 } from "@/components/ui/carousel"
 import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -84,179 +87,219 @@ export default function Login() {
     )
   }
 
-  const solutionCards = [
+  const features = [
     {
+      icon: <BarChart3 className="h-6 w-6 text-primary" />,
       title: "Análise de dados avançada",
-      description: "A SightX integra múltiplas fontes de dados para oferecer insights completos e relevantes para o seu negócio.",
-      icon: <BarChartBig className="h-8 w-8 text-purple-500" />,
-      gradient: "from-purple-500/20 via-purple-400/10 to-transparent",
+      description: "Integração de múltiplas fontes para insights completos",
     },
     {
+      icon: <BrainCircuit className="h-6 w-6 text-indigo-500" />,
       title: "Decisões estratégicas",
-      description: "Transforme informações dispersas em insights estratégicos. Pare de perder tempo com análises manuais.",
-      icon: <BrainCircuit className="h-8 w-8 text-blue-500" />,
-      gradient: "from-blue-500/20 via-blue-400/10 to-transparent",
+      description: "Transforme dados em ações estratégicas para seu negócio",
     },
     {
-      title: "Donna, sua assistente IA",
-      description: "Sua parceira de negócios 24/7, analisando dados e gerando alertas para impulsionar seu crescimento.",
-      icon: <Bot className="h-8 w-8 text-emerald-500" />,
-      gradient: "from-emerald-500/20 via-emerald-400/10 to-transparent",
+      icon: <Bot className="h-6 w-6 text-purple-500" />,
+      title: "Donna IA",
+      description: "Sua parceira de negócios 24/7 com inteligência artificial",
     }
   ]
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-indigo-50/50 via-background to-purple-50/50 dark:from-indigo-950/10 dark:via-background dark:to-purple-950/10">
-      {/* Elementos decorativos de fundo */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-30 pointer-events-none">
-        <div className="absolute top-20 left-[10%] w-60 h-60 bg-purple-300/30 dark:bg-purple-600/10 rounded-full blur-3xl animate-pulse duration-10000"></div>
-        <div className="absolute bottom-40 right-[10%] w-60 h-60 bg-indigo-300/30 dark:bg-indigo-600/10 rounded-full blur-3xl animate-pulse delay-1000 duration-8000"></div>
-        <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-emerald-300/20 dark:bg-emerald-600/10 rounded-full blur-3xl animate-pulse delay-2000 duration-9000"></div>
-      </div>
-      
-      <div className="container relative min-h-screen mx-auto flex flex-col lg:flex-row items-center justify-center px-4 py-6 gap-4 lg:gap-8">
-        {/* Coluna de informações */}
-        <div className="w-full lg:w-1/2 space-y-4 order-2 lg:order-1">
-          <div className="text-center lg:text-left">
-            <h1 className="text-3xl lg:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 leading-tight mb-2">
-              Transforme Dados em<br className="hidden lg:block"/> Decisões Inteligentes
-            </h1>
-            <p className="text-base text-muted-foreground">
-              A SightX integra múltiplas fontes de dados para fornecer insights acionáveis e personalizados.
+    <div className="flex min-h-screen overflow-hidden">
+      {/* Banner lateral esquerdo - visível apenas em telas médias e maiores */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-primary/5 via-indigo-500/5 to-purple-500/5">
+        <div className="absolute inset-0">
+          <div className="absolute top-10 left-10 w-60 h-60 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-20 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/3 right-1/4 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
+        </div>
+
+        <div className="relative flex flex-col justify-center px-12 py-12 w-full max-w-2xl mx-auto">
+          {/* Logo e título */}
+          <div className="mb-10">
+            <div className="flex items-center gap-3 mb-4">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="38" 
+                height="38" 
+                viewBox="0 0 300 187.5" 
+                className="text-primary transition-all hover:scale-105"
+              >
+                <defs>
+                  <clipPath id="e7ffea59ae"><path d="M 53.777344 53 L 127.507812 53 L 127.507812 133.84375 L 53.777344 133.84375 Z M 53.777344 53 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="eed79ac1ca"><path d="M 53.777344 93.496094 L 127.507812 53.148438 L 127.507812 133.84375 Z M 53.777344 93.496094 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="55922dfb59"><path d="M 172.488281 53.152344 L 246.21875 53.152344 L 246.21875 134 L 172.488281 134 Z M 172.488281 53.152344 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="457a8ca164"><path d="M 246.21875 93.5 L 172.488281 133.847656 L 172.488281 53.152344 Z M 246.21875 93.5 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="013f02e760"><path d="M 12.253906 10.425781 L 288 10.425781 L 288 176.574219 L 12.253906 176.574219 Z M 12.253906 10.425781 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="358954cd96"><path d="M 142.285156 173.972656 L 14.984375 98.097656 C 13.367188 97.132812 12.375 95.386719 12.375 93.5 C 12.375 91.617188 13.367188 89.871094 14.984375 88.90625 L 142.285156 13.027344 C 147.035156 10.195312 152.953125 10.195312 157.703125 13.027344 L 285.003906 88.90625 C 286.621094 89.871094 287.613281 91.617188 287.613281 93.5 C 287.613281 95.386719 286.621094 97.132812 285.003906 98.097656 L 157.703125 173.972656 C 152.953125 176.804688 147.035156 176.804688 142.285156 173.972656 Z M 142.285156 173.972656 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="c1469d9fa5"><path d="M 86 74 L 162 74 L 162 117 L 86 117 Z M 86 74 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="4730d2e2ec"><path d="M 88.050781 122.371094 L 84.675781 79.945312 L 158.660156 74.0625 L 162.035156 116.484375 Z M 88.050781 122.371094 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="acbf368fb8"><path d="M 86.9375 100.488281 L 156.515625 74.34375 C 157.015625 74.15625 157.570312 74.214844 158.019531 74.5 C 158.464844 74.785156 158.753906 75.261719 158.796875 75.792969 L 161.894531 114.757812 C 161.9375 115.289062 161.726562 115.804688 161.332031 116.15625 C 160.933594 116.507812 160.394531 116.652344 159.875 116.546875 L 87.035156 101.726562 C 86.753906 101.667969 86.542969 101.433594 86.519531 101.144531 C 86.496094 100.859375 86.667969 100.589844 86.9375 100.488281 Z M 86.9375 100.488281 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="a96eaee0f1"><path d="M 138 70 L 214 70 L 214 113 L 138 113 Z M 138 70 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="3b94516d4d"><path d="M 211.941406 64.625 L 215.316406 107.050781 L 141.332031 112.933594 L 137.957031 70.507812 Z M 211.941406 64.625 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="44287166fc"><path d="M 213.054688 86.503906 L 143.476562 112.652344 C 142.976562 112.839844 142.421875 112.78125 141.976562 112.496094 C 141.527344 112.210938 141.238281 111.734375 141.195312 111.203125 L 138.097656 72.238281 C 138.054688 71.707031 138.265625 71.191406 138.664062 70.839844 C 139.058594 70.488281 139.597656 70.34375 140.117188 70.449219 L 212.957031 85.269531 C 213.238281 85.328125 213.449219 85.5625 213.472656 85.851562 C 213.496094 86.136719 213.324219 86.40625 213.054688 86.503906 Z M 213.054688 86.503906 " clip-rule="nonzero"/></clipPath>
+                </defs>
+                <g clip-path="url(#e7ffea59ae)">
+                  <g clip-path="url(#eed79ac1ca)">
+                    <path fill="#ffffff" d="M 53.777344 133.84375 L 53.777344 53.203125 L 127.507812 53.203125 L 127.507812 133.84375 Z M 53.777344 133.84375 " fill-opacity="1" fill-rule="nonzero"/>
+                  </g>
+                </g>
+                <g clip-path="url(#55922dfb59)">
+                  <g clip-path="url(#457a8ca164)">
+                    <path fill="#ffffff" d="M 246.21875 53.152344 L 246.21875 133.792969 L 172.488281 133.792969 L 172.488281 53.152344 Z M 246.21875 53.152344 " fill-opacity="1" fill-rule="nonzero"/>
+                  </g>
+                </g>
+                <g clip-path="url(#013f02e760)">
+                  <g clip-path="url(#358954cd96)">
+                    <path fill="#450d82" d="M 292.714844 178.570312 L 7.601562 178.570312 L 7.601562 8.433594 L 292.714844 8.433594 Z M 292.714844 178.570312 " fill-opacity="1" fill-rule="nonzero"/>
+                  </g>
+                </g>
+                <g clip-path="url(#c1469d9fa5)">
+                  <g clip-path="url(#4730d2e2ec)">
+                    <g clip-path="url(#acbf368fb8)">
+                      <path fill="#459d3d" d="M 86.5625 123 L 83.109375 79.558594 L 158.621094 73.554688 L 162.074219 116.996094 Z M 86.5625 123 " fill-opacity="1" fill-rule="nonzero"/>
+                    </g>
+                  </g>
+                </g>
+                <g clip-path="url(#a96eaee0f1)">
+                  <g clip-path="url(#3b94516d4d)">
+                    <g clip-path="url(#44287166fc)">
+                      <path fill="#4abd40" d="M 213.429688 63.996094 L 216.882812 107.4375 L 141.371094 113.441406 L 137.917969 70 Z M 213.429688 63.996094 " fill-opacity="1" fill-rule="nonzero"/>
+                    </g>
+                  </g>
+                </g>
+              </svg>
+              <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
+                SightX
+              </h1>
+            </div>
+            <h2 className="text-4xl font-bold text-foreground leading-tight">
+              Transforme dados em 
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600"> decisões inteligentes</span>
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Impulsione seu negócio com análises avançadas e insights personalizados alimentados por IA.
             </p>
           </div>
 
-          {/* Cards para mobile (carrossel) */}
-          <div className="lg:hidden w-full">
-            <Carousel className="w-full">
-              <CarouselContent>
-                {solutionCards.map((card, index) => (
-                  <CarouselItem key={index} className="pl-1 md:basis-2/3">
-                    <Card className="overflow-hidden h-full bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-xl shadow-md">
-                      <CardContent className="p-4 relative h-full">
-                        <div className={`absolute inset-0 bg-gradient-radial ${card.gradient} opacity-30`}></div>
-                        <div className="relative z-10 flex flex-col h-full">
-                          <div className="rounded-full p-2 bg-white/80 dark:bg-gray-700/80 w-fit mb-3">
-                            {card.icon}
-                          </div>
-                          <h3 className="text-lg font-semibold mb-1">{card.title}</h3>
-                          <p className="text-sm text-muted-foreground">{card.description}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="left-1" />
-              <CarouselNext className="right-1" />
-            </Carousel>
-          </div>
-
-          {/* Cards para desktop (grid) */}
-          <div className="hidden lg:grid grid-cols-1 lg:grid-cols-3 gap-3">
-            {solutionCards.map((card, index) => (
-              <Card 
-                key={index} 
-                className="overflow-hidden bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-              >
-                <CardContent className="p-4 relative">
-                  <div className={`absolute inset-0 bg-gradient-radial ${card.gradient} opacity-30`}></div>
-                  <div className="relative z-10">
-                    <div className="rounded-full p-2 bg-white/80 dark:bg-gray-700/80 w-fit mb-3">
-                      {card.icon}
-                    </div>
-                    <h3 className="text-base font-semibold mb-1">{card.title}</h3>
-                    <p className="text-xs text-muted-foreground">{card.description}</p>
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Features */}
+          <div className="space-y-6 mb-8">
+            {features.map((feature, index) => (
+              <div key={index} className="flex items-start space-x-4 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 transition-all hover:bg-white/10">
+                <div className="flex-shrink-0 p-2 rounded-lg bg-white/10">
+                  {feature.icon}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
+                </div>
+              </div>
             ))}
           </div>
-          
-          {/* Destaque adicional para desktop */}
-          <div className="hidden lg:block">
-            <Card className="overflow-hidden bg-gradient-to-r from-primary/5 to-purple-600/5 backdrop-blur-lg border border-primary/10 dark:border-primary/20 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-full p-2 bg-primary/10 w-fit">
-                    <Sparkles className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-medium mb-1">Destaque-se com análises avançadas</h3>
-                    <p className="text-xs text-muted-foreground">Acesse métricas e visualizações que transformarão a maneira como você toma decisões.</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+
+          {/* Depoimento */}
+          <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 mt-8">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex -space-x-2">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium">JD</div>
+                <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-500 font-medium">MS</div>
+                <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-500 font-medium">TP</div>
+              </div>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <svg key={star} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+            </div>
+            <p className="text-foreground italic">
+              "A SightX transformou completamente nossa tomada de decisões. Agora conseguimos analisar dados de maneira rápida e eficiente, o que nos permitiu crescer 32% em apenas 6 meses."
+            </p>
+            <div className="mt-3 text-sm text-muted-foreground">
+              Carlos Mendes, CEO da TechSolve
+            </div>
           </div>
         </div>
-        
-        {/* Coluna de login */}
-        <div className="w-full max-w-sm lg:w-5/12 order-1 lg:order-2">
-          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl border border-border/50 shadow-xl p-5 transform transition-all duration-300 hover:shadow-2xl">
-            {/* Logo e cabeçalho */}
-            <div className="text-center space-y-1 mb-4">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="32" 
-                  height="32" 
-                  viewBox="0 0 300 187.499995" 
-                  className="text-primary transition-all hover:scale-105"
-                  preserveAspectRatio="xMidYMid meet"
-                >
-                  <defs>
-                    <clipPath id="e7ffea59ae"><path d="M 53.777344 53 L 127.507812 53 L 127.507812 133.84375 L 53.777344 133.84375 Z M 53.777344 53 " clip-rule="nonzero"/></clipPath>
-                    <clipPath id="eed79ac1ca"><path d="M 53.777344 93.496094 L 127.507812 53.148438 L 127.507812 133.84375 Z M 53.777344 93.496094 " clip-rule="nonzero"/></clipPath>
-                    <clipPath id="55922dfb59"><path d="M 172.488281 53.152344 L 246.21875 53.152344 L 246.21875 134 L 172.488281 134 Z M 172.488281 53.152344 " clip-rule="nonzero"/></clipPath>
-                    <clipPath id="457a8ca164"><path d="M 246.21875 93.5 L 172.488281 133.847656 L 172.488281 53.152344 Z M 246.21875 93.5 " clip-rule="nonzero"/></clipPath>
-                    <clipPath id="013f02e760"><path d="M 12.253906 10.425781 L 288 10.425781 L 288 176.574219 L 12.253906 176.574219 Z M 12.253906 10.425781 " clip-rule="nonzero"/></clipPath>
-                    <clipPath id="358954cd96"><path d="M 142.285156 173.972656 L 14.984375 98.097656 C 13.367188 97.132812 12.375 95.386719 12.375 93.5 C 12.375 91.617188 13.367188 89.871094 14.984375 88.90625 L 142.285156 13.027344 C 147.035156 10.195312 152.953125 10.195312 157.703125 13.027344 L 285.003906 88.90625 C 286.621094 89.871094 287.613281 91.617188 287.613281 93.5 C 287.613281 95.386719 286.621094 97.132812 285.003906 98.097656 L 157.703125 173.972656 C 152.953125 176.804688 147.035156 176.804688 142.285156 173.972656 Z M 142.285156 173.972656 " clip-rule="nonzero"/></clipPath>
-                    <clipPath id="c1469d9fa5"><path d="M 86 74 L 162 74 L 162 117 L 86 117 Z M 86 74 " clip-rule="nonzero"/></clipPath>
-                    <clipPath id="4730d2e2ec"><path d="M 88.050781 122.371094 L 84.675781 79.945312 L 158.660156 74.0625 L 162.035156 116.484375 Z M 88.050781 122.371094 " clip-rule="nonzero"/></clipPath>
-                    <clipPath id="acbf368fb8"><path d="M 86.9375 100.488281 L 156.515625 74.34375 C 157.015625 74.15625 157.570312 74.214844 158.019531 74.5 C 158.464844 74.785156 158.753906 75.261719 158.796875 75.792969 L 161.894531 114.757812 C 161.9375 115.289062 161.726562 115.804688 161.332031 116.15625 C 160.933594 116.507812 160.394531 116.652344 159.875 116.546875 L 87.035156 101.726562 C 86.753906 101.667969 86.542969 101.433594 86.519531 101.144531 C 86.496094 100.859375 86.667969 100.589844 86.9375 100.488281 Z M 86.9375 100.488281 " clip-rule="nonzero"/></clipPath>
-                    <clipPath id="a96eaee0f1"><path d="M 138 70 L 214 70 L 214 113 L 138 113 Z M 138 70 " clip-rule="nonzero"/></clipPath>
-                    <clipPath id="3b94516d4d"><path d="M 211.941406 64.625 L 215.316406 107.050781 L 141.332031 112.933594 L 137.957031 70.507812 Z M 211.941406 64.625 " clip-rule="nonzero"/></clipPath>
-                    <clipPath id="44287166fc"><path d="M 213.054688 86.503906 L 143.476562 112.652344 C 142.976562 112.839844 142.421875 112.78125 141.976562 112.496094 C 141.527344 112.210938 141.238281 111.734375 141.195312 111.203125 L 138.097656 72.238281 C 138.054688 71.707031 138.265625 71.191406 138.664062 70.839844 C 139.058594 70.488281 139.597656 70.34375 140.117188 70.449219 L 212.957031 85.269531 C 213.238281 85.328125 213.449219 85.5625 213.472656 85.851562 C 213.496094 86.136719 213.324219 86.40625 213.054688 86.503906 Z M 213.054688 86.503906 " clip-rule="nonzero"/></clipPath>
-                  </defs>
-                  <g clip-path="url(#e7ffea59ae)">
-                    <g clip-path="url(#eed79ac1ca)">
-                      <path fill="#ffffff" d="M 53.777344 133.84375 L 53.777344 53.203125 L 127.507812 53.203125 L 127.507812 133.84375 Z M 53.777344 133.84375 " fill-opacity="1" fill-rule="nonzero"/>
+      </div>
+
+      {/* Formulário de login - direita */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
+        <div className="w-full max-w-md">
+          <div className="lg:hidden mb-8">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="32" 
+                height="32" 
+                viewBox="0 0 300 187.5" 
+                className="text-primary"
+              >
+                {/* SVG Logo - mesma definição anterior */}
+                <defs>
+                  <clipPath id="mob-e7ffea59ae"><path d="M 53.777344 53 L 127.507812 53 L 127.507812 133.84375 L 53.777344 133.84375 Z M 53.777344 53 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="mob-eed79ac1ca"><path d="M 53.777344 93.496094 L 127.507812 53.148438 L 127.507812 133.84375 Z M 53.777344 93.496094 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="mob-55922dfb59"><path d="M 172.488281 53.152344 L 246.21875 53.152344 L 246.21875 134 L 172.488281 134 Z M 172.488281 53.152344 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="mob-457a8ca164"><path d="M 246.21875 93.5 L 172.488281 133.847656 L 172.488281 53.152344 Z M 246.21875 93.5 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="mob-013f02e760"><path d="M 12.253906 10.425781 L 288 10.425781 L 288 176.574219 L 12.253906 176.574219 Z M 12.253906 10.425781 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="mob-358954cd96"><path d="M 142.285156 173.972656 L 14.984375 98.097656 C 13.367188 97.132812 12.375 95.386719 12.375 93.5 C 12.375 91.617188 13.367188 89.871094 14.984375 88.90625 L 142.285156 13.027344 C 147.035156 10.195312 152.953125 10.195312 157.703125 13.027344 L 285.003906 88.90625 C 286.621094 89.871094 287.613281 91.617188 287.613281 93.5 C 287.613281 95.386719 286.621094 97.132812 285.003906 98.097656 L 157.703125 173.972656 C 152.953125 176.804688 147.035156 176.804688 142.285156 173.972656 Z M 142.285156 173.972656 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="mob-c1469d9fa5"><path d="M 86 74 L 162 74 L 162 117 L 86 117 Z M 86 74 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="mob-4730d2e2ec"><path d="M 88.050781 122.371094 L 84.675781 79.945312 L 158.660156 74.0625 L 162.035156 116.484375 Z M 88.050781 122.371094 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="mob-acbf368fb8"><path d="M 86.9375 100.488281 L 156.515625 74.34375 C 157.015625 74.15625 157.570312 74.214844 158.019531 74.5 C 158.464844 74.785156 158.753906 75.261719 158.796875 75.792969 L 161.894531 114.757812 C 161.9375 115.289062 161.726562 115.804688 161.332031 116.15625 C 160.933594 116.507812 160.394531 116.652344 159.875 116.546875 L 87.035156 101.726562 C 86.753906 101.667969 86.542969 101.433594 86.519531 101.144531 C 86.496094 100.859375 86.667969 100.589844 86.9375 100.488281 Z M 86.9375 100.488281 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="mob-a96eaee0f1"><path d="M 138 70 L 214 70 L 214 113 L 138 113 Z M 138 70 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="mob-3b94516d4d"><path d="M 211.941406 64.625 L 215.316406 107.050781 L 141.332031 112.933594 L 137.957031 70.507812 Z M 211.941406 64.625 " clip-rule="nonzero"/></clipPath>
+                  <clipPath id="mob-44287166fc"><path d="M 213.054688 86.503906 L 143.476562 112.652344 C 142.976562 112.839844 142.421875 112.78125 141.976562 112.496094 C 141.527344 112.210938 141.238281 111.734375 141.195312 111.203125 L 138.097656 72.238281 C 138.054688 71.707031 138.265625 71.191406 138.664062 70.839844 C 139.058594 70.488281 139.597656 70.34375 140.117188 70.449219 L 212.957031 85.269531 C 213.238281 85.328125 213.449219 85.5625 213.472656 85.851562 C 213.496094 86.136719 213.324219 86.40625 213.054688 86.503906 Z M 213.054688 86.503906 " clip-rule="nonzero"/></clipPath>
+                </defs>
+                <g clip-path="url(#mob-e7ffea59ae)">
+                  <g clip-path="url(#mob-eed79ac1ca)">
+                    <path fill="#ffffff" d="M 53.777344 133.84375 L 53.777344 53.203125 L 127.507812 53.203125 L 127.507812 133.84375 Z M 53.777344 133.84375 " fill-opacity="1" fill-rule="nonzero"/>
+                  </g>
+                </g>
+                <g clip-path="url(#mob-55922dfb59)">
+                  <g clip-path="url(#mob-457a8ca164)">
+                    <path fill="#ffffff" d="M 246.21875 53.152344 L 246.21875 133.792969 L 172.488281 133.792969 L 172.488281 53.152344 Z M 246.21875 53.152344 " fill-opacity="1" fill-rule="nonzero"/>
+                  </g>
+                </g>
+                <g clip-path="url(#mob-013f02e760)">
+                  <g clip-path="url(#mob-358954cd96)">
+                    <path fill="#450d82" d="M 292.714844 178.570312 L 7.601562 178.570312 L 7.601562 8.433594 L 292.714844 8.433594 Z M 292.714844 178.570312 " fill-opacity="1" fill-rule="nonzero"/>
+                  </g>
+                </g>
+                <g clip-path="url(#mob-c1469d9fa5)">
+                  <g clip-path="url(#mob-4730d2e2ec)">
+                    <g clip-path="url(#mob-acbf368fb8)">
+                      <path fill="#459d3d" d="M 86.5625 123 L 83.109375 79.558594 L 158.621094 73.554688 L 162.074219 116.996094 Z M 86.5625 123 " fill-opacity="1" fill-rule="nonzero"/>
                     </g>
                   </g>
-                  <g clip-path="url(#55922dfb59)">
-                    <g clip-path="url(#457a8ca164)">
-                      <path fill="#ffffff" d="M 246.21875 53.152344 L 246.21875 133.792969 L 172.488281 133.792969 L 172.488281 53.152344 Z M 246.21875 53.152344 " fill-opacity="1" fill-rule="nonzero"/>
+                </g>
+                <g clip-path="url(#mob-a96eaee0f1)">
+                  <g clip-path="url(#mob-3b94516d4d)">
+                    <g clip-path="url(#mob-44287166fc)">
+                      <path fill="#4abd40" d="M 213.429688 63.996094 L 216.882812 107.4375 L 141.371094 113.441406 L 137.917969 70 Z M 213.429688 63.996094 " fill-opacity="1" fill-rule="nonzero"/>
                     </g>
                   </g>
-                  <g clip-path="url(#013f02e760)">
-                    <g clip-path="url(#358954cd96)">
-                      <path fill="#450d82" d="M 292.714844 178.570312 L 7.601562 178.570312 L 7.601562 8.433594 L 292.714844 8.433594 Z M 292.714844 178.570312 " fill-opacity="1" fill-rule="nonzero"/>
-                    </g>
-                  </g>
-                  <g clip-path="url(#c1469d9fa5)">
-                    <g clip-path="url(#4730d2e2ec)">
-                      <g clip-path="url(#acbf368fb8)">
-                        <path fill="#459d3d" d="M 86.5625 123 L 83.109375 79.558594 L 158.621094 73.554688 L 162.074219 116.996094 Z M 86.5625 123 " fill-opacity="1" fill-rule="nonzero"/>
-                      </g>
-                    </g>
-                  </g>
-                  <g clip-path="url(#a96eaee0f1)">
-                    <g clip-path="url(#3b94516d4d)">
-                      <g clip-path="url(#44287166fc)">
-                        <path fill="#4abd40" d="M 213.429688 63.996094 L 216.882812 107.4375 L 141.371094 113.441406 L 137.917969 70 Z M 213.429688 63.996094 " fill-opacity="1" fill-rule="nonzero"/>
-                      </g>
-                    </g>
-                  </g>
-                </svg>
-                <h1 className="text-xl font-bold text-foreground">
-                  SightX
-                </h1>
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">
+                </g>
+              </svg>
+              <h1 className="text-xl font-bold text-foreground">
+                SightX
+              </h1>
+            </div>
+            <h2 className="text-2xl font-bold text-center text-foreground mb-1">
+              Acesse sua conta
+            </h2>
+            <p className="text-sm text-center text-muted-foreground">
+              Entre com suas credenciais para acessar o dashboard
+            </p>
+          </div>
+
+          {/* Card de login */}
+          <div className="bg-card/60 backdrop-blur-md rounded-2xl border border-border/50 shadow-xl p-6">
+            <div className="hidden lg:block mb-8">
+              <h2 className="text-2xl font-bold text-foreground mb-1">
                 Acesse sua conta
               </h2>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Entre com suas credenciais para acessar o dashboard
               </p>
             </div>
@@ -298,12 +341,12 @@ export default function Login() {
                 },
                 className: {
                   container: 'space-y-3',
-                  button: 'w-full px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg shadow-sm hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-2',
-                  input: 'w-full px-3 py-2 bg-background border border-input rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-200',
+                  button: 'w-full px-4 py-2.5 bg-primary text-primary-foreground font-medium rounded-lg shadow-sm hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-2',
+                  input: 'w-full px-3 py-2.5 bg-background border border-input rounded-lg placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-shadow duration-200',
                   label: 'block text-sm font-medium text-foreground mb-1',
                   message: 'text-sm text-muted-foreground mt-1',
                   anchor: 'text-primary hover:text-primary/90 font-medium transition-colors',
-                  divider: 'my-2',
+                  divider: 'my-3',
                 },
               }}
               localization={{
@@ -344,9 +387,9 @@ export default function Login() {
             />
 
             {/* Termos e políticas */}
-            <div className="mt-3 text-center text-xs text-muted-foreground">
+            <div className="mt-4 text-center text-xs text-muted-foreground">
               <p>Ao continuar, você concorda com nossos</p>
-              <div className="flex justify-center gap-2 mt-1">
+              <div className="flex justify-center gap-1 mt-1">
                 <Link 
                   to="/terms-of-service" 
                   className="text-primary hover:text-primary/90 hover:underline transition-colors"
@@ -367,12 +410,38 @@ export default function Login() {
               </div>
             </div>
           </div>
+
+          {/* Features para mobile */}
+          <div className="mt-8 space-y-4 lg:hidden">
+            <h3 className="text-lg font-medium text-center mb-4">
+              Nossos diferenciais
+            </h3>
+            
+            <Carousel className="w-full">
+              <CarouselContent>
+                {features.map((feature, index) => (
+                  <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3 pl-1">
+                    <Card className="overflow-hidden bg-card/60 backdrop-blur-md border border-border/50 hover:border-primary/20 transition-all">
+                      <CardContent className="p-4 flex items-start gap-3">
+                        <div className="flex-shrink-0 p-2 rounded-lg bg-white/10">
+                          {feature.icon}
+                        </div>
+                        <div>
+                          <h3 className="font-medium">{feature.title}</h3>
+                          <p className="text-xs text-muted-foreground">{feature.description}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <div className="flex justify-center gap-1 mt-2">
+                <CarouselPrevious className="relative static transform-none data-[hidden]:hidden" />
+                <CarouselNext className="relative static transform-none data-[hidden]:hidden" />
+              </div>
+            </Carousel>
+          </div>
         </div>
-      </div>
-      
-      {/* Rodapé */}
-      <div className="absolute bottom-0 w-full py-2 text-center text-xs text-muted-foreground bg-background/30 backdrop-blur-sm border-t border-border/10">
-        <p>© 2023 SightX. Todos os direitos reservados.</p>
       </div>
     </div>
   )
