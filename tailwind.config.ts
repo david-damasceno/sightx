@@ -70,9 +70,6 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
-      screens: {
-        'xs': '380px',  // Adicionado breakpoint extra para telas muito pequenas
-      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
