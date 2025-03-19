@@ -88,62 +88,58 @@ export default function Login() {
     {
       title: "Análise de dados avançada",
       description: "A SightX integra múltiplas fontes de dados para oferecer insights completos e relevantes para o seu negócio.",
-      icon: <BarChartBig className="h-10 w-10 text-purple-500" />,
+      icon: <BarChartBig className="h-8 w-8 text-purple-500" />,
       gradient: "from-purple-500/20 via-purple-400/10 to-transparent",
-      animation: "animate-float"
     },
     {
-      title: "Transforme seus dados em decisões estratégicas",
-      description: "A SightX é uma plataforma inteligente que transforma informações dispersas em insights estratégicos para PMEs. Pare de perder tempo analisando manualmente seus dados.",
-      icon: <BrainCircuit className="h-10 w-10 text-blue-500" />,
+      title: "Decisões estratégicas",
+      description: "Transforme informações dispersas em insights estratégicos. Pare de perder tempo com análises manuais.",
+      icon: <BrainCircuit className="h-8 w-8 text-blue-500" />,
       gradient: "from-blue-500/20 via-blue-400/10 to-transparent",
-      animation: "animate-float-delay-1"
     },
     {
-      title: "Experimente o poder da Donna em ação",
-      description: "Mais que uma I.A., Donna é sua parceira de negócios 24/7, analisando dados, criando estratégias e gerando alertas importantes para impulsionar seu crescimento.",
-      icon: <Bot className="h-10 w-10 text-emerald-500" />,
+      title: "Donna, sua assistente IA",
+      description: "Sua parceira de negócios 24/7, analisando dados e gerando alertas para impulsionar seu crescimento.",
+      icon: <Bot className="h-8 w-8 text-emerald-500" />,
       gradient: "from-emerald-500/20 via-emerald-400/10 to-transparent",
-      animation: "animate-float-delay-2"
     }
   ]
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-indigo-50 via-background to-purple-50 dark:from-indigo-950/20 dark:via-background dark:to-purple-950/20">
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-40 pointer-events-none">
-        <div className="absolute top-20 left-[10%] w-72 h-72 bg-purple-300/30 dark:bg-purple-600/10 rounded-full blur-3xl animate-pulse duration-10000"></div>
-        <div className="absolute bottom-20 right-[10%] w-72 h-72 bg-indigo-300/30 dark:bg-indigo-600/10 rounded-full blur-3xl animate-pulse delay-1000 duration-8000"></div>
-        <div className="absolute top-[40%] right-[20%] w-48 h-48 bg-emerald-300/20 dark:bg-emerald-600/10 rounded-full blur-3xl animate-pulse delay-2000 duration-9000"></div>
-        
-        <div className="absolute top-[30%] left-[30%] w-24 h-24 bg-blue-300/20 dark:bg-blue-600/10 rounded-full blur-xl animate-pulse delay-500 duration-5000"></div>
-        <div className="absolute bottom-[30%] left-[20%] w-32 h-32 bg-pink-300/20 dark:bg-pink-600/10 rounded-full blur-xl animate-pulse delay-1500 duration-6000"></div>
-        <div className="absolute top-[70%] right-[35%] w-20 h-20 bg-yellow-300/20 dark:bg-yellow-600/10 rounded-full blur-xl animate-pulse delay-2500 duration-8000"></div>
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-indigo-50/50 via-background to-purple-50/50 dark:from-indigo-950/10 dark:via-background dark:to-purple-950/10">
+      {/* Elementos decorativos de fundo */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-30 pointer-events-none">
+        <div className="absolute top-20 left-[10%] w-60 h-60 bg-purple-300/30 dark:bg-purple-600/10 rounded-full blur-3xl animate-pulse duration-10000"></div>
+        <div className="absolute bottom-40 right-[10%] w-60 h-60 bg-indigo-300/30 dark:bg-indigo-600/10 rounded-full blur-3xl animate-pulse delay-1000 duration-8000"></div>
+        <div className="absolute top-1/2 left-1/3 w-40 h-40 bg-emerald-300/20 dark:bg-emerald-600/10 rounded-full blur-3xl animate-pulse delay-2000 duration-9000"></div>
       </div>
       
-      <div className="container relative min-h-screen mx-auto flex flex-col lg:flex-row items-center justify-center px-4 py-6 gap-8">
-        <div className="w-full lg:w-1/2 space-y-6 order-2 lg:order-1">
-          <div className="text-center lg:text-left mb-4">
-            <h1 className="text-4xl lg:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 leading-tight">
-              Transforme Dados em <br className="hidden lg:block"/> Decisões Inteligentes
+      <div className="container relative min-h-screen mx-auto flex flex-col lg:flex-row items-center justify-center px-4 py-6 gap-4 lg:gap-8">
+        {/* Coluna de informações */}
+        <div className="w-full lg:w-1/2 space-y-4 order-2 lg:order-1">
+          <div className="text-center lg:text-left">
+            <h1 className="text-3xl lg:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600 leading-tight mb-2">
+              Transforme Dados em<br className="hidden lg:block"/> Decisões Inteligentes
             </h1>
-            <p className="text-lg text-muted-foreground mt-3">
-              A SightX integra múltiplas fontes de dados para fornecer insights acionáveis e personalizados para sua empresa.
+            <p className="text-base text-muted-foreground">
+              A SightX integra múltiplas fontes de dados para fornecer insights acionáveis e personalizados.
             </p>
           </div>
 
+          {/* Cards para mobile (carrossel) */}
           <div className="lg:hidden w-full">
             <Carousel className="w-full">
               <CarouselContent>
                 {solutionCards.map((card, index) => (
-                  <CarouselItem key={index} className="pl-1 md:basis-2/3 lg:basis-1/2">
-                    <Card className={`overflow-hidden h-full bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-xl shadow-lg ${card.animation}`}>
-                      <CardContent className="p-6 relative h-full">
+                  <CarouselItem key={index} className="pl-1 md:basis-2/3">
+                    <Card className="overflow-hidden h-full bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-xl shadow-md">
+                      <CardContent className="p-4 relative h-full">
                         <div className={`absolute inset-0 bg-gradient-radial ${card.gradient} opacity-30`}></div>
                         <div className="relative z-10 flex flex-col h-full">
-                          <div className="rounded-full p-2 bg-white/80 dark:bg-gray-700/80 w-fit mb-4">
+                          <div className="rounded-full p-2 bg-white/80 dark:bg-gray-700/80 w-fit mb-3">
                             {card.icon}
                           </div>
-                          <h3 className="text-xl font-semibold mb-2">{card.title}</h3>
+                          <h3 className="text-lg font-semibold mb-1">{card.title}</h3>
                           <p className="text-sm text-muted-foreground">{card.description}</p>
                         </div>
                       </CardContent>
@@ -156,34 +152,38 @@ export default function Login() {
             </Carousel>
           </div>
 
-          <div className="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Cards para desktop (grid) */}
+          <div className="hidden lg:grid grid-cols-1 lg:grid-cols-3 gap-3">
             {solutionCards.map((card, index) => (
               <Card 
                 key={index} 
-                className={`overflow-hidden bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${card.animation}`}
+                className="overflow-hidden bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg border border-white/20 dark:border-gray-700/20 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
-                <CardContent className="p-6 relative">
+                <CardContent className="p-4 relative">
                   <div className={`absolute inset-0 bg-gradient-radial ${card.gradient} opacity-30`}></div>
                   <div className="relative z-10">
-                    <div className="rounded-full p-2 bg-white/80 dark:bg-gray-700/80 w-fit mb-4">
+                    <div className="rounded-full p-2 bg-white/80 dark:bg-gray-700/80 w-fit mb-3">
                       {card.icon}
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">{card.title}</h3>
-                    <p className="text-sm text-muted-foreground">{card.description}</p>
+                    <h3 className="text-base font-semibold mb-1">{card.title}</h3>
+                    <p className="text-xs text-muted-foreground">{card.description}</p>
                   </div>
                 </CardContent>
               </Card>
             ))}
-            
-            <Card className="overflow-hidden col-span-full bg-gradient-to-r from-primary/10 to-purple-600/10 backdrop-blur-lg border border-primary/20 dark:border-primary/20 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 animate-float-delay-3">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="rounded-full p-2 bg-primary/20 w-fit">
-                    <Sparkles className="h-8 w-8 text-primary" />
+          </div>
+          
+          {/* Destaque adicional para desktop */}
+          <div className="hidden lg:block">
+            <Card className="overflow-hidden bg-gradient-to-r from-primary/5 to-purple-600/5 backdrop-blur-lg border border-primary/10 dark:border-primary/20 rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full p-2 bg-primary/10 w-fit">
+                    <Sparkles className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-1">Destaque-se com análises avançadas</h3>
-                    <p className="text-sm text-muted-foreground">Acesse métricas e visualizações que transformarão a maneira como você toma decisões. A SightX coloca o poder dos dados na palma da sua mão.</p>
+                    <h3 className="text-base font-medium mb-1">Destaque-se com análises avançadas</h3>
+                    <p className="text-xs text-muted-foreground">Acesse métricas e visualizações que transformarão a maneira como você toma decisões.</p>
                   </div>
                 </div>
               </CardContent>
@@ -191,13 +191,15 @@ export default function Login() {
           </div>
         </div>
         
-        <div className="w-full max-w-md lg:w-1/3 order-1 lg:order-2">
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl border border-border/50 shadow-xl p-6 space-y-4 transform transition-all duration-300 hover:shadow-2xl">
-            <div className="text-center space-y-2">
-              <div className="flex items-center justify-center gap-3 mb-3">
+        {/* Coluna de login */}
+        <div className="w-full max-w-sm lg:w-5/12 order-1 lg:order-2">
+          <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-2xl border border-border/50 shadow-xl p-5 transform transition-all duration-300 hover:shadow-2xl">
+            {/* Logo e cabeçalho */}
+            <div className="text-center space-y-1 mb-4">
+              <div className="flex items-center justify-center gap-2 mb-2">
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
-                  width="40" 
+                  width="32" 
                   height="32" 
                   viewBox="0 0 300 187.499995" 
                   className="text-primary transition-all hover:scale-105"
@@ -247,20 +249,19 @@ export default function Login() {
                     </g>
                   </g>
                 </svg>
-                <h1 className="text-2xl font-bold text-foreground">
+                <h1 className="text-xl font-bold text-foreground">
                   SightX
                 </h1>
               </div>
-              <div className="space-y-1">
-                <h2 className="text-xl font-semibold text-foreground">
-                  Acesse sua conta
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  Entre com suas credenciais para acessar o dashboard
-                </p>
-              </div>
+              <h2 className="text-lg font-semibold text-foreground">
+                Acesse sua conta
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Entre com suas credenciais para acessar o dashboard
+              </p>
             </div>
 
+            {/* Auth component */}
             <Auth
               supabaseClient={supabase}
               appearance={{
@@ -302,7 +303,7 @@ export default function Login() {
                   label: 'block text-sm font-medium text-foreground mb-1',
                   message: 'text-sm text-muted-foreground mt-1',
                   anchor: 'text-primary hover:text-primary/90 font-medium transition-colors',
-                  divider: 'my-3',
+                  divider: 'my-2',
                 },
               }}
               localization={{
@@ -342,7 +343,8 @@ export default function Login() {
               socialLayout="vertical"
             />
 
-            <div className="mt-4 text-center text-xs text-muted-foreground">
+            {/* Termos e políticas */}
+            <div className="mt-3 text-center text-xs text-muted-foreground">
               <p>Ao continuar, você concorda com nossos</p>
               <div className="flex justify-center gap-2 mt-1">
                 <Link 
@@ -368,7 +370,8 @@ export default function Login() {
         </div>
       </div>
       
-      <div className="absolute bottom-0 w-full py-3 text-center text-xs text-muted-foreground bg-background/30 backdrop-blur-sm border-t border-border/10">
+      {/* Rodapé */}
+      <div className="absolute bottom-0 w-full py-2 text-center text-xs text-muted-foreground bg-background/30 backdrop-blur-sm border-t border-border/10">
         <p>© 2023 SightX. Todos os direitos reservados.</p>
       </div>
     </div>
