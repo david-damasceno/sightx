@@ -382,20 +382,29 @@ export type Database = {
               p_name: string
               p_slug: string
               p_user_id: string
-              p_sector: string
-              p_city: string
-              p_state: string
-              p_description: string
+              p_sector?: string
+              p_city?: string
+              p_state?: string
+              p_description?: string
             }
             Returns: Json
           }
-      get_table_data: {
-        Args: {
-          table_name: string
-          row_limit?: number
-        }
-        Returns: Json
-      }
+      get_table_data:
+        | {
+            Args: {
+              p_table_name: string
+              p_organization_id: string
+              p_row_limit?: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              table_name: string
+              row_limit?: number
+            }
+            Returns: Json
+          }
       infer_column_type: {
         Args: {
           sample_value: string

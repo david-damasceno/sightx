@@ -26,36 +26,67 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Buscar informações do arquivo
-    const { data: fileData, error: fileError } = await supabase
-      .from('data_imports')
-      .select('storage_path, file_type')
-      .eq('id', fileId)
-      .eq('organization_id', organizationId)
-      .single()
+    // Buscar informações do arquivo e da organização
+    const [fileResult, orgResult] = await Promise.all([
+      supabase
+        .from('data_imports')
+        .select('storage_path, file_type')
+        .eq('id', fileId)
+        .eq('organization_id', organizationId)
+        .single(),
+      
+      supabase
+        .from('organizations')
+        .select('settings')
+        .eq('id', organizationId)
+        .single()
+    ])
 
-    if (fileError || !fileData) {
-      console.error('Erro ao buscar arquivo:', fileError)
+    if (fileResult.error || !fileResult.data) {
+      console.error('Erro ao buscar arquivo:', fileResult.error)
       throw new Error('Arquivo não encontrado')
     }
 
-    console.log('Dados do arquivo encontrados:', fileData)
+    if (orgResult.error) {
+      console.error('Erro ao buscar organização:', orgResult.error)
+      throw new Error('Organização não encontrada')
+    }
 
-    // Baixar o arquivo do storage
+    const fileData = fileResult.data
+    const schemaName = orgResult.data.settings?.schema_name || 'public'
+    
+    console.log('Dados recuperados:', {
+      arquivo: fileData.storage_path,
+      esquema: schemaName
+    })
+
+    // Baixar o arquivo do bucket específico da organização
     const { data: fileBuffer, error: downloadError } = await supabase
       .storage
-      .from('data_files')
+      .from(organizationId)
       .download(fileData.storage_path)
 
+    // Se não encontrar no bucket da organização, tenta no bucket padrão 'data_files'
+    let buffer = fileBuffer
     if (downloadError) {
-      console.error('Erro ao baixar arquivo:', downloadError)
-      throw downloadError
+      console.log('Arquivo não encontrado no bucket da organização, tentando bucket padrão')
+      const { data: defaultBuffer, error: defaultError } = await supabase
+        .storage
+        .from('data_files')
+        .download(fileData.storage_path)
+        
+      if (defaultError) {
+        console.error('Erro ao baixar arquivo:', defaultError)
+        throw defaultError
+      }
+      
+      buffer = defaultBuffer
     }
 
     console.log('Arquivo baixado com sucesso')
 
     // Converter para array buffer
-    const arrayBuffer = await fileBuffer.arrayBuffer()
+    const arrayBuffer = await buffer.arrayBuffer()
 
     // Ler o arquivo usando xlsx
     const workbook = XLSX.read(new Uint8Array(arrayBuffer), { 
@@ -86,7 +117,8 @@ serve(async (req) => {
       page, 
       pageSize, 
       totalPages, 
-      returnedRows: paginatedData.length 
+      returnedRows: paginatedData.length,
+      schema: schemaName
     })
 
     return new Response(
@@ -95,7 +127,8 @@ serve(async (req) => {
         page,
         pageSize,
         totalPages,
-        totalRows
+        totalRows,
+        schema: schemaName
       }),
       { 
         headers: { 

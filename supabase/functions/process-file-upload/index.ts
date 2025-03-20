@@ -36,20 +36,36 @@ serve(async (req) => {
     
     console.log(`Iniciando processamento do arquivo: ${fileId} para organização: ${organizationId}`);
     
-    // Buscar informações do arquivo no banco de dados
-    const { data: fileData, error: fileError } = await supabase
-      .from('data_imports')
-      .select('*')
-      .eq('id', fileId)
-      .eq('organization_id', organizationId)
-      .single();
+    // Buscar informações do arquivo no banco de dados e da organização
+    const [fileResult, orgResult] = await Promise.all([
+      supabase
+        .from('data_imports')
+        .select('*')
+        .eq('id', fileId)
+        .eq('organization_id', organizationId)
+        .single(),
+      
+      supabase
+        .from('organizations')
+        .select('settings')
+        .eq('id', organizationId)
+        .single()
+    ]);
     
-    if (fileError || !fileData) {
-      console.error('Erro ao buscar informações do arquivo:', fileError);
-      throw new Error(`Arquivo não encontrado ou sem permissão: ${fileError?.message || 'Não encontrado'}`);
+    if (fileResult.error || !fileResult.data) {
+      console.error('Erro ao buscar informações do arquivo:', fileResult.error);
+      throw new Error(`Arquivo não encontrado ou sem permissão: ${fileResult.error?.message || 'Não encontrado'}`);
     }
     
-    console.log(`Dados do arquivo encontrados: ${fileData.name}, caminho: ${fileData.storage_path}, tabela: ${fileData.table_name}`);
+    if (orgResult.error) {
+      console.error('Erro ao buscar organização:', orgResult.error);
+      throw new Error(`Organização não encontrada: ${orgResult.error.message}`);
+    }
+    
+    const fileData = fileResult.data;
+    const schemaName = orgResult.data.settings?.schema_name || 'public';
+    
+    console.log(`Dados do arquivo encontrados: ${fileData.name}, caminho: ${fileData.storage_path}, tabela: ${fileData.table_name}, esquema: ${schemaName}`);
     
     // Atualizar status para processing
     await supabase
@@ -59,10 +75,32 @@ serve(async (req) => {
       })
       .eq('id', fileId);
       
-    // Obter o arquivo de storage
-    const { data: fileContent, error: storageError } = await supabase.storage
-      .from('data_files')
-      .download(fileData.storage_path);
+    // Primeiro tentar obter o arquivo do bucket específico da organização
+    let fileContent;
+    let storageError;
+    
+    try {
+      const result = await supabase.storage
+        .from(organizationId)
+        .download(fileData.storage_path);
+        
+      fileContent = result.data;
+      storageError = result.error;
+    } catch (error) {
+      console.log('Erro ao acessar bucket da organização, tentando bucket padrão');
+      storageError = error;
+    }
+    
+    // Se não encontrou no bucket da organização, tenta no bucket padrão
+    if (storageError || !fileContent) {
+      console.log('Tentando baixar do bucket padrão data_files');
+      const defaultResult = await supabase.storage
+        .from('data_files')
+        .download(fileData.storage_path);
+        
+      fileContent = defaultResult.data;
+      storageError = defaultResult.error;
+    }
     
     if (storageError || !fileContent) {
       console.error('Erro ao baixar arquivo do storage:', storageError);
@@ -141,7 +179,7 @@ serve(async (req) => {
       throw parseError;
     }
     
-    // Criar a tabela dinâmica
+    // Criar a tabela dinâmica no esquema da organização
     try {
       // Inferir tipos de coluna
       const columnDefinitions = columns.map(column => {
@@ -182,8 +220,8 @@ serve(async (req) => {
       // Construir e executar o SQL para criar a tabela
       const tableName = fileData.table_name;
       
-      // Usar RPC para chamar a função que cria a tabela
-      const { error: createTableError } = await supabase.rpc(
+      // Usar a função que cria tabelas no esquema correto
+      const { data: tableResult, error: createTableError } = await supabase.rpc(
         'create_dynamic_table',
         { 
           p_table_name: tableName,
@@ -197,7 +235,7 @@ serve(async (req) => {
         throw new Error(`Erro ao criar tabela: ${createTableError.message}`);
       }
       
-      console.log(`Tabela ${tableName} criada com sucesso`);
+      console.log(`Tabela ${tableName} criada com sucesso no esquema ${schemaName}`);
       
       // Inserir os dados na tabela
       // Processar em lotes para evitar problemas com muitos registros
@@ -210,9 +248,20 @@ serve(async (req) => {
           organization_id: organizationId
         }));
         
-        const { error: insertError } = await supabase
-          .from(tableName)
-          .insert(batch);
+        // Construir a query de inserção com o esquema correto
+        const insertSQL = `
+          INSERT INTO "${schemaName}"."${tableName}" (${Object.keys(batch[0]).map(k => `"${k}"`).join(', ')})
+          VALUES ${batch.map((row, idx) => 
+            `(${Object.values(row).map(val => 
+              val === null ? 'NULL' : (typeof val === 'string' ? `'${val.replace(/'/g, "''")}'` : val)
+            ).join(', ')})`
+          ).join(',\n')}
+        `;
+        
+        const { error: insertError } = await supabase.rpc(
+          'exec_sql',
+          { sql: insertSQL }
+        );
           
         if (insertError) {
           console.error(`Erro ao inserir lote ${i}:`, insertError);
@@ -246,11 +295,12 @@ serve(async (req) => {
         .update({
           status: 'completed',
           row_count: data.length,
-          columns_metadata: columnMetadata
+          columns_metadata: columnMetadata,
+          settings: { schema: schemaName }
         })
         .eq('id', fileId);
       
-      console.log(`Processamento concluído com sucesso: ${data.length} registros importados`);
+      console.log(`Processamento concluído com sucesso: ${data.length} registros importados no esquema ${schemaName}`);
       
     } catch (processError) {
       console.error('Erro no processamento:', processError);
@@ -274,7 +324,8 @@ serve(async (req) => {
         message: "Arquivo processado com sucesso",
         fileId,
         organizationId,
-        rowCount: data.length
+        rowCount: data.length,
+        schema: schemaName
       }),
       {
         headers: {

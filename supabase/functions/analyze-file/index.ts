@@ -46,14 +46,37 @@ serve(async (req) => {
     console.log('Dados do arquivo encontrados:', {
       id: fileData.id,
       nome: fileData.name,
-      caminho: fileData.storage_path
+      caminho: fileData.storage_path,
+      organizacao: fileData.organization_id
     })
+
+    // Buscar informações da organização para obter o esquema
+    console.log('Buscando informações da organização...')
+    const { data: orgData, error: orgError } = await supabaseAdmin
+      .from('organizations')
+      .select('settings')
+      .eq('id', fileData.organization_id)
+      .single()
+
+    if (orgError) {
+      console.error('Erro ao buscar organização:', orgError)
+      throw new Error('Organização não encontrada')
+    }
+
+    const schemaName = orgData.settings?.schema_name || 'public'
+    console.log(`Usando esquema: ${schemaName} para organização: ${fileData.organization_id}`)
 
     // Atualizar status para analyzing
     console.log('Atualizando status para analyzing...')
     const { error: updateError } = await supabaseAdmin
       .from('data_imports')
-      .update({ status: 'analyzing' })
+      .update({ 
+        status: 'analyzing',
+        settings: { 
+          ...fileData.settings,
+          schema: schemaName 
+        }
+      })
       .eq('id', fileId)
 
     if (updateError) {
@@ -61,12 +84,35 @@ serve(async (req) => {
       throw updateError
     }
 
-    // Baixar o arquivo do storage
-    console.log('Baixando arquivo do storage...')
-    const { data: fileBuffer, error: downloadError } = await supabaseAdmin
-      .storage
-      .from('data_files')
-      .download(fileData.storage_path)
+    // Tentar primeiro baixar do bucket específico da organização
+    console.log('Tentando baixar do bucket da organização...')
+    let fileBuffer;
+    let downloadError;
+    
+    try {
+      const result = await supabaseAdmin
+        .storage
+        .from(fileData.organization_id)
+        .download(fileData.storage_path)
+        
+      fileBuffer = result.data;
+      downloadError = result.error;
+    } catch (error) {
+      console.log('Erro ao acessar bucket da organização, tentando bucket padrão')
+      downloadError = error;
+    }
+    
+    // Se não encontrou, tenta no bucket padrão
+    if (downloadError || !fileBuffer) {
+      console.log('Baixando do bucket padrão data_files...')
+      const result = await supabaseAdmin
+        .storage
+        .from('data_files')
+        .download(fileData.storage_path)
+        
+      fileBuffer = result.data;
+      downloadError = result.error;
+    }
 
     if (downloadError) {
       console.error('Erro ao baixar arquivo:', downloadError)
@@ -175,6 +221,7 @@ serve(async (req) => {
         organization_id: fileData.organization_id,
         original_name: column,
         sample_data: JSON.stringify(sampleData.map(row => row[column])),
+        settings: { schema: schemaName }
       }))
 
       const { error: batchError } = await supabaseAdmin
@@ -197,6 +244,10 @@ serve(async (req) => {
       .update({
         status: 'editing',
         row_count: jsonData.length,
+        settings: { 
+          ...fileData.settings,
+          schema: schemaName
+        }
       })
       .eq('id', fileId)
 
@@ -211,7 +262,8 @@ serve(async (req) => {
         success: true, 
         message: 'Arquivo processado com sucesso',
         totalRows: jsonData.length,
-        totalColumns: columns.length
+        totalColumns: columns.length,
+        schema: schemaName
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

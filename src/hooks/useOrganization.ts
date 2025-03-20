@@ -84,6 +84,7 @@ export function useOrganization() {
 
       const uniqueSlug = await generateUniqueSlug(baseSlug)
 
+      // Utilizamos a função SQL modificada para criar a organização, esquema e bucket
       const { data: result, error: rpcError } = await supabase.rpc(
         'create_organization_with_owner',
         {
@@ -149,10 +150,25 @@ export function useOrganization() {
     }
   }
 
+  const getOrganizationSchema = (organization: Organization | null): string | null => {
+    if (!organization || !organization.settings) return null
+    
+    // Extrai o nome do esquema das configurações da organização
+    const settings = organization.settings as Record<string, any>
+    return settings.schema_name || null
+  }
+
+  const getOrganizationBucket = (organization: Organization | null): string | null => {
+    if (!organization) return null
+    
+    // O ID da organização é o ID do bucket
+    return organization.id
+  }
+
   const inviteMember = async (organizationId: string, email: string, role: 'member' | 'admin') => {
     try {
       setLoading(true)
-      // Invocamos a nova edge function para processar o convite
+      // Invocamos a edge function para processar o convite
       const { data, error } = await supabase.functions.invoke('process-invite', {
         body: {
           email,
@@ -203,6 +219,8 @@ export function useOrganization() {
     members,
     createOrganization,
     inviteMember,
-    fetchMembers  // Expomos a função para que possa ser usada
+    fetchMembers,
+    getOrganizationSchema,
+    getOrganizationBucket
   }
 }

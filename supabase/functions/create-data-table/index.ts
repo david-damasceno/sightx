@@ -30,6 +30,18 @@ serve(async (req) => {
       previewRowsCount: previewData?.length
     })
 
+    // Obter o esquema da organização
+    const { data: orgData, error: orgError } = await supabaseClient
+      .from('organizations')
+      .select('settings')
+      .eq('id', organizationId)
+      .single()
+
+    if (orgError) throw orgError
+
+    const schemaName = orgData.settings?.schema_name || 'public'
+    console.log(`Usando esquema: ${schemaName} para organização: ${organizationId}`)
+
     // Criar string SQL para criar a tabela
     const columnDefinitions = Object.entries(columns).map(([name, details]) => {
       const { type, description } = details as Column
@@ -37,7 +49,7 @@ serve(async (req) => {
     }).join(',\n  ')
 
     const createTableSQL = `
-      CREATE TABLE IF NOT EXISTS "${tableName}" (
+      CREATE TABLE IF NOT EXISTS "${schemaName}"."${tableName}" (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         organization_id UUID NOT NULL,
         ${columnDefinitions},
@@ -49,11 +61,39 @@ serve(async (req) => {
       ${Object.entries(columns)
         .filter(([_, details]) => (details as Column).description)
         .map(([name, details]) => 
-          `COMMENT ON COLUMN "${tableName}"."${name}" IS '${(details as Column).description}';`
+          `COMMENT ON COLUMN "${schemaName}"."${tableName}"."${name}" IS '${(details as Column).description}';`
         ).join('\n')}
 
       -- Configurar RLS
-      SELECT setup_table_rls('public', '${tableName}');
+      ALTER TABLE "${schemaName}"."${tableName}" ENABLE ROW LEVEL SECURITY;
+      
+      CREATE POLICY "${tableName}_select_policy" 
+      ON "${schemaName}"."${tableName}"
+      FOR SELECT 
+      USING (organization_id = '${organizationId}' OR organization_id IN (
+        SELECT organization_id FROM organization_members WHERE user_id = auth.uid()
+      ));
+      
+      CREATE POLICY "${tableName}_insert_policy" 
+      ON "${schemaName}"."${tableName}"
+      FOR INSERT 
+      WITH CHECK (organization_id = '${organizationId}' OR organization_id IN (
+        SELECT organization_id FROM organization_members WHERE user_id = auth.uid()
+      ));
+      
+      CREATE POLICY "${tableName}_update_policy" 
+      ON "${schemaName}"."${tableName}"
+      FOR UPDATE 
+      USING (organization_id = '${organizationId}' OR organization_id IN (
+        SELECT organization_id FROM organization_members WHERE user_id = auth.uid()
+      ));
+      
+      CREATE POLICY "${tableName}_delete_policy" 
+      ON "${schemaName}"."${tableName}"
+      FOR DELETE 
+      USING (organization_id = '${organizationId}' OR organization_id IN (
+        SELECT organization_id FROM organization_members WHERE user_id = auth.uid()
+      ));
     `
 
     console.log('SQL gerado:', createTableSQL)
@@ -78,7 +118,7 @@ serve(async (req) => {
       }).join(',\n')
 
       const insertSQL = `
-        INSERT INTO "${tableName}" (
+        INSERT INTO "${schemaName}"."${tableName}" (
           id,
           organization_id,
           ${columns.map(c => `"${c}"`).join(', ')}
@@ -109,7 +149,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: 'Tabela criada com sucesso'
+        message: 'Tabela criada com sucesso',
+        schema: schemaName
       }),
       {
         headers: {

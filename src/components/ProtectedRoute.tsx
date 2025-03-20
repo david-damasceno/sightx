@@ -58,7 +58,12 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
     profile: !!profile,
     path: location.pathname,
     hasOrg: !!currentOrganization,
-    onboardingFlag: profile?.onboarded
+    onboardingFlag: profile?.onboarded,
+    orgData: currentOrganization ? {
+      id: currentOrganization.id,
+      name: currentOrganization.name,
+      hasSchema: !!(currentOrganization.settings && (currentOrganization.settings as any).schema_name)
+    } : null
   })
 
   // Garante que não renderizemos nada até que o estado inicial seja carregado
