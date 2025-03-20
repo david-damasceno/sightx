@@ -1,4 +1,3 @@
-
 import { Auth } from "@supabase/auth-ui-react"
 import { ThemeSupa } from "@supabase/auth-ui-shared"
 import { supabase } from "@/integrations/supabase/client"
@@ -243,10 +242,7 @@ export default function Login() {
           </div>
         </div>
       </div>
-      
-      <div className="absolute bottom-0 w-full py-3 text-center text-xs text-muted-foreground bg-background/30 backdrop-blur-sm border-t border-border/10">
-        <p>© 2023 SightX. Todos os direitos reservados.</p>
-      </div>
     </div>
   )
 }
+
