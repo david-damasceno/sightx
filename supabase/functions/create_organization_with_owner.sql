@@ -65,12 +65,12 @@ BEGIN
     -- Ignora se o bucket já existir
   END;
   
-  -- Configurar RLS para o bucket
+  -- Configurar RLS para o bucket - CORREÇÃO: Modificado para evitar o erro "op ANY/ALL (array) requires array on right side"
   EXECUTE 'CREATE POLICY "' || v_org.slug || '_bucket_policy" ON storage.objects 
            FOR ALL 
            TO authenticated
            USING (bucket_id = ''' || v_org.id::text || ''' AND (
-              auth.uid() = ANY(owner) OR
+              auth.uid()::text = ANY(owner) OR
               auth.uid() IN (
                 SELECT user_id FROM organization_members 
                 WHERE organization_id = ''' || v_org.id || '''
