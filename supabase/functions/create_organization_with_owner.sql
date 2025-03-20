@@ -1,4 +1,5 @@
 
+
 CREATE OR REPLACE FUNCTION create_organization_with_owner(
   p_name TEXT,
   p_slug TEXT,
@@ -69,15 +70,15 @@ BEGIN
   EXECUTE 'CREATE POLICY "' || v_org.slug || '_bucket_policy" ON storage.objects 
            FOR ALL 
            TO authenticated
-           USING (bucket_id = ''' || v_org.id::text || ''' AND (
-              auth.uid()::text = ANY(owner) OR
-              auth.uid() IN (
-                SELECT user_id FROM organization_members 
-                WHERE organization_id = ''' || v_org.id || '''
-              )
-           ))';
+           USING (bucket_id = ''' || v_org.id::text || ''' AND 
+                  auth.uid() IN (
+                    SELECT user_id FROM organization_members 
+                    WHERE organization_id = ''' || v_org.id || '''
+                  )
+           )';
   
   -- Retornar um JSON com os dados da organização
   RETURN row_to_json(v_org);
 END;
 $$;
+
