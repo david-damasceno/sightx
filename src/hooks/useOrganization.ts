@@ -31,7 +31,7 @@ export function useOrganization() {
         setCurrentOrganization(null)
       }
     } catch (error: any) {
-      console.error('Error fetching organizations:', error)
+      console.error('Erro ao buscar organizações:', error)
       // Removemos o toast de erro aqui pois é esperado não ter organizações no início
     } finally {
       setLoading(false)
@@ -98,9 +98,14 @@ export function useOrganization() {
         }
       )
 
-      if (rpcError) throw rpcError
+      if (rpcError) {
+        console.error('Erro ao criar organização (RPC):', rpcError)
+        throw rpcError
+      }
 
       if (!result) throw new Error('Nenhum resultado retornado da função RPC')
+
+      console.log('Organização criada com sucesso:', result)
 
       // Atualiza imediatamente o estado com a nova organização
       await fetchOrganizations()
@@ -117,10 +122,10 @@ export function useOrganization() {
 
       return result as Organization
     } catch (error: any) {
-      console.error('Error creating organization:', error)
+      console.error('Erro ao criar organização:', error)
       toast({
         title: "Erro",
-        description: "Não foi possível criar a organização.",
+        description: "Não foi possível criar a organização: " + error.message,
         variant: "destructive"
       })
       throw error
@@ -143,7 +148,7 @@ export function useOrganization() {
 
       setMembers(data || [])
     } catch (error: any) {
-      console.error('Error fetching members:', error)
+      console.error('Erro ao buscar membros:', error)
       // Removemos o toast de erro aqui também pois é esperado não ter membros no início
     } finally {
       setLoading(false)
@@ -189,7 +194,7 @@ export function useOrganization() {
         description: "Convite enviado com sucesso.",
       })
     } catch (error: any) {
-      console.error('Error inviting member:', error)
+      console.error('Erro ao convidar membro:', error)
       toast({
         title: "Erro",
         description: "Não foi possível enviar o convite.",

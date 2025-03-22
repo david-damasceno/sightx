@@ -30,7 +30,7 @@ export function ProtectedRoute({ children, checkOnboarding = false }: ProtectedR
           if (error) throw error
           if (mounted) setIsOnboarded(data?.onboarded ?? false)
         } catch (error) {
-          console.error('Error checking onboarding status:', error)
+          console.error('Erro ao verificar status de onboarding:', error)
           if (mounted) setIsOnboarded(false)
         }
       } else {

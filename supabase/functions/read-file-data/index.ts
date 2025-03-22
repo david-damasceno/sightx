@@ -60,7 +60,7 @@ serve(async (req) => {
       esquema: schemaName
     })
 
-    // Baixar o arquivo do bucket específico da organização
+    // Baixar o arquivo usando service_role para contornar RLS
     const { data: fileBuffer, error: downloadError } = await supabase
       .storage
       .from(organizationId)

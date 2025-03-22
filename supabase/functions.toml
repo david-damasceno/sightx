@@ -36,3 +36,7 @@ verify_jwt = false
 [[functions]]
 name = "process-invite"
 verify_jwt = false
+
+[[functions]]
+name = "read-file-data"
+verify_jwt = false
