@@ -40,7 +40,3 @@ verify_jwt = false
 [[functions]]
 name = "read-file-data"
 verify_jwt = false
-
-[[functions]]
-name = "setup-airbyte-access"
-verify_jwt = false
