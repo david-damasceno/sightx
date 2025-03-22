@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -30,6 +29,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy"
 import TermsOfService from "./pages/TermsOfService"
 import Support from "./pages/Support"
 import DataUsagePolicy from "./pages/DataUsagePolicy"
+import AirbyteIntegration from "./pages/AirbyteIntegration"
 import { initializeLocalization, getLocalizationSettings } from "@/utils/localization";
 
 const queryClient = new QueryClient()
@@ -40,12 +40,9 @@ const AppContent = () => {
   const isOnboardingPage = location.pathname === '/onboarding'
   const isLegalPage = ['/privacy-policy', '/terms-of-service', '/support', '/data-usage-policy'].includes(location.pathname)
 
-  // Inicializar as configurações de localização quando o componente montar
   useEffect(() => {
-    // Inicializar localização
     initializeLocalization();
     
-    // Configurar título da página baseado no idioma atual
     const settings = getLocalizationSettings();
     const siteName = "SightX";
     let suffix = "";
@@ -172,6 +169,14 @@ const AppContent = () => {
             element={
               <ProtectedRoute checkOnboarding>
                 <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/integrations/airbyte"
+            element={
+              <ProtectedRoute checkOnboarding>
+                <AirbyteIntegration />
               </ProtectedRoute>
             }
           />

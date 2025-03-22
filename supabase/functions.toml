@@ -40,3 +40,7 @@ verify_jwt = false
 [[functions]]
 name = "read-file-data"
 verify_jwt = false
+
+[[functions]]
+name = "create-airbyte-user"
+verify_jwt = false
