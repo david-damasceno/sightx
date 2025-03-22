@@ -19,10 +19,14 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Gerar nome de usuário e senha aleatórios
+    // Gerar nome de usuário e senha aleatórios e seguros
     const username = `airbyte_user_${Math.random().toString(36).substring(2, 10)}`;
     const password = Math.random().toString(36).substring(2, 15) + 
+                     Math.random().toString(36).substring(2, 15) +
+                     Math.random().toString(36).substring(2, 15) +
                      Math.random().toString(36).substring(2, 15);
+
+    console.log(`Criando usuário para Airbyte: ${username}`);
 
     // Executar SQL para criar o usuário com permissões no banco de dados
     const { data, error } = await supabase.rpc('create_airbyte_user', {
@@ -30,7 +34,12 @@ serve(async (req) => {
       p_password: password
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Erro ao criar usuário Airbyte:", error);
+      throw error;
+    }
+
+    console.log("Usuário para Airbyte criado com sucesso:", data);
 
     return new Response(
       JSON.stringify({
@@ -48,7 +57,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Erro:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
