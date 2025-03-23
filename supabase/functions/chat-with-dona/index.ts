@@ -3,9 +3,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.2"
 
-const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY')
-const endpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT')
-const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT')
+const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY') || Deno.env.get('OPENAI_API_KEY')
+const endpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT') || "https://api.openai.com/v1"
+const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT') || "gpt-4o-mini"
+const isAzure = !!Deno.env.get('AZURE_OPENAI_ENDPOINT')
 const supabaseUrl = Deno.env.get('SUPABASE_URL')
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
@@ -21,11 +22,9 @@ serve(async (req) => {
 
   try {
     // Verificar se todas as variáveis de ambiente necessárias estão definidas
-    if (!apiKey || !endpoint || !deployment || !supabaseUrl || !supabaseServiceKey) {
+    if (!apiKey || !supabaseUrl || !supabaseServiceKey) {
       console.error('Configuração incompleta:', {
         hasApiKey: !!apiKey,
-        hasEndpoint: !!endpoint,
-        hasDeployment: !!deployment,
         hasSupabaseUrl: !!supabaseUrl,
         hasSupabaseServiceKey: !!supabaseServiceKey
       })
@@ -62,7 +61,7 @@ serve(async (req) => {
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
     
     if (profileError) {
       console.error('Erro ao obter perfil do usuário:', profileError)
@@ -76,7 +75,7 @@ serve(async (req) => {
         .from('organizations')
         .select('*')
         .eq('id', orgId)
-        .single()
+        .maybeSingle()
       
       if (orgError) {
         console.error('Erro ao obter informações da organização:', orgError)
@@ -95,16 +94,15 @@ Você é profissional mas amigável, e sempre tenta ajudar os usuários a entend
 Você também é especialista em criar pesquisas e formulários de feedback eficazes, seguindo as melhores práticas de UX e design de pesquisa.
 
 CAPACIDADES DE ACESSO A DADOS:
-Você pode acessar e analisar dados do banco de dados da empresa quando solicitado. Para fazer isso:
-1. Quando o usuário pedir insights, estatísticas ou análises, você pode gerar consultas SQL para obter os dados.
-2. Para cada consulta, você deve:
-   - Garantir que ela seja segura e eficiente
-   - Limitar o número de resultados para evitar sobrecarga
-   - Explicar claramente os resultados em linguagem simples
-3. Só compartilhe SQL com o usuário se ele solicitar explicitamente
+Você pode acessar e analisar dados do banco de dados da empresa automaticamente. Para isso:
+1. Você deve SEMPRE analisar AUTOMATICAMENTE a solicitação do usuário para identificar se envolve análise de dados.
+2. Quando identificar uma solicitação que necessita de dados, você DEVE gerar uma consulta SQL apropriada.
+3. Você deve SEMPRE executar a consulta SQL sem pedir permissão ao usuário.
+4. Após executar a consulta, apresente os resultados em um formato claro e conciso, explicando o que foi encontrado.
+5. Se ocorrer algum erro na consulta, explique o problema e sugira alternativas.
 
 INFORMAÇÕES SOBRE O BANCO DE DADOS:
-${schemaData || 'Informações de schema indisponíveis no momento. Pergunte ao usuário sobre os dados que deseja analisar.'}
+${schemaData || 'Informações de schema indisponíveis no momento. Por favor pergunte ao usuário sobre os dados que deseja analisar.'}
 
 INFORMAÇÕES DO USUÁRIO:
 Nome: ${userName}
@@ -122,24 +120,38 @@ Lembre-se: Você existe para ajudar ${userName} a obter insights valiosos dos da
     // Preparar dados adicionais da mensagem
     const userMessage = context ? `${message}\n\nContexto adicional: ${context}` : message
     
-    const baseEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint
-    const url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-07-01-preview`
+    let url, headers;
     
-    console.log('Chamando Azure OpenAI em:', url)
-    console.log('Usando deployment:', deployment)
+    // Configurar a chamada para Azure OpenAI ou OpenAI padrão
+    if (isAzure) {
+      // Azure OpenAI
+      const baseEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint
+      url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-07-01-preview`
+      headers = {
+        'Content-Type': 'application/json',
+        'api-key': apiKey,
+      }
+      console.log('Usando Azure OpenAI:', url)
+    } else {
+      // OpenAI padrão
+      url = `${endpoint}/chat/completions`
+      headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      }
+      console.log('Usando OpenAI padrão:', url)
+    }
 
     // Configurações que podem ser ajustadas com base em settings
     const temperature = settings?.temperature || 0.7
     const maxTokens = settings?.maxTokens || 1200
 
-    // Enviar solicitação para o Azure OpenAI
-    const azureResponse = await fetch(url, {
+    // Enviar solicitação para o provedor de IA
+    const aiResponse = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api-key': apiKey,
-      },
+      headers: headers,
       body: JSON.stringify({
+        model: isAzure ? null : deployment,
         messages: [
           {
             role: 'system',
@@ -159,29 +171,29 @@ Lembre-se: Você existe para ajudar ${userName} a obter insights valiosos dos da
       }),
     })
 
-    console.log('Status da resposta do Azure OpenAI:', azureResponse.status)
+    console.log('Status da resposta da IA:', aiResponse.status)
 
-    if (!azureResponse.ok) {
-      const errorText = await azureResponse.text()
-      console.error('Erro na resposta do Azure OpenAI:', errorText)
-      throw new Error(`Erro no Azure OpenAI: ${errorText}`)
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text()
+      console.error('Erro na resposta da IA:', errorText)
+      throw new Error(`Erro no serviço de IA: ${errorText}`)
     }
 
-    const data = await azureResponse.json()
-    console.log('Resposta recebida do Azure OpenAI')
+    const data = await aiResponse.json()
+    console.log('Resposta recebida da IA')
 
     if (!data.choices?.[0]?.message?.content) {
-      throw new Error('Formato de resposta inválido do Azure OpenAI')
+      throw new Error('Formato de resposta inválido do serviço de IA')
     }
 
-    const aiResponse = data.choices[0].message.content
+    const aiResult = data.choices[0].message.content
 
     // Processar a resposta para ver se contém uma consulta SQL para executar
-    let processedResponse = aiResponse
-    const sqlMatch = aiResponse.match(/```sql\s*([\s\S]*?)\s*```/)
+    let processedResponse = aiResult
+    const sqlMatch = aiResult.match(/```sql\s*([\s\S]*?)\s*```/)
     
-    // Se a IA gerou uma consulta SQL e temos um ID de organização, execute-a
-    if (sqlMatch && orgId && settings?.autoAnalysis !== false) {
+    // Se a IA gerou uma consulta SQL e temos um ID de organização, execute-a automaticamente
+    if (sqlMatch && orgId) {
       const sqlQuery = sqlMatch[1].trim()
       console.log('Executando consulta SQL gerada pela IA:', sqlQuery)
       

@@ -65,7 +65,7 @@ export function ChatInterface({
       
       setInputMessage("")
       setIsLoading(true)
-      setLoadingMessage("Analisando sua mensagem...")
+      setLoadingMessage("Analisando sua solicitação...")
       onChatUpdated()
 
       // Obter contexto da conversa atual
@@ -74,7 +74,10 @@ export function ChatInterface({
         : '';
 
       // Enviando a mensagem para a IA
-      setLoadingMessage("Consultando dados e gerando resposta...")
+      setTimeout(() => {
+        setLoadingMessage("Consultando dados e gerando insights...")
+      }, 1000);
+      
       const aiResponse = await sendMessageToAI(inputMessage, chatContext)
       
       // Adicionar resposta da IA ao chat

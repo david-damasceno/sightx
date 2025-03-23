@@ -26,6 +26,10 @@ name = "chat-with-dona"
 verify_jwt = false
 
 [[functions]]
+name = "analyze-data-insights"
+verify_jwt = false
+
+[[functions]]
 name = "test-function"
 verify_jwt = false
 

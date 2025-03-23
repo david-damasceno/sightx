@@ -62,6 +62,47 @@ export function ChatMessageList({
     );
   }
 
+  // Renderiza a lista de mensagens
+  const renderMessageContent = (text: string) => {
+    // Detectar e formatar blocos de código
+    const parts = text.split(/(```[\s\S]*?```)/g);
+    
+    return parts.map((part, idx) => {
+      if (part.startsWith('```') && part.endsWith('```')) {
+        // Extrair a linguagem e o código
+        const match = part.match(/```(?:(\w+))?\s*([\s\S]*?)```/);
+        const language = match?.[1] || '';
+        const code = match?.[2] || '';
+        
+        return (
+          <div key={idx} className="my-2 overflow-x-auto">
+            <pre className="bg-gray-900 text-gray-100 dark:bg-gray-800 p-3 rounded-md text-sm">
+              <code>{code}</code>
+            </pre>
+          </div>
+        );
+      } else if (part.includes('**Resultados da análise:**')) {
+        // Formatar seção de resultados
+        return (
+          <div key={idx} className="mt-2 p-2 bg-primary/10 rounded-md">
+            {part.split('\n').map((line, lineIdx) => (
+              <div key={lineIdx}>
+                {line.startsWith('**') ? (
+                  <strong className="text-primary">{line.replace(/\*\*/g, '')}</strong>
+                ) : (
+                  line
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      } else {
+        // Texto normal
+        return <div key={idx} className="whitespace-pre-wrap">{part}</div>;
+      }
+    });
+  };
+
   return (
     <div className="space-y-4">
       {messages.map((message) => (
@@ -88,8 +129,12 @@ export function ChatMessageList({
                   : "bg-muted/70 dark:bg-muted"
               }`}
             >
-              <div className="whitespace-pre-wrap text-sm">
-                {message.text}
+              <div className="text-sm">
+                {message.sender === "user" ? (
+                  <div className="whitespace-pre-wrap">{message.text}</div>
+                ) : (
+                  renderMessageContent(message.text)
+                )}
               </div>
               <div className="mt-1 text-[10px] opacity-70 text-right">
                 {typeof message.timestamp === 'string'

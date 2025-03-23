@@ -1,7 +1,12 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.2'
+
+const apiKey = Deno.env.get('AZURE_OPENAI_API_KEY') || Deno.env.get('OPENAI_API_KEY')
+const endpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT') || "https://api.openai.com/v1"
+const deployment = Deno.env.get('AZURE_OPENAI_DEPLOYMENT') || "gpt-4o-mini"
+const isAzure = !!Deno.env.get('AZURE_OPENAI_ENDPOINT')
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -43,27 +48,60 @@ serve(async (req) => {
       "type": "um dos seguintes: time_series, correlation, distribution, clustering, segmentation, forecasting, anomaly_detection"
     }`
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('AZURE_OPENAI_API_KEY')}`,
+    let url, headers;
+    
+    // Configurar a chamada para Azure OpenAI ou OpenAI padrão
+    if (isAzure) {
+      // Azure OpenAI
+      const baseEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint
+      url = `${baseEndpoint}/openai/deployments/${deployment}/chat/completions?api-version=2023-07-01-preview`
+      headers = {
         'Content-Type': 'application/json',
-      },
+        'api-key': apiKey,
+      }
+    } else {
+      // OpenAI padrão
+      url = `${endpoint}/chat/completions`
+      headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      }
+    }
+
+    const aiResponse = await fetch(url, {
+      method: 'POST',
+      headers: headers,
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: isAzure ? null : deployment,
         messages: [
           { role: 'system', content: 'Você é um analista de dados especializado em sugerir análises relevantes.' },
           { role: 'user', content: prompt }
         ],
+        temperature: 0.7,
+        max_tokens: 1500,
       }),
     })
 
-    if (!response.ok) {
+    if (!aiResponse.ok) {
       throw new Error('Erro ao gerar sugestões de análise')
     }
 
-    const data = await response.json()
-    const suggestions = JSON.parse(data.choices[0].message.content)
+    const data = await aiResponse.json()
+    const resultContent = data.choices[0].message.content
+    
+    // Tentar analisar o JSON da resposta
+    let suggestions = []
+    try {
+      suggestions = JSON.parse(resultContent)
+    } catch (e) {
+      // Tentar encontrar array JSON na resposta se não for JSON puro
+      const jsonMatch = resultContent.match(/\[\s*\{.*\}\s*\]/s)
+      if (jsonMatch) {
+        suggestions = JSON.parse(jsonMatch[0])
+      } else {
+        throw new Error('Formato de resposta inválido da IA')
+      }
+    }
 
     // Salvar sugestões no banco de dados
     const supabase = createClient(
