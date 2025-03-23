@@ -25,6 +25,27 @@ serve(async (req) => {
       throw new Error('Dados insuficientes para análise')
     }
 
+    // Obter informações da organização para identificar o esquema
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    // Buscar informações da organização para obter o esquema
+    const { data: orgData, error: orgError } = await supabase
+      .from('organizations')
+      .select('settings')
+      .eq('id', organizationId)
+      .single()
+
+    if (orgError) {
+      console.error('Erro ao buscar organização:', orgError)
+      throw new Error('Organização não encontrada')
+    }
+
+    const orgSchemaName = orgData?.settings?.schema_name || 'public'
+    console.log(`Usando esquema da organização: ${orgSchemaName} para análise de dados`)
+
     // Construir um prompt informativo para a IA
     const prompt = `Como um analista de dados especializado, analise os seguintes dados e sugira análises relevantes.
     
@@ -33,11 +54,16 @@ serve(async (req) => {
     Dados de exemplo:
     ${JSON.stringify(previewData.slice(0, 5), null, 2)}
     
+    Esquema do banco de dados a ser usado: ${orgSchemaName}
+    
     Por favor, sugira análises específicas que possam ser realizadas com estes dados. Para cada análise sugerida, forneça:
     1. Título da análise
     2. Descrição do que pode ser descoberto
     3. Métricas relevantes
     4. Tipo de visualização recomendada
+    
+    IMPORTANTE: Quando gerar consultas SQL, SEMPRE use o esquema "${orgSchemaName}." como prefixo para todas as tabelas.
+    Exemplo: Use "${orgSchemaName}.nome_da_tabela" em vez de apenas "nome_da_tabela".
     
     Retorne apenas um array JSON com o seguinte formato para cada análise:
     {
@@ -104,11 +130,6 @@ serve(async (req) => {
     }
 
     // Salvar sugestões no banco de dados
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
     const { error: insertError } = await supabase
       .from('data_analysis_suggestions')
       .insert({
@@ -120,7 +141,10 @@ serve(async (req) => {
     if (insertError) throw insertError
 
     return new Response(
-      JSON.stringify({ suggestions }),
+      JSON.stringify({ 
+        suggestions,
+        schema: orgSchemaName
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {

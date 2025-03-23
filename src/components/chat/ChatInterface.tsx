@@ -73,12 +73,30 @@ export function ChatInterface({
         ? messages.slice(-10).map(m => `${m.sender === 'user' ? 'Usuário' : 'IA'}: ${m.text}`).join('\n')
         : '';
 
-      // Enviando a mensagem para a IA
-      setTimeout(() => {
-        setLoadingMessage("Consultando dados e gerando insights...")
-      }, 1000);
+      // Sequência de mensagens de carregamento mais detalhadas
+      const loadingMessages = [
+        "Identificando necessidades de dados...",
+        "Consultando esquema da organização...",
+        "Gerando consulta SQL otimizada...",
+        "Executando consulta no banco de dados...",
+        "Analisando resultados e gerando insights..."
+      ];
       
+      let messageIndex = 0;
+      const loadingInterval = setInterval(() => {
+        if (messageIndex < loadingMessages.length) {
+          setLoadingMessage(loadingMessages[messageIndex]);
+          messageIndex++;
+        } else {
+          clearInterval(loadingInterval);
+        }
+      }, 1500);
+      
+      // Enviando a mensagem para a IA
       const aiResponse = await sendMessageToAI(inputMessage, chatContext)
+      
+      // Limpar o intervalo quando a resposta chegar
+      clearInterval(loadingInterval);
       
       // Adicionar resposta da IA ao chat
       await addMessageToChat(selectedChat, {

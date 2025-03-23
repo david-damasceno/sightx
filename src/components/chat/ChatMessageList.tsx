@@ -62,6 +62,16 @@ export function ChatMessageList({
     );
   }
 
+  // Destacar esquema em código SQL
+  const highlightSchema = (code: string) => {
+    // Buscar por possíveis esquemas no formato "schema_name."
+    const schemaRegex = /(\w+)\.(\w+)/g;
+    
+    return code.replace(schemaRegex, (match, schema, table) => {
+      return `<span class="text-green-500 font-semibold">${schema}</span>.<span class="text-blue-500">${table}</span>`;
+    });
+  };
+
   // Renderiza a lista de mensagens
   const renderMessageContent = (text: string) => {
     // Detectar e formatar blocos de código
@@ -74,15 +84,20 @@ export function ChatMessageList({
         const language = match?.[1] || '';
         const code = match?.[2] || '';
         
+        // Se for SQL, destacar o esquema
+        const formattedCode = language.toLowerCase() === 'sql' 
+          ? <div dangerouslySetInnerHTML={{ __html: highlightSchema(code) }} />
+          : <code>{code}</code>;
+        
         return (
           <div key={idx} className="my-2 overflow-x-auto">
             <pre className="bg-gray-900 text-gray-100 dark:bg-gray-800 p-3 rounded-md text-sm">
-              <code>{code}</code>
+              {formattedCode}
             </pre>
           </div>
         );
-      } else if (part.includes('**Resultados da análise:**')) {
-        // Formatar seção de resultados
+      } else if (part.includes('**Resultados da análise:**') || part.includes('**Nota:**')) {
+        // Formatar seção de resultados e notas
         return (
           <div key={idx} className="mt-2 p-2 bg-primary/10 rounded-md">
             {part.split('\n').map((line, lineIdx) => (

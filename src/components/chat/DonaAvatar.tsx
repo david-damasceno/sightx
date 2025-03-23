@@ -1,6 +1,6 @@
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Brain } from "lucide-react"
-import { Avatar } from "@/components/ui/avatar"
 
 interface DonaAvatarProps {
   className?: string;
@@ -8,8 +8,11 @@ interface DonaAvatarProps {
 
 export function DonaAvatar({ className }: DonaAvatarProps) {
   return (
-    <Avatar className={`h-8 w-8 bg-primary/10 flex items-center justify-center ${className || ''}`}>
-      <Brain className="h-5 w-5 text-primary" />
+    <Avatar className={className}>
+      <AvatarImage src="/icons/dona-avatar.png" alt="DONA" />
+      <AvatarFallback className="bg-primary/10">
+        <Brain className="h-4 w-4 text-primary" />
+      </AvatarFallback>
     </Avatar>
   )
 }

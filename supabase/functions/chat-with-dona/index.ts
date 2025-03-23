@@ -47,6 +47,27 @@ serve(async (req) => {
       throw new Error('ID do usuário não fornecido. Autenticação necessária.')
     }
 
+    if (!orgId) {
+      throw new Error('ID da organização não fornecido. Seleção de organização necessária.')
+    }
+
+    // Obter informações da organização para identificar o esquema
+    console.log('Obtendo informações da organização')
+    const { data: orgData, error: orgError } = await supabase
+      .from('organizations')
+      .select('*, settings')
+      .eq('id', orgId)
+      .maybeSingle()
+    
+    if (orgError || !orgData) {
+      console.error('Erro ao obter informações da organização:', orgError)
+      throw new Error('Organização não encontrada: ' + (orgError?.message || ''))
+    }
+    
+    // Determinar o esquema da organização
+    const orgSchemaName = orgData?.settings?.schema_name || 'public'
+    console.log(`Usando esquema da organização: ${orgSchemaName}`)
+
     // Obter metadados do schema do banco de dados
     console.log('Obtendo schema do banco de dados para a IA')
     const { data: schemaData, error: schemaError } = await supabase.rpc('get_ai_schema_summary')
@@ -67,23 +88,6 @@ serve(async (req) => {
       console.error('Erro ao obter perfil do usuário:', profileError)
     }
 
-    // Obter informações da organização se o ID foi fornecido
-    let orgData = null
-    if (orgId) {
-      console.log('Obtendo informações da organização')
-      const { data: org, error: orgError } = await supabase
-        .from('organizations')
-        .select('*')
-        .eq('id', orgId)
-        .maybeSingle()
-      
-      if (orgError) {
-        console.error('Erro ao obter informações da organização:', orgError)
-      } else {
-        orgData = org
-      }
-    }
-
     // Construir o contexto para a IA com os metadados disponíveis
     const userName = profileData?.full_name || 'Usuário'
     const orgName = orgData?.name || 'sua organização'
@@ -98,8 +102,9 @@ Você pode acessar e analisar dados do banco de dados da empresa automaticamente
 1. Você deve SEMPRE analisar AUTOMATICAMENTE a solicitação do usuário para identificar se envolve análise de dados.
 2. Quando identificar uma solicitação que necessita de dados, você DEVE gerar uma consulta SQL apropriada.
 3. Você deve SEMPRE executar a consulta SQL sem pedir permissão ao usuário.
-4. Após executar a consulta, apresente os resultados em um formato claro e conciso, explicando o que foi encontrado.
-5. Se ocorrer algum erro na consulta, explique o problema e sugira alternativas.
+4. Você DEVE SEMPRE adicionar o esquema da organização "${orgSchemaName}" ao início das tabelas em suas consultas SQL.
+5. Após executar a consulta, apresente os resultados em um formato claro e conciso, explicando o que foi encontrado.
+6. Se ocorrer algum erro na consulta, explique o problema e sugira alternativas.
 
 INFORMAÇÕES SOBRE O BANCO DE DADOS:
 ${schemaData || 'Informações de schema indisponíveis no momento. Por favor pergunte ao usuário sobre os dados que deseja analisar.'}
@@ -111,9 +116,16 @@ Empresa: ${profileData.company || 'Não disponível'}` : 'Detalhes de perfil nã
 
 INFORMAÇÕES DA ORGANIZAÇÃO:
 ${orgData ? `Nome: ${orgData.name}
+Esquema do Banco de Dados: ${orgSchemaName}
 ${orgData.settings?.sector ? `Setor: ${orgData.settings.sector}` : ''}
 ${orgData.settings?.city && orgData.settings?.state ? `Localização: ${orgData.settings.city}, ${orgData.settings.state}` : ''}
 ${orgData.settings?.description ? `Descrição: ${orgData.settings.description}` : ''}` : 'Detalhes da organização não disponíveis'}
+
+INSTRUÇÕES PARA CONSULTAS SQL:
+1. SEMPRE adicione o prefixo do esquema "${orgSchemaName}." antes de cada nome de tabela em suas consultas SQL.
+2. Exemplo: Use "${orgSchemaName}.nome_da_tabela" em vez de apenas "nome_da_tabela".
+3. Consultas sem o prefixo correto do esquema falharão.
+4. Nunca use o esquema "public" a menos que seja explicitamente solicitado.
 
 Lembre-se: Você existe para ajudar ${userName} a obter insights valiosos dos dados da empresa. Seja específico, orientado a soluções e sempre considere o contexto empresarial em suas respostas.`
 
@@ -194,8 +206,29 @@ Lembre-se: Você existe para ajudar ${userName} a obter insights valiosos dos da
     
     // Se a IA gerou uma consulta SQL e temos um ID de organização, execute-a automaticamente
     if (sqlMatch && orgId) {
-      const sqlQuery = sqlMatch[1].trim()
-      console.log('Executando consulta SQL gerada pela IA:', sqlQuery)
+      let sqlQuery = sqlMatch[1].trim()
+      
+      // Verificar se a consulta já inclui o prefixo do esquema
+      if (!sqlQuery.includes(`${orgSchemaName}.`)) {
+        // Se não incluir o esquema, adicionamos um aviso na resposta
+        processedResponse = processedResponse.replace(
+          "```sql", 
+          `**Nota:** Consulta SQL ajustada para usar o esquema da organização '${orgSchemaName}'.\n\n\`\`\`sql`
+        )
+        
+        // Adicionar o prefixo do esquema a todas as tabelas na consulta
+        // Esta é uma abordagem simplificada, pode precisar de ajustes para consultas complexas
+        const tableRegex = /\b(FROM|JOIN)\s+([a-zA-Z_][a-zA-Z0-9_]*)\b/gi
+        sqlQuery = sqlQuery.replace(tableRegex, (match, keyword, tableName) => {
+          // Não adicionar prefixo se já tiver um esquema especificado
+          if (tableName.includes(".") || tableName.startsWith(`${orgSchemaName}.`)) {
+            return match;
+          }
+          return `${keyword} ${orgSchemaName}.${tableName}`;
+        });
+      }
+      
+      console.log('Executando consulta SQL com esquema correto:', sqlQuery)
       
       try {
         // Executar a consulta usando a função AI query_data
