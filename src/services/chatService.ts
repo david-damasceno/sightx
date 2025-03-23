@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Chat, ChatMessage, ChatSettings } from "@/types/chat";
 import { v4 as uuidv4 } from "uuid";
@@ -352,40 +351,28 @@ export const sendMessageToAI = async (message: string, context?: string): Promis
   try {
     const settings = await loadChatSettings();
     
-    // Obter informações do usuário e da organização
-    const { userName, orgInfo } = await getUserAndOrgContext();
+    // Obter o ID do usuário atual
+    const { data: { user } } = await supabase.auth.getUser();
     
-    // Construir contexto adicional com informações do usuário e da organização
-    let enhancedContext = `O usuário @${userName} está lhe enviando uma mensagem.`;
-    
-    if (orgInfo) {
-      enhancedContext += "\n\nPara fornecer a melhor resposta, segue as informações sobre a empresa dele:";
-      
-      if (orgInfo.name) enhancedContext += `\nNome da empresa: ${orgInfo.name}`;
-      if (orgInfo.sector) enhancedContext += `\nSetor: ${orgInfo.sector}`;
-      if (orgInfo.city && orgInfo.state) enhancedContext += `\nLocalização: ${orgInfo.city}, ${orgInfo.state}`;
-      if (orgInfo.description) enhancedContext += `\nSobre a empresa: ${orgInfo.description}`;
-      
-      // Adicionar outras informações disponíveis
-      Object.entries(orgInfo).forEach(([key, value]) => {
-        if (!['name', 'sector', 'city', 'state', 'description'].includes(key) && value) {
-          enhancedContext += `\n${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`;
-        }
-      });
+    if (!user?.id) {
+      throw new Error("Usuário não autenticado");
     }
     
-    enhancedContext += `\n\nAbaixo, segue a mensagem do @${userName} para você:\n\n"${message}"`;
+    // Obter a organização atual do usuário
+    const { data: memberData } = await supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
     
-    // Incluir histórico do chat se fornecido
-    if (context) {
-      enhancedContext += `\n\nHistórico recente da conversa:\n${context}`;
-    }
-    
+    // Chamar a função Edge com os IDs do usuário e da organização
     const { data, error } = await supabase.functions.invoke("chat-with-dona", {
       body: { 
-        message: enhancedContext,
-        context: "",
-        settings
+        message,
+        context,
+        settings,
+        userId: user.id,
+        orgId: memberData?.organization_id || null
       },
     });
 

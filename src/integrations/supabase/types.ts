@@ -9,6 +9,83 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_analysis_history: {
+        Row: {
+          created_at: string | null
+          executed_sql: string | null
+          full_result: Json | null
+          id: string
+          organization_id: string
+          query_text: string
+          result_summary: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          executed_sql?: string | null
+          full_result?: Json | null
+          id?: string
+          organization_id: string
+          query_text: string
+          result_summary?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          executed_sql?: string | null
+          full_result?: Json | null
+          id?: string
+          organization_id?: string
+          query_text?: string
+          result_summary?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_analysis_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_knowledge_index: {
+        Row: {
+          column_metadata: Json | null
+          description: string
+          entity_name: string
+          entity_type: string
+          id: string
+          last_updated: string | null
+          relationships: Json | null
+          sample_queries: Json | null
+          schema_name: string
+        }
+        Insert: {
+          column_metadata?: Json | null
+          description: string
+          entity_name: string
+          entity_type: string
+          id?: string
+          last_updated?: string | null
+          relationships?: Json | null
+          sample_queries?: Json | null
+          schema_name?: string
+        }
+        Update: {
+          column_metadata?: Json | null
+          description?: string
+          entity_name?: string
+          entity_type?: string
+          id?: string
+          last_updated?: string | null
+          relationships?: Json | null
+          sample_queries?: Json | null
+          schema_name?: string
+        }
+        Relationships: []
+      }
       chats: {
         Row: {
           created_at: string
@@ -354,6 +431,14 @@ export type Database = {
       }
     }
     Functions: {
+      ai_query_data: {
+        Args: {
+          p_sql: string
+          p_organization_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       calculate_nps_metrics: {
         Args: {
           survey_id: string
@@ -389,6 +474,10 @@ export type Database = {
             }
             Returns: Json
           }
+      get_ai_schema_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_table_data:
         | {
             Args: {
@@ -411,6 +500,10 @@ export type Database = {
           sample_data: Json
         }
         Returns: string
+      }
+      populate_ai_knowledge_index: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       setup_table_rls: {
         Args: {

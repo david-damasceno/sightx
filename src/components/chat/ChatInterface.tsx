@@ -29,6 +29,7 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
   const [inputMessage, setInputMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [loadingMessage, setLoadingMessage] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const isMobile = useMobile()
@@ -64,15 +65,16 @@ export function ChatInterface({
       
       setInputMessage("")
       setIsLoading(true)
+      setLoadingMessage("Analisando sua mensagem...")
       onChatUpdated()
 
-      // Obter resposta da IA
-      // Agora não precisamos enviar o contexto completo aqui, pois será construído na função sendMessageToAI
+      // Obter contexto da conversa atual
       const chatContext = messages.length > 0 
         ? messages.slice(-10).map(m => `${m.sender === 'user' ? 'Usuário' : 'IA'}: ${m.text}`).join('\n')
         : '';
 
-      // Enviando a mensagem original do usuário - a função sendMessageToAI já vai adicionar o contexto
+      // Enviando a mensagem para a IA
+      setLoadingMessage("Consultando dados e gerando resposta...")
       const aiResponse = await sendMessageToAI(inputMessage, chatContext)
       
       // Adicionar resposta da IA ao chat
@@ -87,6 +89,7 @@ export function ChatInterface({
       console.error("Erro ao processar mensagem:", error)
     } finally {
       setIsLoading(false)
+      setLoadingMessage("")
     }
   }
 
@@ -177,7 +180,11 @@ export function ChatInterface({
 
       {/* Message list */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
-        <ChatMessageList messages={messages} isLoading={isLoading} />
+        <ChatMessageList 
+          messages={messages} 
+          isLoading={isLoading} 
+          loadingMessage={loadingMessage}
+        />
         <div ref={messagesEndRef} />
       </div>
 

@@ -1,63 +1,127 @@
 
-import { cn } from "@/lib/utils"
-import { Loader2 } from "lucide-react"
-import { ChatMessage } from "@/types/chat"
-import { DonaAvatar } from "./DonaAvatar"
-import { UserAvatar } from "./UserAvatar"
+import { useEffect, useRef } from "react";
+import { ChatMessage } from "@/types/chat";
+import { DonaAvatar } from "./DonaAvatar";
+import { UserAvatar } from "./UserAvatar";
+import { Loader2 } from "lucide-react";
 
 interface ChatMessageListProps {
-  messages: ChatMessage[]
-  isLoading: boolean
+  messages: ChatMessage[];
+  isLoading: boolean;
+  loadingMessage?: string;
 }
 
-export function ChatMessageList({ messages, isLoading }: ChatMessageListProps) {
-  const formatText = (text: string) => {
-    return text.split('\n').map((line, i) => (
-      <span key={i}>
-        {line}
-        {i < text.split('\n').length - 1 && <br />}
-      </span>
-    ))
+export function ChatMessageList({ 
+  messages, 
+  isLoading, 
+  loadingMessage = "Processando..."
+}: ChatMessageListProps) {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Scroll para o final das mensagens quando novas mensagens são adicionadas
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  if (messages.length === 0 && !isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center p-8 h-full">
+        <DonaAvatar className="w-16 h-16 mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Olá, eu sou DONA</h2>
+        <p className="text-muted-foreground max-w-md mb-6">
+          Sua assistente de análise de dados e insights empresariais. 
+          Como posso ajudar você hoje?
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-lg w-full text-left">
+          <div className="bg-muted/40 p-3 rounded-lg hover:bg-muted cursor-pointer">
+            <h3 className="font-medium text-sm">Analise meus dados</h3>
+            <p className="text-xs text-muted-foreground">
+              "Quais são as tendências de vendas dos últimos 3 meses?"
+            </p>
+          </div>
+          <div className="bg-muted/40 p-3 rounded-lg hover:bg-muted cursor-pointer">
+            <h3 className="font-medium text-sm">Crie uma pesquisa</h3>
+            <p className="text-xs text-muted-foreground">
+              "Ajude-me a criar uma pesquisa de satisfação do cliente"
+            </p>
+          </div>
+          <div className="bg-muted/40 p-3 rounded-lg hover:bg-muted cursor-pointer">
+            <h3 className="font-medium text-sm">Compare métricas</h3>
+            <p className="text-xs text-muted-foreground">
+              "Compare o desempenho deste mês com o mesmo período do ano passado"
+            </p>
+          </div>
+          <div className="bg-muted/40 p-3 rounded-lg hover:bg-muted cursor-pointer">
+            <h3 className="font-medium text-sm">Gere visualizações</h3>
+            <p className="text-xs text-muted-foreground">
+              "Que tipo de gráfico é melhor para mostrar distribuição de clientes?"
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {messages.map((message) => (
-        <div 
+        <div
           key={message.id}
-          className={cn(
-            "flex items-start gap-3 animate-fade-in",
-            message.sender === "user" ? "flex-row-reverse" : "flex-row"
-          )}
+          className={`flex ${
+            message.sender === "user" ? "justify-end" : "justify-start"
+          }`}
         >
-          {message.sender === "ai" ? <DonaAvatar /> : <UserAvatar />}
-          
-          <div 
-            className={cn(
-              "relative max-w-[80%] rounded-2xl p-4",
-              message.sender === "user" 
-                ? "bg-primary text-primary-foreground" 
-                : "bg-card/50 backdrop-blur-sm border"
-            )}
+          <div
+            className={`flex max-w-[80%] gap-3 ${
+              message.sender === "user" ? "flex-row-reverse" : ""
+            }`}
           >
-            <div className="text-sm leading-relaxed">
-              {formatText(message.text)}
+            {message.sender === "user" ? (
+              <UserAvatar />
+            ) : (
+              <DonaAvatar className="mt-0.5" />
+            )}
+            <div
+              className={`rounded-lg px-4 py-2 ${
+                message.sender === "user"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted/70 dark:bg-muted"
+              }`}
+            >
+              <div className="whitespace-pre-wrap text-sm">
+                {message.text}
+              </div>
+              <div className="mt-1 text-[10px] opacity-70 text-right">
+                {typeof message.timestamp === 'string'
+                  ? new Date(message.timestamp).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })
+                  : message.timestamp.toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+              </div>
             </div>
           </div>
         </div>
       ))}
 
       {isLoading && (
-        <div className="flex items-start gap-3">
-          <DonaAvatar />
-          <div className="bg-card/50 backdrop-blur-sm border rounded-2xl p-4 max-w-[80%] animate-pulse">
-            <div className="flex items-center space-x-2">
-              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              <span className="text-sm text-muted-foreground">SightX está pensando...</span>
+        <div className="flex justify-start">
+          <div className="flex max-w-[80%] gap-3">
+            <DonaAvatar className="mt-0.5" />
+            <div className="rounded-lg px-4 py-3 bg-muted/70 dark:bg-muted">
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin opacity-70" />
+                <span className="text-sm opacity-90">{loadingMessage}</span>
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      <div ref={messagesEndRef} />
     </div>
-  )
+  );
 }
