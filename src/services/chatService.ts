@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Chat, ChatMessage, ChatSettings } from "@/types/chat";
 import { v4 as uuidv4 } from "uuid";
@@ -347,7 +348,7 @@ export const getUserAndOrgContext = async (): Promise<{
 };
 
 // Envia mensagem para a IA e obtém resposta
-export const sendMessageToAI = async (message: string, context?: string): Promise<string> => {
+export const sendMessageToAI = async (message: string, context?: string, chatId?: string): Promise<string> => {
   try {
     const settings = await loadChatSettings();
     
@@ -372,7 +373,8 @@ export const sendMessageToAI = async (message: string, context?: string): Promis
         context,
         settings,
         userId: user.id,
-        orgId: memberData?.organization_id || null
+        orgId: memberData?.organization_id || null,
+        chatId: chatId // Passando o ID do chat para que a IA possa acessar o histórico
       },
     });
 

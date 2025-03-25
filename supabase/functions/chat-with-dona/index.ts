@@ -34,13 +34,14 @@ serve(async (req) => {
     // Inicializar cliente Supabase com a chave de serviço para ter acesso completo
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    const { message, context, settings, userId, orgId } = await req.json()
+    const { message, context, settings, userId, orgId, chatId } = await req.json()
     console.log('Processando solicitação com mensagem:', { 
       messageLength: message?.length,
       hasContext: !!context,
       hasSettings: !!settings,
       userId,
-      orgId
+      orgId,
+      chatId
     })
 
     if (!userId) {
@@ -68,12 +69,98 @@ serve(async (req) => {
     const orgSchemaName = orgData?.settings?.schema_name || 'public'
     console.log(`Usando esquema da organização: ${orgSchemaName}`)
 
-    // Obter metadados do schema do banco de dados
+    // Obter histórico de mensagens da conversa atual
+    let chatHistory = []
+    if (chatId) {
+      const { data: chatData, error: chatError } = await supabase
+        .from('chats')
+        .select('messages')
+        .eq('id', chatId)
+        .maybeSingle()
+        
+      if (chatError) {
+        console.error('Erro ao obter histórico do chat:', chatError)
+      } else if (chatData && chatData.messages) {
+        chatHistory = Array.isArray(chatData.messages) ? 
+          chatData.messages.map(msg => ({
+            role: msg.sender === 'user' ? 'user' : 'assistant',
+            content: msg.text
+          })) : []
+          
+        // Limitamos para as últimas 15 mensagens para não exceder o contexto
+        if (chatHistory.length > 15) {
+          chatHistory = chatHistory.slice(-15)
+        }
+        
+        console.log(`Carregado histórico do chat com ${chatHistory.length} mensagens`)
+      }
+    }
+
+    // Obter metadados detalhados do schema do banco de dados
     console.log('Obtendo schema do banco de dados para a IA')
     const { data: schemaData, error: schemaError } = await supabase.rpc('get_ai_schema_summary')
     
     if (schemaError) {
       console.error('Erro ao obter schema do banco de dados:', schemaError)
+    }
+    
+    // Obter tabelas específicas do esquema da organização
+    console.log('Obtendo tabelas do esquema da organização')
+    const { data: orgTablesData, error: orgTablesError } = await supabase
+      .from('ai_knowledge_index')
+      .select('*')
+      .eq('schema_name', orgSchemaName)
+    
+    if (orgTablesError) {
+      console.error('Erro ao obter tabelas do esquema da organização:', orgTablesError)
+    }
+    
+    let orgTablesInfo = "Não foram encontradas tabelas específicas do esquema da organização."
+    
+    if (orgTablesData && orgTablesData.length > 0) {
+      orgTablesInfo = `Tabelas no esquema da organização ${orgSchemaName}:\n\n`
+      
+      for (const table of orgTablesData) {
+        orgTablesInfo += `- Tabela: ${table.entity_name}\n`
+        orgTablesInfo += `  Descrição: ${table.description || 'Sem descrição'}\n`
+        
+        if (table.column_metadata && Array.isArray(table.column_metadata)) {
+          orgTablesInfo += `  Colunas:\n`
+          for (const column of table.column_metadata) {
+            orgTablesInfo += `    - ${column.name} (${column.type})\n`
+          }
+        }
+        
+        if (table.relationships && Array.isArray(table.relationships) && table.relationships.length > 0) {
+          orgTablesInfo += `  Relacionamentos:\n`
+          for (const rel of table.relationships) {
+            orgTablesInfo += `    - ${rel.column} referencia ${rel.references_table}.${rel.references_column}\n`
+          }
+        }
+        
+        orgTablesInfo += `\n`
+      }
+    }
+
+    // Obter histórico de análises anteriores da IA para mostrar exemplos de consultas
+    console.log('Obtendo histórico de análises para fornecer exemplos')
+    const { data: analysisHistoryData, error: analysisHistoryError } = await supabase
+      .from('ai_analysis_history')
+      .select('query_text, executed_sql, result_summary')
+      .eq('organization_id', orgId)
+      .order('created_at', { ascending: false })
+      .limit(10)
+    
+    let queryExamples = ""
+    if (!analysisHistoryError && analysisHistoryData && analysisHistoryData.length > 0) {
+      queryExamples = "Exemplos de consultas anteriores realizadas nesta organização:\n\n"
+      
+      for (const analysis of analysisHistoryData) {
+        if (analysis.executed_sql) {
+          queryExamples += `Pergunta: ${analysis.query_text || 'N/A'}\n`
+          queryExamples += `SQL: ${analysis.executed_sql}\n\n`
+        }
+      }
     }
 
     // Obter informações do perfil do usuário
@@ -106,8 +193,21 @@ Você pode acessar e analisar dados do banco de dados da empresa automaticamente
 5. Após executar a consulta, apresente os resultados em um formato claro e conciso, explicando o que foi encontrado.
 6. Se ocorrer algum erro na consulta, explique o problema e sugira alternativas.
 
-INFORMAÇÕES SOBRE O BANCO DE DADOS:
+INSTRUÇÕES PARA GERAR CONSULTAS SQL:
+1. Sempre prefixe os nomes das tabelas com o esquema correto: "${orgSchemaName}."
+2. Evite keywords reservadas do SQL como nomes de colunas; se necessário, coloque-as entre aspas duplas
+3. Sempre inclua condições de filtro para limitar resultados grandes
+4. Use JOIN explícito em vez de vírgulas para junções de tabelas
+5. Sempre considere o desempenho da consulta, especialmente em tabelas grandes
+6. Limite resultados (LIMIT 100) para consultas exploratórias
+
+ESQUEMA DA ORGANIZAÇÃO:
+${orgTablesInfo}
+
+INFORMAÇÕES GERAIS DO BANCO DE DADOS:
 ${schemaData || 'Informações de schema indisponíveis no momento. Por favor pergunte ao usuário sobre os dados que deseja analisar.'}
+
+${queryExamples}
 
 INFORMAÇÕES DO USUÁRIO:
 Nome: ${userName}
@@ -121,16 +221,31 @@ ${orgData.settings?.sector ? `Setor: ${orgData.settings.sector}` : ''}
 ${orgData.settings?.city && orgData.settings?.state ? `Localização: ${orgData.settings.city}, ${orgData.settings.state}` : ''}
 ${orgData.settings?.description ? `Descrição: ${orgData.settings.description}` : ''}` : 'Detalhes da organização não disponíveis'}
 
-INSTRUÇÕES PARA CONSULTAS SQL:
-1. SEMPRE adicione o prefixo do esquema "${orgSchemaName}." antes de cada nome de tabela em suas consultas SQL.
-2. Exemplo: Use "${orgSchemaName}.nome_da_tabela" em vez de apenas "nome_da_tabela".
-3. Consultas sem o prefixo correto do esquema falharão.
-4. Nunca use o esquema "public" a menos que seja explicitamente solicitado.
+TRATAMENTO DO CONTEXTO DA CONVERSA:
+1. Você deve SEMPRE considerar o contexto da conversa atual para fornecer respostas mais relevantes e contextualizadas.
+2. Use o histórico de mensagens para entender o tema da conversa e referências a consultas ou análises anteriores.
+3. Se o usuário fizer perguntas de acompanhamento ou referenciar análises anteriores, você deve usar o contexto para entender o que ele quer dizer.
 
 Lembre-se: Você existe para ajudar ${userName} a obter insights valiosos dos dados da empresa. Seja específico, orientado a soluções e sempre considere o contexto empresarial em suas respostas.`
 
-    // Preparar dados adicionais da mensagem
-    const userMessage = context ? `${message}\n\nContexto adicional: ${context}` : message
+    // Preparar dados adicionais da mensagem e histórico da conversa
+    const messages = [
+      {
+        role: 'system',
+        content: systemPrompt
+      }
+    ]
+    
+    // Adicionar histórico da conversa se disponível
+    if (chatHistory.length > 0) {
+      messages.push(...chatHistory)
+    }
+    
+    // Adicionar a mensagem atual do usuário
+    messages.push({
+      role: 'user',
+      content: context ? `${message}\n\nContexto adicional: ${context}` : message
+    })
     
     let url, headers;
     
@@ -164,16 +279,7 @@ Lembre-se: Você existe para ajudar ${userName} a obter insights valiosos dos da
       headers: headers,
       body: JSON.stringify({
         model: isAzure ? null : deployment,
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: userMessage
-          }
-        ],
+        messages: messages,
         temperature: temperature,
         max_tokens: maxTokens,
         top_p: 0.95,

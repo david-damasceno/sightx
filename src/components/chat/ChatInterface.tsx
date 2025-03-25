@@ -96,8 +96,8 @@ export function ChatInterface({
         }
       }, 1000);
       
-      // Enviando a mensagem para a IA
-      const aiResponse = await sendMessageToAI(inputMessage, chatContext)
+      // Enviando a mensagem para a IA, incluindo o ID do chat para contexto
+      const aiResponse = await sendMessageToAI(inputMessage, chatContext, selectedChat)
       
       // Limpar o intervalo quando a resposta chegar
       clearInterval(loadingInterval);
