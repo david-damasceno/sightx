@@ -65,7 +65,6 @@ export function ChatInterface({
       
       setInputMessage("")
       setIsLoading(true)
-      setLoadingMessage("Analisando sua solicitação...")
       onChatUpdated()
 
       // Obter contexto da conversa atual
@@ -73,13 +72,18 @@ export function ChatInterface({
         ? messages.slice(-10).map(m => `${m.sender === 'user' ? 'Usuário' : 'IA'}: ${m.text}`).join('\n')
         : '';
 
-      // Sequência de mensagens de carregamento mais detalhadas
+      // Sequência de mensagens de carregamento mais detalhadas e interativas
       const loadingMessages = [
-        "Identificando necessidades de dados...",
+        "Analisando sua solicitação...",
+        "Identificando necessidades de dados e contexto...",
         "Consultando esquema da organização...",
         "Gerando consulta SQL otimizada...",
+        "Verificando permissões e segurança...",
         "Executando consulta no banco de dados...",
-        "Analisando resultados e gerando insights..."
+        "Analisando resultados e identificando padrões...",
+        "Aplicando modelos estatísticos aos dados...",
+        "Gerando visualizações e insights...",
+        "Preparando resposta contextualizada..."
       ];
       
       let messageIndex = 0;
@@ -90,7 +94,7 @@ export function ChatInterface({
         } else {
           clearInterval(loadingInterval);
         }
-      }, 1500);
+      }, 1000);
       
       // Enviando a mensagem para a IA
       const aiResponse = await sendMessageToAI(inputMessage, chatContext)
