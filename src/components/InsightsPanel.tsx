@@ -70,7 +70,22 @@ export function InsightsPanel() {
         .limit(10)
 
       if (error) throw error
-      setInsights(data || [])
+      
+      // Transformar os dados para garantir que o tipo seja compatível
+      const formattedInsights: Insight[] = (data || []).map(item => ({
+        id: item.id,
+        text: item.text,
+        type: (item.type as 'ai' | 'warning' | 'success' | 'info') || 'ai',
+        priority: (item.priority as 'high' | 'medium' | 'low') || 'medium',
+        category: item.category,
+        impact: item.impact,
+        timeToImplement: item.time_to_implement,
+        created_at: item.created_at,
+        source: item.source,
+        is_favorite: !!item.is_favorite
+      }))
+      
+      setInsights(formattedInsights)
     } catch (error) {
       console.error('Erro ao buscar insights:', error)
     } finally {
@@ -187,7 +202,7 @@ export function InsightsPanel() {
   const getIconForInsight = (insight: Insight) => {
     const icon = categoryIcons[insight.category as keyof typeof categoryIcons]
     if (icon) {
-      return React.cloneElement(icon, { className: `h-4 w-4 ${typeColors[insight.type]}` })
+      return icon && React.cloneElement(icon, { className: `h-4 w-4 ${typeColors[insight.type]}` })
     }
     return <Brain className={`h-4 w-4 ${typeColors[insight.type]}`} />
   }
