@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card"
 import { Brain, TrendingUp, Package, AlertCircle, ShoppingCart, Users, Clock, Repeat, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -131,4 +132,3 @@ export function InsightsPanel() {
       </div>
     </Card>
   )
-}

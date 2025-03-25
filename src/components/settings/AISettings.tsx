@@ -181,4 +181,3 @@ export function AISettings({ onSaved }: AISettingsProps) {
       </div>
     </div>
   )
-}
