@@ -87,69 +87,49 @@ serve(async (req) => {
             content: msg.text
           })) : []
           
-        // Limitamos para as últimas 15 mensagens para não exceder o contexto
-        if (chatHistory.length > 15) {
-          chatHistory = chatHistory.slice(-15)
+        // Limitamos para as últimas 20 mensagens para não exceder o contexto
+        if (chatHistory.length > 20) {
+          chatHistory = chatHistory.slice(-20)
         }
         
         console.log(`Carregado histórico do chat com ${chatHistory.length} mensagens`)
       }
     }
 
-    // Obter metadados detalhados do schema do banco de dados
-    console.log('Obtendo schema do banco de dados para a IA')
-    const { data: schemaData, error: schemaError } = await supabase.rpc('get_ai_schema_summary')
+    // Obter descrição detalhada do schema da organização usando nossa nova função
+    console.log('Obtendo descrição detalhada do schema da organização')
+    const { data: schemaDescription, error: schemaError } = await supabase.rpc(
+      'get_organization_schema_description',
+      { p_organization_id: orgId }
+    )
     
     if (schemaError) {
-      console.error('Erro ao obter schema do banco de dados:', schemaError)
+      console.error('Erro ao obter descrição do schema:', schemaError)
+    } else {
+      console.log('Descrição do schema obtida com sucesso, tamanho:', schemaDescription?.length || 0)
     }
     
-    // Obter tabelas específicas do esquema da organização
-    console.log('Obtendo tabelas do esquema da organização')
-    const { data: orgTablesData, error: orgTablesError } = await supabase
-      .from('ai_knowledge_index')
-      .select('*')
-      .eq('schema_name', orgSchemaName)
+    // Obter metadados completos do schema para uso da IA
+    console.log('Obtendo metadados completos do schema da organização')
+    const { data: schemaMetadata, error: metadataError } = await supabase.rpc(
+      'get_organization_schema_metadata',
+      { p_organization_id: orgId }
+    )
     
-    if (orgTablesError) {
-      console.error('Erro ao obter tabelas do esquema da organização:', orgTablesError)
-    }
-    
-    let orgTablesInfo = "Não foram encontradas tabelas específicas do esquema da organização."
-    
-    if (orgTablesData && orgTablesData.length > 0) {
-      orgTablesInfo = `Tabelas no esquema da organização ${orgSchemaName}:\n\n`
-      
-      for (const table of orgTablesData) {
-        orgTablesInfo += `- Tabela: ${table.entity_name}\n`
-        orgTablesInfo += `  Descrição: ${table.description || 'Sem descrição'}\n`
-        
-        if (table.column_metadata && Array.isArray(table.column_metadata)) {
-          orgTablesInfo += `  Colunas:\n`
-          for (const column of table.column_metadata) {
-            orgTablesInfo += `    - ${column.name} (${column.type})\n`
-          }
-        }
-        
-        if (table.relationships && Array.isArray(table.relationships) && table.relationships.length > 0) {
-          orgTablesInfo += `  Relacionamentos:\n`
-          for (const rel of table.relationships) {
-            orgTablesInfo += `    - ${rel.column} referencia ${rel.references_table}.${rel.references_column}\n`
-          }
-        }
-        
-        orgTablesInfo += `\n`
-      }
+    if (metadataError) {
+      console.error('Erro ao obter metadados do schema:', metadataError)
+    } else {
+      console.log('Metadados do schema obtidos com sucesso, tabelas:', schemaMetadata?.length || 0)
     }
 
-    // Obter histórico de análises anteriores da IA para mostrar exemplos de consultas
+    // Obter histórico de análises anteriores e consultas SQL para enriquecer o contexto
     console.log('Obtendo histórico de análises para fornecer exemplos')
     const { data: analysisHistoryData, error: analysisHistoryError } = await supabase
       .from('ai_analysis_history')
       .select('query_text, executed_sql, result_summary')
       .eq('organization_id', orgId)
       .order('created_at', { ascending: false })
-      .limit(10)
+      .limit(15)
     
     let queryExamples = ""
     if (!analysisHistoryError && analysisHistoryData && analysisHistoryData.length > 0) {
@@ -158,7 +138,8 @@ serve(async (req) => {
       for (const analysis of analysisHistoryData) {
         if (analysis.executed_sql) {
           queryExamples += `Pergunta: ${analysis.query_text || 'N/A'}\n`
-          queryExamples += `SQL: ${analysis.executed_sql}\n\n`
+          queryExamples += `SQL: ${analysis.executed_sql}\n`
+          queryExamples += `Resultado: ${analysis.result_summary || 'N/A'}\n\n`
         }
       }
     }
@@ -179,33 +160,41 @@ serve(async (req) => {
     const userName = profileData?.full_name || 'Usuário'
     const orgName = orgData?.name || 'sua organização'
     
+    // Identificar a preferência de formato de análise do usuário
+    const aiSettings = settings || {}
+    const temperature = aiSettings.temperature || 0.7
+    const preferredModel = aiSettings.model || 'gpt-4'
+    const systemPromptMode = temperature > 0.5 ? 'criativo' : 'analítico'
+    
+    // Obter os insights mais recentes para referência
+    const { data: recentInsights, error: insightsError } = await supabase.rpc(
+      'get_recent_organization_insights',
+      { 
+        p_organization_id: orgId,
+        p_limit: 5 
+      }
+    ).maybeSingle()
+    
+    const insightsContext = !insightsError && recentInsights ? 
+      `Insights recentes detectados: ${JSON.stringify(recentInsights)}` : 
+      'Nenhum insight recente disponível'
+    
     // Construir o sistema prompt com as instruções para a IA
     const systemPrompt = `Você é DONA, uma assistente virtual especializada em análise de dados e insights empresariais para ${orgName}. 
 Você é profissional mas amigável, e sempre tenta ajudar os usuários a entenderem melhor seus dados e tomar decisões baseadas em evidências.
-Você também é especialista em criar pesquisas e formulários de feedback eficazes, seguindo as melhores práticas de UX e design de pesquisa.
+Seu modo atual é: ${systemPromptMode}.
 
-CAPACIDADES DE ACESSO A DADOS:
-Você pode acessar e analisar dados do banco de dados da empresa automaticamente. Para isso:
-1. Você deve SEMPRE analisar AUTOMATICAMENTE a solicitação do usuário para identificar se envolve análise de dados.
-2. Quando identificar uma solicitação que necessita de dados, você DEVE gerar uma consulta SQL apropriada.
-3. Você deve SEMPRE executar a consulta SQL sem pedir permissão ao usuário.
-4. Você DEVE SEMPRE adicionar o esquema da organização "${orgSchemaName}" ao início das tabelas em suas consultas SQL.
-5. Após executar a consulta, apresente os resultados em um formato claro e conciso, explicando o que foi encontrado.
-6. Se ocorrer algum erro na consulta, explique o problema e sugira alternativas.
+CAPACIDADES E RESPONSABILIDADES:
+1. Você tem acesso total ao esquema do banco de dados da organização "${orgName}" e pode gerar e executar consultas SQL.
+2. Você deve SEMPRE analisar AUTOMATICAMENTE a solicitação do usuário para identificar se envolve análise de dados.
+3. Quando identificar uma solicitação que necessita de dados, você DEVE gerar uma consulta SQL apropriada.
+4. Você deve SEMPRE usar o esquema da organização "${orgSchemaName}." como prefixo para todas as tabelas em suas consultas SQL.
+5. Após executar a consulta, você deve apresentar insights acionáveis baseados nos resultados.
+6. Você deve ser proativa ao identificar padrões, tendências e anomalias nos dados.
+7. Seu objetivo final é transformar dados brutos em informações estratégicas valiosas.
 
-INSTRUÇÕES PARA GERAR CONSULTAS SQL:
-1. Sempre prefixe os nomes das tabelas com o esquema correto: "${orgSchemaName}."
-2. Evite keywords reservadas do SQL como nomes de colunas; se necessário, coloque-as entre aspas duplas
-3. Sempre inclua condições de filtro para limitar resultados grandes
-4. Use JOIN explícito em vez de vírgulas para junções de tabelas
-5. Sempre considere o desempenho da consulta, especialmente em tabelas grandes
-6. Limite resultados (LIMIT 100) para consultas exploratórias
-
-ESQUEMA DA ORGANIZAÇÃO:
-${orgTablesInfo}
-
-INFORMAÇÕES GERAIS DO BANCO DE DADOS:
-${schemaData || 'Informações de schema indisponíveis no momento. Por favor pergunte ao usuário sobre os dados que deseja analisar.'}
+ESQUEMA COMPLETO DA ORGANIZAÇÃO:
+${schemaDescription || 'Informações de schema indisponíveis no momento.'}
 
 ${queryExamples}
 
@@ -221,10 +210,24 @@ ${orgData.settings?.sector ? `Setor: ${orgData.settings.sector}` : ''}
 ${orgData.settings?.city && orgData.settings?.state ? `Localização: ${orgData.settings.city}, ${orgData.settings.state}` : ''}
 ${orgData.settings?.description ? `Descrição: ${orgData.settings.description}` : ''}` : 'Detalhes da organização não disponíveis'}
 
-TRATAMENTO DO CONTEXTO DA CONVERSA:
-1. Você deve SEMPRE considerar o contexto da conversa atual para fornecer respostas mais relevantes e contextualizadas.
-2. Use o histórico de mensagens para entender o tema da conversa e referências a consultas ou análises anteriores.
-3. Se o usuário fizer perguntas de acompanhamento ou referenciar análises anteriores, você deve usar o contexto para entender o que ele quer dizer.
+${insightsContext}
+
+INSTRUÇÕES PARA CONSULTAS SQL:
+1. Sempre prefixe os nomes das tabelas com "${orgSchemaName}."
+2. Evite keywords reservadas do SQL como nomes de colunas
+3. Inclua condições de filtro para limitar resultados grandes
+4. Use JOIN explícito em vez de vírgulas para junções
+5. Considere o desempenho para consultas em tabelas grandes
+6. Limite resultados (LIMIT 100) para consultas exploratórias
+7. Sempre verifique o tipo de dados das colunas antes de criar condições
+
+ANÁLISE DE DADOS:
+1. Ao analisar dados numéricos, considere médias, medianas, tendências e outliers
+2. Para dados temporais, identifique padrões sazonais e tendências
+3. Ao comparar categorias, destaque diferenças significativas
+4. Sempre considere o contexto de negócio em suas análises
+5. Sugira visualizações apropriadas para os diferentes tipos de análise
+6. Identifique oportunidades para segmentação de clientes ou produtos
 
 Lembre-se: Você existe para ajudar ${userName} a obter insights valiosos dos dados da empresa. Seja específico, orientado a soluções e sempre considere o contexto empresarial em suas respostas.`
 
@@ -270,8 +273,7 @@ Lembre-se: Você existe para ajudar ${userName} a obter insights valiosos dos da
     }
 
     // Configurações que podem ser ajustadas com base em settings
-    const temperature = settings?.temperature || 0.7
-    const maxTokens = settings?.maxTokens || 1200
+    const maxTokens = settings?.maxTokens || 2000
 
     // Enviar solicitação para o provedor de IA
     const aiResponse = await fetch(url, {
@@ -371,9 +373,38 @@ Lembre-se: Você existe para ajudar ${userName} a obter insights valiosos dos da
               queryResult.slice(0, 3).forEach((item, index) => {
                 processedResponse += `Exemplo ${index + 1}: ${JSON.stringify(item)}\n`
               })
+              
+              // Adicionar análise automática dos resultados
+              try {
+                const { data: analysisResult } = await supabase.rpc('analyze_query_results', {
+                  p_results: JSON.stringify(queryResult),
+                  p_query: sqlQuery,
+                  p_org_id: orgId
+                })
+                
+                if (analysisResult) {
+                  processedResponse += `\n\n**Análise automática:**\n${analysisResult}`
+                }
+              } catch (analysisError) {
+                console.error('Erro na análise automática:', analysisError)
+              }
             }
           } else {
             processedResponse += `\nNenhum resultado encontrado para esta consulta.`
+          }
+          
+          // Verificar se devemos salvar insights desta análise
+          try {
+            if (queryResult && queryResult.length > 0) {
+              await supabase.rpc('generate_insights_from_query', {
+                p_org_id: orgId,
+                p_user_id: userId,
+                p_query: sqlQuery,
+                p_results: JSON.stringify(queryResult)
+              })
+            }
+          } catch (insightError) {
+            console.error('Erro ao gerar insights:', insightError)
           }
         }
       } catch (error) {

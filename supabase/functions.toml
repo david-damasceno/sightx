@@ -52,3 +52,8 @@ verify_jwt = false
 [[functions]]
 name = "analyze-table-context"
 verify_jwt = false
+
+# Nova função para gerenciar insights
+[[functions]]
+name = "manage-insights"
+verify_jwt = false
