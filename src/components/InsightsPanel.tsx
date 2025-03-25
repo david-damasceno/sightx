@@ -1,6 +1,6 @@
 
 import { Card } from "@/components/ui/card"
-import { Brain, TrendingUp, Package, AlertCircle, ShoppingCart, Users, Clock, Repeat, Star, RefreshCw } from "lucide-react"
+import { Brain, TrendingUp, Package, AlertCircle, ShoppingCart, Users, Clock, Repeat, Star, RefreshCw, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,12 @@ import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/contexts/AuthContext"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface Insight {
   id: string
@@ -20,6 +26,7 @@ interface Insight {
   timeToImplement?: string
   created_at: string
   source?: string
+  is_favorite: boolean
 }
 
 // Mapeamento de ícones por categoria
@@ -31,7 +38,8 @@ const categoryIcons = {
   'RH': <Users className="h-4 w-4" />,
   'Fidelização': <Repeat className="h-4 w-4" />,
   'Financeiro': <TrendingUp className="h-4 w-4" />,
-  'Marketing': <ShoppingCart className="h-4 w-4" />
+  'Marketing': <ShoppingCart className="h-4 w-4" />,
+  'Análise de Dados': <Brain className="h-4 w-4" />
 }
 
 // Mapeamento de cores por tipo de insight
@@ -57,6 +65,7 @@ export function InsightsPanel() {
         .from('organization_insights')
         .select('*')
         .eq('organization_id', currentOrganization.id)
+        .order('is_favorite', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(10)
 
@@ -103,6 +112,75 @@ export function InsightsPanel() {
       toast.error('Erro ao atualizar insights')
     } finally {
       setRefreshing(false)
+    }
+  }
+
+  const toggleFavorite = async (insightId: string, currentStatus: boolean) => {
+    if (!currentOrganization?.id) return
+    
+    try {
+      // Atualizar UI otimisticamente
+      setInsights(prevInsights => 
+        prevInsights.map(insight => 
+          insight.id === insightId 
+            ? {...insight, is_favorite: !currentStatus} 
+            : insight
+        )
+      )
+      
+      // Chamar a edge function para favoritar/desfavoritar o insight
+      const { data, error } = await supabase.functions.invoke('manage-insights', {
+        body: { 
+          action: 'favorite',
+          organizationId: currentOrganization.id,
+          insightId: insightId
+        }
+      })
+      
+      if (error) throw error
+      
+      const message = !currentStatus ? 'Insight adicionado aos favoritos' : 'Insight removido dos favoritos'
+      toast.success(message)
+    } catch (error) {
+      console.error('Erro ao atualizar status do favorito:', error)
+      toast.error('Erro ao atualizar status do favorito')
+      
+      // Reverter mudança em caso de erro
+      setInsights(prevInsights => 
+        prevInsights.map(insight => 
+          insight.id === insightId 
+            ? {...insight, is_favorite: currentStatus} 
+            : insight
+        )
+      )
+    }
+  }
+
+  const deleteInsight = async (insightId: string) => {
+    if (!currentOrganization?.id) return
+    
+    try {
+      // Remover da UI otimisticamente
+      setInsights(prevInsights => prevInsights.filter(insight => insight.id !== insightId))
+      
+      // Chamar a edge function para excluir o insight
+      const { data, error } = await supabase.functions.invoke('manage-insights', {
+        body: { 
+          action: 'delete',
+          organizationId: currentOrganization.id,
+          insightId: insightId
+        }
+      })
+      
+      if (error) throw error
+      
+      toast.success('Insight excluído com sucesso')
+    } catch (error) {
+      console.error('Erro ao excluir insight:', error)
+      toast.error('Erro ao excluir insight')
+      
+      // Recarregar dados em caso de erro
+      fetchInsights()
     }
   }
 
@@ -175,10 +253,45 @@ export function InsightsPanel() {
                 }
               )}
             >
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="icon">
-                  <Star className="h-4 w-4" />
-                </Button>
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost" 
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => toggleFavorite(insight.id, insight.is_favorite)}
+                      >
+                        <Star className={cn(
+                          "h-4 w-4", 
+                          insight.is_favorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                        )} />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {insight.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost" 
+                        size="icon"
+                        className="h-7 w-7 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                        onClick={() => deleteInsight(insight.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Excluir insight
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               <div className="flex items-start gap-3">

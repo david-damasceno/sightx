@@ -86,6 +86,50 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_schema_knowledge: {
+        Row: {
+          columns: Json
+          id: string
+          last_updated: string | null
+          organization_id: string
+          relationships: Json | null
+          sample_data: Json | null
+          schema_name: string
+          table_description: string | null
+          table_name: string
+        }
+        Insert: {
+          columns: Json
+          id?: string
+          last_updated?: string | null
+          organization_id: string
+          relationships?: Json | null
+          sample_data?: Json | null
+          schema_name: string
+          table_description?: string | null
+          table_name: string
+        }
+        Update: {
+          columns?: Json
+          id?: string
+          last_updated?: string | null
+          organization_id?: string
+          relationships?: Json | null
+          sample_data?: Json | null
+          schema_name?: string
+          table_description?: string | null
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_schema_knowledge_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chats: {
         Row: {
           created_at: string
@@ -241,6 +285,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "nps_surveys_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_insights: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          impact: string
+          is_favorite: boolean | null
+          organization_id: string
+          priority: string
+          source: string | null
+          text: string
+          time_to_implement: string | null
+          type: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          impact: string
+          is_favorite?: boolean | null
+          organization_id: string
+          priority?: string
+          source?: string | null
+          text: string
+          time_to_implement?: string | null
+          type?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          impact?: string
+          is_favorite?: boolean | null
+          organization_id?: string
+          priority?: string
+          source?: string | null
+          text?: string
+          time_to_implement?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_insights_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -439,6 +533,14 @@ export type Database = {
         }
         Returns: Json
       }
+      analyze_query_results: {
+        Args: {
+          p_results: Json
+          p_query: string
+          p_org_id: string
+        }
+        Returns: string
+      }
       calculate_nps_metrics: {
         Args: {
           survey_id: string
@@ -474,9 +576,37 @@ export type Database = {
             }
             Returns: Json
           }
+      generate_insights_from_query: {
+        Args: {
+          p_org_id: string
+          p_user_id: string
+          p_query: string
+          p_results: Json
+        }
+        Returns: boolean
+      }
       get_ai_schema_summary: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_organization_schema_description: {
+        Args: {
+          p_organization_id: string
+        }
+        Returns: string
+      }
+      get_organization_schema_metadata: {
+        Args: {
+          p_organization_id: string
+        }
+        Returns: Json
+      }
+      get_recent_organization_insights: {
+        Args: {
+          p_organization_id: string
+          p_limit?: number
+        }
+        Returns: Json
       }
       get_table_data:
         | {
@@ -494,6 +624,13 @@ export type Database = {
             }
             Returns: Json
           }
+      index_schema_for_ai: {
+        Args: {
+          p_schema_name: string
+          p_organization_id: string
+        }
+        Returns: number
+      }
       infer_column_type: {
         Args: {
           sample_value: string
@@ -504,6 +641,10 @@ export type Database = {
       populate_ai_knowledge_index: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      refresh_all_organizations_ai_knowledge: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       setup_table_rls: {
         Args: {
