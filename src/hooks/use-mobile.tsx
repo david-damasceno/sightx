@@ -1,23 +1,28 @@
 
-import * as React from "react"
+import React, { useState, useEffect } from "react"
 
 const MOBILE_BREAKPOINT = 768
 
 export function useMobile() {
-  const [isMobile, setIsMobile] = React.useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
-  React.useEffect(() => {
-    // Definir o estado inicial imediatamente
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    
-    const handleResize = () => {
+  useEffect(() => {
+    // Verificar se a página está sendo carregada em um ambiente de cliente
+    if (typeof window !== 'undefined') {
+      // Definir o estado inicial imediatamente
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    }
-    
-    window.addEventListener("resize", handleResize)
-    
-    return () => {
-      window.removeEventListener("resize", handleResize)
+      
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+      }
+      
+      // Adicionar evento de redimensionamento
+      window.addEventListener("resize", handleResize)
+      
+      // Limpar o evento quando o componente for desmontado
+      return () => {
+        window.removeEventListener("resize", handleResize)
+      }
     }
   }, [])
 

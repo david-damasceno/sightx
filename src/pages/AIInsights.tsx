@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { ChatInterface } from "@/components/chat/ChatInterface"
 import { ChatSidebar } from "@/components/chat/ChatSidebar"
 import { useMobile } from "@/hooks/use-mobile"
@@ -193,13 +193,13 @@ export default function AIInsights() {
             </div>
           ) : (
             <div className="h-full flex flex-col p-4">
-              <div className="flex-1 flex flex-col items-center justify-center gap-6 pt-10 pb-20">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-                  <Brain className="h-10 w-10 text-primary" />
+              <div className="flex-1 flex flex-col items-center justify-center gap-4 md:gap-6 pt-6 md:pt-10 pb-16 md:pb-20">
+                <div className="flex h-16 w-16 md:h-20 md:w-20 items-center justify-center rounded-full bg-primary/10">
+                  <Brain className="h-8 w-8 md:h-10 md:w-10 text-primary" />
                 </div>
                 <div className="text-center space-y-2">
-                  <h3 className="text-xl font-medium">IA Insights</h3>
-                  <p className="text-sm text-muted-foreground max-w-[250px]">
+                  <h3 className="text-lg md:text-xl font-medium">IA Insights</h3>
+                  <p className="text-sm text-muted-foreground max-w-[280px]">
                     Pergunte qualquer coisa sobre seus dados e receba insights valiosos.
                   </p>
                 </div>
@@ -217,7 +217,7 @@ export default function AIInsights() {
               <div className="mt-auto">
                 <h3 className="text-sm font-medium text-muted-foreground mb-2">Conversas recentes</h3>
                 <div className="space-y-2">
-                  {chats.slice(0, 2).map(chat => (
+                  {chats.slice(0, 3).map(chat => (
                     <Button
                       key={chat.id}
                       variant="outline"
@@ -236,7 +236,7 @@ export default function AIInsights() {
                   )}
                   
                   {isLoading && (
-                    <div className="flex justify-center py-4">
+                    <div className="flex justify-center py-3">
                       <div className="animate-pulse flex space-x-4">
                         <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
                       </div>
@@ -260,7 +260,7 @@ export default function AIInsights() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           </div>
           
-          <div className="mt-6 space-y-4">
+          <div className="mt-4 md:mt-6 space-y-3 md:space-y-4">
             {/* Resultados da busca */}
             {searchQuery && (
               <div className="space-y-2">
@@ -298,7 +298,7 @@ export default function AIInsights() {
                     msg.text.toLowerCase().includes(searchQuery.toLowerCase())
                   )
                 ).length === 0 && (
-                  <p className="text-center text-sm text-muted-foreground py-10">
+                  <p className="text-center text-sm text-muted-foreground py-8 md:py-10">
                     Nenhum resultado encontrado
                   </p>
                 )}
@@ -306,7 +306,7 @@ export default function AIInsights() {
             )}
             
             {!searchQuery && (
-              <p className="text-center text-sm text-muted-foreground py-10">
+              <p className="text-center text-sm text-muted-foreground py-8 md:py-10">
                 Digite para buscar
               </p>
             )}

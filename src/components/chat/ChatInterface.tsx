@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { ChatInput } from "./ChatInput"
 import { ChatMessageList } from "./ChatMessageList"
 import { Button } from "@/components/ui/button"
@@ -58,7 +58,7 @@ export function ChatInterface({
 
     try {
       // Adicionar mensagem do usuário
-      const userMessage = await addMessageToChat(selectedChat, {
+      await addMessageToChat(selectedChat, {
         sender: "user",
         text: inputMessage
       })
@@ -72,18 +72,13 @@ export function ChatInterface({
         ? messages.slice(-10).map(m => `${m.sender === 'user' ? 'Usuário' : 'IA'}: ${m.text}`).join('\n')
         : '';
 
-      // Sequência de mensagens de carregamento mais detalhadas e interativas
+      // Sequência de mensagens de carregamento mais interativas
       const loadingMessages = [
         "Analisando sua solicitação...",
-        "Identificando necessidades de dados e contexto...",
-        "Consultando esquema da organização...",
-        "Gerando consulta SQL otimizada...",
-        "Verificando permissões e segurança...",
-        "Executando consulta no banco de dados...",
-        "Analisando resultados e identificando padrões...",
-        "Aplicando modelos estatísticos aos dados...",
-        "Gerando visualizações e insights...",
-        "Preparando resposta contextualizada..."
+        "Processando dados relevantes...",
+        "Consultando base de conhecimento...",
+        "Elaborando resposta personalizada...",
+        "Finalizando análise dos dados...",
       ];
       
       let messageIndex = 0;
@@ -94,7 +89,7 @@ export function ChatInterface({
         } else {
           clearInterval(loadingInterval);
         }
-      }, 1000);
+      }, 1500);
       
       // Enviando a mensagem para a IA, incluindo o ID do chat para contexto
       const aiResponse = await sendMessageToAI(inputMessage, chatContext, selectedChat)
@@ -137,13 +132,13 @@ export function ChatInterface({
   // Tela de boas-vindas quando nenhum chat está selecionado
   if (!selectedChat && !isMobile) {
     return (
-      <div className="flex flex-col items-center justify-center h-full space-y-6 px-4 py-12 text-center">
-        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-          <Brain className="w-10 h-10 text-primary" />
+      <div className="flex flex-col items-center justify-center h-full space-y-6 px-4 py-8 md:py-12 text-center">
+        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-primary/10 flex items-center justify-center">
+          <Brain className="w-8 h-8 md:w-10 md:h-10 text-primary" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold mb-2">IA Insights</h2>
-          <p className="text-muted-foreground max-w-md">
+          <h2 className="text-xl md:text-2xl font-bold mb-2">IA Insights</h2>
+          <p className="text-muted-foreground max-w-md text-sm md:text-base">
             Explore seus dados com a ajuda da nossa IA. Faça perguntas, obtenha insights e descubra tendências que impulsionarão seu negócio.
           </p>
         </div>
@@ -155,22 +150,22 @@ export function ChatInterface({
             Iniciar uma nova conversa
           </Button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl w-full mt-6">
-          <div className="bg-card/40 backdrop-blur-sm p-4 rounded-lg border">
-            <h3 className="font-medium mb-2">Análise de Dados</h3>
-            <p className="text-sm text-muted-foreground">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-3xl w-full mt-4 md:mt-6">
+          <div className="bg-card/40 backdrop-blur-sm p-3 md:p-4 rounded-lg border">
+            <h3 className="font-medium mb-1 md:mb-2 text-sm md:text-base">Análise de Dados</h3>
+            <p className="text-xs md:text-sm text-muted-foreground">
               Pergunte sobre tendências, padrões e insights em seus dados.
             </p>
           </div>
-          <div className="bg-card/40 backdrop-blur-sm p-4 rounded-lg border">
-            <h3 className="font-medium mb-2">Previsões</h3>
-            <p className="text-sm text-muted-foreground">
+          <div className="bg-card/40 backdrop-blur-sm p-3 md:p-4 rounded-lg border">
+            <h3 className="font-medium mb-1 md:mb-2 text-sm md:text-base">Previsões</h3>
+            <p className="text-xs md:text-sm text-muted-foreground">
               Obtenha previsões sobre métricas de negócios e tendências futuras.
             </p>
           </div>
-          <div className="bg-card/40 backdrop-blur-sm p-4 rounded-lg border">
-            <h3 className="font-medium mb-2">Recomendações</h3>
-            <p className="text-sm text-muted-foreground">
+          <div className="bg-card/40 backdrop-blur-sm p-3 md:p-4 rounded-lg border">
+            <h3 className="font-medium mb-1 md:mb-2 text-sm md:text-base">Recomendações</h3>
+            <p className="text-xs md:text-sm text-muted-foreground">
               Receba sugestões personalizadas para melhorar seu desempenho.
             </p>
           </div>
@@ -204,7 +199,7 @@ export function ChatInterface({
       )}
 
       {/* Message list */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+      <div className="flex-1 overflow-y-auto px-3 md:px-4 py-4 md:py-6 space-y-4 md:space-y-6">
         <ChatMessageList 
           messages={messages} 
           isLoading={isLoading} 

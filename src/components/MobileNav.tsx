@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { 
   Home, 
@@ -129,11 +129,12 @@ export function MobileNav() {
               )}
             >
               <item.icon className={cn(
-                "h-7 w-7",
+                "h-6 w-6 mb-1",
                 activeItem === item.href || (item.href === "/settings/general" && activeItem.startsWith("/settings"))
-                  ? "text-foreground" 
+                  ? "text-primary" 
                   : "text-muted-foreground"
               )} />
+              <span>{item.title}</span>
             </Link>
           ))}
         </nav>

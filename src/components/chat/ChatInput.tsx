@@ -1,5 +1,5 @@
 
-import { useRef, useEffect } from "react"
+import React, { useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Send, Mic, Loader2, Paperclip } from "lucide-react"
@@ -54,7 +54,7 @@ export function ChatInput({
   }
 
   return (
-    <div className="p-4 bg-background/95 backdrop-blur-sm border-t safe-area-bottom">
+    <div className="p-2 md:p-4 bg-background/95 backdrop-blur-sm border-t safe-area-bottom">
       <div className={cn(
         "flex items-end gap-2 mx-auto relative",
         isMobile ? "max-w-full" : "max-w-3xl"
@@ -99,7 +99,7 @@ export function ChatInput({
             placeholder="Digite sua mensagem..."
             onKeyDown={handleKeyDown}
             className={cn(
-              "min-h-[40px] max-h-[120px] pl-20 pr-12 resize-none",
+              "min-h-[40px] max-h-[100px] pl-20 pr-12 resize-none",
               "bg-white/40 dark:bg-gray-800/40 backdrop-blur-md",
               "border-primary/10 dark:border-primary/20 focus-visible:ring-primary/20",
               "rounded-2xl py-2 px-4",
