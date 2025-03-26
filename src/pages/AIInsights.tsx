@@ -1,8 +1,6 @@
 
 import React, { useState, useEffect } from "react"
-import { supabase } from "@/integrations/supabase/client"
 import { Chat } from "@/types/chat"
-import { v4 as uuidv4 } from "uuid"
 import { toast } from "sonner"
 import { ChatSidebar } from "@/components/chat/ChatSidebar"
 import { ChatInterface } from "@/components/chat/ChatInterface"
@@ -10,6 +8,12 @@ import { InsightsPanel } from "@/components/InsightsPanel"
 import { Button } from "@/components/ui/button"
 import { useMobile } from "@/hooks/use-mobile"
 import { MobileChatWrapper } from "@/components/chat/MobileChatWrapper"
+import { 
+  fetchChats, 
+  fetchChatMessages, 
+  createNewChat, 
+  deleteChat 
+} from "@/services/chatService"
 
 export default function AIInsights() {
   const [chats, setChats] = useState<Chat[]>([])
@@ -21,146 +25,76 @@ export default function AIInsights() {
 
   // Carregar lista de chats
   useEffect(() => {
-    fetchChats()
+    loadAllChats()
   }, [])
 
   // Carregar chat selecionado
   useEffect(() => {
     if (selectedChat && selectedChat !== 'settings' && selectedChat !== 'new') {
-      fetchChatMessages(selectedChat)
+      loadChatMessages(selectedChat)
     } else if (selectedChat === 'new') {
-      createNewChat()
+      handleCreateNewChat()
     } else {
       setCurrentChat(null)
     }
   }, [selectedChat])
 
-  const fetchChats = async () => {
+  const loadAllChats = async () => {
     try {
       setLoadingChats(true)
-      const { data, error } = await supabase
-        .from('chats')
-        .select('*')
-        .order('updated_at', { ascending: false })
-
-      if (error) throw error
-
-      const formattedChats = data.map(chat => ({
-        id: chat.id,
-        title: chat.title || "Nova Conversa",
-        messages: [],
-        createdAt: new Date(chat.created_at),
-        updatedAt: new Date(chat.updated_at)
-      }))
-
-      setChats(formattedChats)
+      const chatsData = await fetchChats()
+      setChats(chatsData)
     } catch (error) {
-      console.error("Erro ao buscar chats:", error)
-      toast.error("Erro ao carregar conversas")
+      console.error("Erro ao carregar chats:", error)
+      toast.error("Não foi possível carregar as conversas")
     } finally {
       setLoadingChats(false)
     }
   }
 
-  const fetchChatMessages = async (chatId: string) => {
+  const loadChatMessages = async (chatId: string) => {
     try {
       setLoadingChat(true)
-      
-      // Buscar dados do chat
-      const { data: chatData, error: chatError } = await supabase
-        .from('chats')
-        .select('*')
-        .eq('id', chatId)
-        .single()
-      
-      if (chatError) throw chatError
-      
-      // Buscar mensagens do chat
-      const { data: messagesData, error: messagesError } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('chat_id', chatId)
-        .order('created_at', { ascending: true })
-      
-      if (messagesError) throw messagesError
-      
-      const formattedMessages = messagesData.map(message => ({
-        id: message.id,
-        sender: message.sender,
-        text: message.content,
-        timestamp: new Date(message.created_at)
-      }))
-      
-      setCurrentChat({
-        id: chatData.id,
-        title: chatData.title || "Nova Conversa",
-        messages: formattedMessages,
-        createdAt: new Date(chatData.created_at),
-        updatedAt: new Date(chatData.updated_at)
-      })
+      const chatData = await fetchChatMessages(chatId)
+      if (chatData) {
+        setCurrentChat(chatData)
+      }
     } catch (error) {
-      console.error("Erro ao buscar mensagens do chat:", error)
-      toast.error("Erro ao carregar mensagens")
+      console.error("Erro ao carregar mensagens:", error)
+      toast.error("Não foi possível carregar as mensagens")
     } finally {
       setLoadingChat(false)
     }
   }
 
-  const createNewChat = async () => {
+  const handleCreateNewChat = async () => {
     try {
-      const chatId = uuidv4()
-      const { error } = await supabase
-        .from('chats')
-        .insert([
-          {
-            id: chatId,
-            title: "Nova Conversa",
-            user_id: (await supabase.auth.getUser()).data.user?.id
-          }
-        ])
-
-      if (error) throw error
-
-      // Atualiza a lista de chats e seleciona o novo chat
-      await fetchChats()
-      setSelectedChat(chatId)
+      const chatId = await createNewChat()
+      if (chatId) {
+        await loadAllChats()
+        setSelectedChat(chatId)
+      }
     } catch (error) {
       console.error("Erro ao criar novo chat:", error)
-      toast.error("Erro ao criar nova conversa")
+      toast.error("Não foi possível criar uma nova conversa")
     }
   }
 
   const handleDeleteChat = async (chatId: string) => {
     try {
-      // Exclui todas as mensagens do chat
-      const { error: messagesError } = await supabase
-        .from('messages')
-        .delete()
-        .eq('chat_id', chatId)
-      
-      if (messagesError) throw messagesError
-      
-      // Exclui o chat
-      const { error: chatError } = await supabase
-        .from('chats')
-        .delete()
-        .eq('id', chatId)
-      
-      if (chatError) throw chatError
-      
-      // Atualiza a lista de chats
-      await fetchChats()
-      
-      // Se o chat excluído era o chat selecionado, limpa a seleção
-      if (selectedChat === chatId) {
-        setSelectedChat(null)
-        setCurrentChat(null)
+      const success = await deleteChat(chatId)
+      if (success) {
+        await loadAllChats()
+        
+        // Se o chat excluído era o chat selecionado, limpa a seleção
+        if (selectedChat === chatId) {
+          setSelectedChat(null)
+          setCurrentChat(null)
+        }
       }
-      
-      toast.success("Conversa excluída com sucesso")
     } catch (error) {
       console.error("Erro ao excluir chat:", error)
-      toast.error("Erro ao excluir conversa")
+      toast.error("Não foi possível excluir a conversa")
     }
   }
 
@@ -176,7 +110,7 @@ export default function AIInsights() {
           onDeleteChat={handleDeleteChat}
           loadingChats={loadingChats}
           loadingChat={loadingChat}
-          fetchChats={fetchChats}
+          fetchChats={loadAllChats}
           chat={currentChat}
         />
       </div>
@@ -199,6 +133,7 @@ export default function AIInsights() {
                 isLoading={loadingChats}
                 showSettings={true}
                 onCreateChat={() => setSelectedChat("new")}
+                onChatsUpdated={loadAllChats}
               />
             </div>
             
@@ -210,7 +145,7 @@ export default function AIInsights() {
                 onSelectChat={setSelectedChat}
                 onOpenSidebar={() => {}}
                 isSidebarCollapsed={false}
-                onChatUpdated={fetchChats}
+                onChatUpdated={loadAllChats}
               />
             </div>
           </div>

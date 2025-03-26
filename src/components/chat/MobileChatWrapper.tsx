@@ -75,6 +75,7 @@ export function MobileChatWrapper({
             isLoading={loadingChats}
             showSettings={true}
             onCreateChat={onCreateChat}
+            onChatsUpdated={fetchChats}
           />
         </div>
       </div>
