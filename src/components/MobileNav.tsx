@@ -22,6 +22,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "./navbar/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useMobile } from "@/hooks/use-mobile";
 
 const menuItems = [
   {
@@ -111,6 +112,7 @@ export function MobileNav() {
   const [open, setOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("/");
   const { toast } = useToast();
+  const isMobile = useMobile();
 
   useEffect(() => {
     setActiveItem(location.pathname);
@@ -137,6 +139,11 @@ export function MobileNav() {
       });
     }
   };
+
+  // Se não for dispositivo móvel, não renderiza este componente
+  if (!isMobile) {
+    return null;
+  }
 
   return (
     <>

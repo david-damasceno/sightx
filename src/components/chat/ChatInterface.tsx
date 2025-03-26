@@ -39,19 +39,23 @@ export function ChatInterface({
 
   // Rolar para o final quando novas mensagens são adicionadas
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+    }
   }, [messages])
 
   // Garantir que o componente é renderizado corretamente em dispositivos móveis
   useEffect(() => {
     const handleResize = () => {
-      // Forçar uma atualização da UI
-      setInputMessage(prev => prev)
+      // Forçar uma atualização da UI para dispositivos móveis
+      if (isMobile) {
+        setInputMessage(prev => prev)
+      }
     }
     
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  }, [isMobile])
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() === "" || !selectedChat || selectedChat === 'settings') return
