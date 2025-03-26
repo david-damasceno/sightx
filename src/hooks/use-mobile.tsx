@@ -15,16 +15,22 @@ export function useMobile() {
     // Definir o estado inicial
     setIsMobile(checkMobile())
     
+    // Função para manipular o redimensionamento com debounce
+    let timeoutId: ReturnType<typeof setTimeout>
     const handleResize = () => {
-      setIsMobile(checkMobile())
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => {
+        setIsMobile(checkMobile())
+      }, 100) // Pequeno debounce para melhorar performance
     }
     
     // Adicionar evento de redimensionamento
     window.addEventListener("resize", handleResize)
     
-    // Limpar o evento quando o componente for desmontado
+    // Limpar o evento e timeout quando o componente for desmontado
     return () => {
       window.removeEventListener("resize", handleResize)
+      clearTimeout(timeoutId)
     }
   }, [])
 

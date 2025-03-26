@@ -23,6 +23,7 @@ import { Logo } from "./navbar/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useMobile } from "@/hooks/use-mobile";
+import { AnimatePresence, motion } from "framer-motion";
 
 // Menu items para o menu de navegação inferior
 const bottomMenuItems = [
@@ -149,25 +150,35 @@ export function MobileNav() {
   return (
     <>
       {/* Menu de navegação bottom bar para telas pequenas */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border safe-area-bottom shadow-lg">
         <nav className="grid grid-cols-5 h-16">
           {bottomMenuItems.map((item) => (
             <Link
               key={item.href}
               to={item.href}
               className={cn(
-                "flex flex-col items-center justify-center text-xs font-medium transition-colors",
+                "flex flex-col items-center justify-center text-xs font-medium transition-all duration-300 relative",
                 activeItem === item.href || (item.href === "/settings/general" && activeItem.startsWith("/settings"))
                   ? "text-primary"
                   : "text-muted-foreground hover:text-primary"
               )}
             >
-              <item.icon className={cn(
-                "h-5 w-5 mb-1",
+              {activeItem === item.href || (item.href === "/settings/general" && activeItem.startsWith("/settings")) ? (
+                <div className="absolute -top-3 w-10 h-1 rounded-full bg-primary" />
+              ) : null}
+              <div className={cn(
+                "flex items-center justify-center w-10 h-10 rounded-full mb-1",
                 activeItem === item.href || (item.href === "/settings/general" && activeItem.startsWith("/settings"))
-                  ? "text-primary" 
-                  : "text-muted-foreground"
-              )} />
+                  ? "bg-primary/10" 
+                  : "bg-transparent"
+              )}>
+                <item.icon className={cn(
+                  "h-5 w-5",
+                  activeItem === item.href || (item.href === "/settings/general" && activeItem.startsWith("/settings"))
+                    ? "text-primary" 
+                    : "text-muted-foreground"
+                )} />
+              </div>
               <span>{item.title}</span>
             </Link>
           ))}
@@ -180,13 +191,13 @@ export function MobileNav() {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="fixed top-4 right-4 z-50 bg-background/60 backdrop-blur-md border border-border hover:bg-accent"
+            className="fixed top-4 right-4 z-50 bg-background/60 backdrop-blur-xl border border-border hover:bg-accent shadow-md rounded-full h-10 w-10"
           >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-72 p-0">
+        <SheetContent side="left" className="w-72 p-0 border-r border-border bg-background/95 backdrop-blur-xl">
           <div className="flex flex-col h-full">
             <div className="p-4 border-b">
               <div className="flex items-center justify-between">
@@ -209,13 +220,20 @@ export function MobileNav() {
                     to={item.href}
                     onClick={() => setOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium transition-colors",
+                      "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200",
                       (activeItem === item.href || (item.href === "/settings/general" && activeItem.startsWith("/settings")))
-                        ? "bg-accent text-accent-foreground"
+                        ? "bg-primary/10 text-primary"
                         : "hover:bg-accent hover:text-accent-foreground"
                     )}
                   >
-                    <item.icon className="h-5 w-5" />
+                    <div className={cn(
+                      "flex items-center justify-center w-8 h-8 rounded-full",
+                      (activeItem === item.href || (item.href === "/settings/general" && activeItem.startsWith("/settings")))
+                        ? "bg-primary/20" 
+                        : "bg-muted/30"
+                    )}>
+                      <item.icon className="h-4 w-4" />
+                    </div>
                     <span>{item.title}</span>
                   </Link>
                 ))}
@@ -225,9 +243,11 @@ export function MobileNav() {
               <Button
                 onClick={handleLogout}
                 variant="outline"
-                className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 dark:hover:text-red-400"
+                className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 dark:hover:text-red-400 rounded-xl py-6"
               >
-                <LogOut className="h-4 w-4" />
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30">
+                  <LogOut className="h-4 w-4 text-red-600 dark:text-red-400" />
+                </div>
                 <span>Sair</span>
               </Button>
               <p className="text-xs text-muted-foreground text-center mt-4">
