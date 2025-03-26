@@ -7,6 +7,7 @@ import { Logo } from "./navbar/Logo"
 import { Navigation } from "./navbar/Navigation"
 import { UserMenu } from "./navbar/UserMenu"
 import { MobileNav } from "./MobileNav"
+import { useMobile } from "@/hooks/use-mobile"
 
 export function AppNavbar() {
   const { session } = useAuth()
@@ -15,6 +16,7 @@ export function AppNavbar() {
     email: string;
     avatar_url: string;
   } | null>(null)
+  const isMobile = useMobile()
 
   useEffect(() => {
     if (session?.user) {
@@ -57,7 +59,7 @@ export function AppNavbar() {
 
             <div className="flex items-center gap-4">
               <ModeToggle />
-              <UserMenu profile={profile} />
+              {!isMobile && <UserMenu profile={profile} />}
             </div>
           </div>
         </div>

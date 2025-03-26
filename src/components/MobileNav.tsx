@@ -13,12 +13,15 @@ import {
   TrendingUp,
   Share2,
   Users,
-  MessageSquare
+  MessageSquare,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "./navbar/Logo";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 const menuItems = [
   {
@@ -107,10 +110,33 @@ export function MobileNav() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("/");
+  const { toast } = useToast();
 
   useEffect(() => {
     setActiveItem(location.pathname);
   }, [location.pathname]);
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso",
+      });
+      
+      navigate('/login');
+      setOpen(false);
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao sair",
+        description: "Não foi possível fazer logout. Tente novamente.",
+      });
+    }
+  };
 
   return (
     <>
@@ -157,6 +183,14 @@ export function MobileNav() {
             <div className="p-4 border-b">
               <div className="flex items-center justify-between">
                 <Logo />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setOpen(false)}
+                  className="h-8 w-8 rounded-full"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
             </div>
             <div className="flex-1 overflow-auto py-2">
@@ -179,8 +213,16 @@ export function MobileNav() {
                 ))}
               </div>
             </div>
-            <div className="p-4 border-t">
-              <p className="text-xs text-muted-foreground text-center">
+            <div className="border-t p-4">
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 dark:hover:text-red-400"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Sair</span>
+              </Button>
+              <p className="text-xs text-muted-foreground text-center mt-4">
                 SightX - Transforme Dados em Decisões Inteligentes
               </p>
             </div>
