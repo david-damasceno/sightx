@@ -12,21 +12,19 @@ export function useMobile() {
       return typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT
     }
 
-    // Definir o estado inicial imediatamente
+    // Definir o estado inicial
     setIsMobile(checkMobile())
     
     const handleResize = () => {
       setIsMobile(checkMobile())
     }
     
-    // Adicionar evento de redimensionamento apenas no navegador
-    if (typeof window !== 'undefined') {
-      window.addEventListener("resize", handleResize)
-      
-      // Limpar o evento quando o componente for desmontado
-      return () => {
-        window.removeEventListener("resize", handleResize)
-      }
+    // Adicionar evento de redimensionamento
+    window.addEventListener("resize", handleResize)
+    
+    // Limpar o evento quando o componente for desmontado
+    return () => {
+      window.removeEventListener("resize", handleResize)
     }
   }, [])
 

@@ -24,7 +24,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useMobile } from "@/hooks/use-mobile";
 
-const menuItems = [
+// Menu items para o menu de navegação inferior
+const bottomMenuItems = [
   {
     title: "Painel",
     href: "/",
@@ -53,7 +54,7 @@ const menuItems = [
 ];
 
 // Menu lateral completo
-const fullMenuItems = [
+const sidebarMenuItems = [
   {
     title: "Painel",
     href: "/",
@@ -148,9 +149,9 @@ export function MobileNav() {
   return (
     <>
       {/* Menu de navegação bottom bar para telas pequenas */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border safe-area-bottom">
         <nav className="grid grid-cols-5 h-16">
-          {menuItems.map((item) => (
+          {bottomMenuItems.map((item) => (
             <Link
               key={item.href}
               to={item.href}
@@ -162,7 +163,7 @@ export function MobileNav() {
               )}
             >
               <item.icon className={cn(
-                "h-6 w-6 mb-1",
+                "h-5 w-5 mb-1",
                 activeItem === item.href || (item.href === "/settings/general" && activeItem.startsWith("/settings"))
                   ? "text-primary" 
                   : "text-muted-foreground"
@@ -173,13 +174,13 @@ export function MobileNav() {
         </nav>
       </div>
 
-      {/* Menu de navegação lateral por slide - Apenas botão na versão mobile, sem avatar */}
+      {/* Menu de navegação lateral por slide */}
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <Button 
             variant="ghost" 
             size="icon" 
-            className="md:hidden fixed top-4 right-4 z-50 bg-background/60 backdrop-blur-md border border-border hover:bg-accent"
+            className="fixed top-4 right-4 z-50 bg-background/60 backdrop-blur-md border border-border hover:bg-accent"
           >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Menu</span>
@@ -202,7 +203,7 @@ export function MobileNav() {
             </div>
             <div className="flex-1 overflow-auto py-2">
               <div className="space-y-1 px-2">
-                {fullMenuItems.map((item) => (
+                {sidebarMenuItems.map((item) => (
                   <Link
                     key={item.href}
                     to={item.href}

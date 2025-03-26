@@ -44,19 +44,6 @@ export function ChatInterface({
     }
   }, [messages])
 
-  // Garantir que o componente é renderizado corretamente em dispositivos móveis
-  useEffect(() => {
-    const handleResize = () => {
-      // Forçar uma atualização da UI para dispositivos móveis
-      if (isMobile) {
-        setInputMessage(prev => prev)
-      }
-    }
-    
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [isMobile])
-
   const handleSendMessage = async () => {
     if (inputMessage.trim() === "" || !selectedChat || selectedChat === 'settings') return
 
@@ -134,7 +121,7 @@ export function ChatInterface({
   }
 
   // Tela de boas-vindas quando nenhum chat está selecionado
-  if (!selectedChat && !isMobile) {
+  if (!selectedChat) {
     return (
       <div className="flex flex-col items-center justify-center h-full space-y-6 px-4 py-8 md:py-12 text-center">
         <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-primary/10 flex items-center justify-center">
