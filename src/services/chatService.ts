@@ -50,9 +50,9 @@ export const fetchChatMessages = async (chatId: string): Promise<Chat | null> =>
     if (messagesError) throw messagesError;
     
     // Formatar mensagens
-    const formattedMessages = messagesData ? messagesData.map(message => ({
+    const formattedMessages: ChatMessage[] = messagesData ? messagesData.map(message => ({
       id: message.id,
-      sender: message.sender,
+      sender: message.sender as "user" | "ai", // Fazemos um type casting explícito aqui
       text: message.content,
       timestamp: new Date(message.created_at)
     })) : [];
@@ -126,6 +126,11 @@ export const addMessageToChat = async (
   try {
     const messageId = uuidv4();
     const now = new Date();
+    
+    // Verificação para garantir que sender seja apenas "user" ou "ai"
+    if (message.sender !== "user" && message.sender !== "ai") {
+      throw new Error("O remetente da mensagem deve ser 'user' ou 'ai'");
+    }
     
     // Inserir a mensagem
     const { error } = await supabase
