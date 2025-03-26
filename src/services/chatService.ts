@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Chat, ChatMessage } from "@/types/chat";
+import { Chat, ChatMessage, ChatSettings } from "@/types/chat";
 import { v4 as uuidv4 } from "uuid";
 import { toast } from "sonner";
 
@@ -101,15 +101,7 @@ export const createNewChat = async (): Promise<string | null> => {
 // Função para excluir um chat
 export const deleteChat = async (chatId: string): Promise<boolean> => {
   try {
-    // Exclui todas as mensagens do chat
-    const { error: messagesError } = await supabase
-      .from('messages')
-      .delete()
-      .eq('chat_id', chatId);
-    
-    if (messagesError) throw messagesError;
-    
-    // Exclui o chat
+    // Exclui o chat (as mensagens serão excluídas automaticamente devido à restrição ON DELETE CASCADE)
     const { error: chatError } = await supabase
       .from('chats')
       .delete()
@@ -166,12 +158,68 @@ export const addMessageToChat = async (
   }
 };
 
-// Função para buscar resposta da IA
-export const getAIResponse = async (message: string): Promise<string> => {
-  // Simulação de resposta da IA (substitua por uma chamada real à API quando estiver pronta)
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(`Resposta da IA para: "${message}"`);
-    }, 1000);
-  });
+// Função para enviar mensagem para IA e obter resposta
+export const sendMessageToAI = async (
+  message: string, 
+  context: string, 
+  chatId: string
+): Promise<string> => {
+  try {
+    // Aqui você pode integrar com uma API de IA como OpenAI, Azure OpenAI, etc.
+    // Por enquanto, vamos simular uma resposta
+    
+    // Simular um tempo de processamento
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Resposta simulada
+    const resposta = `Olá! Recebi sua mensagem: "${message}".\n\nBaseado na minha análise, posso oferecer algumas informações:\n\n**Resultados da análise:**\n- Os dados mostram uma tendência interessante para seu negócio\n- Existe uma oportunidade de crescimento no segmento de mercado atual\n- Recomendo focar em estratégias de fidelização de clientes\n\nVocê gostaria de alguma análise específica sobre esses resultados?`;
+    
+    return resposta;
+  } catch (error) {
+    console.error("Erro ao processar resposta da IA:", error);
+    throw new Error("Não foi possível obter resposta da IA. Tente novamente mais tarde.");
+  }
+};
+
+// Função para carregar configurações do chat
+export const loadChatSettings = async (): Promise<ChatSettings> => {
+  try {
+    // Em um cenário real, você carregaria do banco de dados
+    // Por enquanto, retorna configurações padrão
+    return {
+      model: "gpt-4",
+      temperature: 0.7,
+      saveHistory: true,
+      autoAnalysis: true
+    };
+  } catch (error) {
+    console.error("Erro ao carregar configurações:", error);
+    toast.error("Erro ao carregar configurações da IA");
+    
+    // Retornar configurações padrão em caso de erro
+    return {
+      model: "gpt-4",
+      temperature: 0.7,
+      saveHistory: true,
+      autoAnalysis: true
+    };
+  }
+};
+
+// Função para salvar configurações do chat
+export const saveChatSettings = async (settings: ChatSettings): Promise<boolean> => {
+  try {
+    // Em um cenário real, você salvaria no banco de dados
+    // Por enquanto, apenas simula o salvamento
+    console.log("Configurações salvas:", settings);
+    
+    // Simular tempo de processamento
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    return true;
+  } catch (error) {
+    console.error("Erro ao salvar configurações:", error);
+    toast.error("Erro ao salvar configurações da IA");
+    return false;
+  }
 };
