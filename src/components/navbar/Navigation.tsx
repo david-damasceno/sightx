@@ -57,13 +57,13 @@ export function Navigation() {
   const isMobile = useMobile()
   
   // Filtra os itens mais importantes para a versão mobile
-  const displayItems = isMobile 
+  const importantItems = isMobile 
     ? menuItems.filter(item => ["/", "/sales", "/ai-insights", "/reports", "/data"].includes(item.href))
     : menuItems
   
   return (
     <div className="hidden md:flex items-center space-x-1 overflow-x-auto">
-      {displayItems.map((item) => (
+      {importantItems.map((item) => (
         <NavItem
           key={item.href}
           href={item.href}

@@ -2,229 +2,386 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Chat, ChatMessage, ChatSettings } from "@/types/chat";
 import { v4 as uuidv4 } from "uuid";
-import { toast } from "sonner";
 
-// Função para carregar todas as conversas do usuário
-export const fetchChats = async (): Promise<Chat[]> => {
+const DEFAULT_SETTINGS: ChatSettings = {
+  model: "gpt-4",
+  temperature: 0.7,
+  saveHistory: true,
+  autoAnalysis: true,
+};
+
+// Carrega as configurações de chat do usuário
+export const loadChatSettings = async (): Promise<ChatSettings> => {
   try {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("settings")
+      .single();
+
+    // Garantindo que acessamos propriedades apenas se elas existirem
+    const chatSettings = profile?.settings ? 
+      (typeof profile.settings === 'object' && profile.settings !== null && 'chat' in profile.settings ? 
+       profile.settings.chat : null) : null;
+    
+    if (chatSettings && typeof chatSettings === 'object') {
+      return {
+        ...DEFAULT_SETTINGS,
+        ...chatSettings as Partial<ChatSettings>,
+      };
+    }
+    
+    return DEFAULT_SETTINGS;
+  } catch (error) {
+    console.error("Erro ao carregar configurações do chat:", error);
+    return DEFAULT_SETTINGS;
+  }
+};
+
+// Salva as configurações de chat do usuário
+export const saveChatSettings = async (settings: ChatSettings): Promise<void> => {
+  try {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("settings")
+      .single();
+
+    const currentSettings = profile?.settings || {};
+    
+    const updatedSettings = {
+      ...(typeof currentSettings === 'object' ? currentSettings : {}),
+      chat: settings,
+    };
+
+    await supabase
+      .from("profiles")
+      .update({
+        settings: updatedSettings as any, // Usando any para contornar limitações do tipo Json
+      })
+      .eq("id", (await supabase.auth.getUser()).data.user?.id);
+  } catch (error) {
+    console.error("Erro ao salvar configurações do chat:", error);
+    throw new Error("Não foi possível salvar as configurações");
+  }
+};
+
+// Função auxiliar para converter os timestamps de string para Date
+const convertChatDates = (chat: any): Chat => {
+  // Garantir que messages é um array mesmo que venha como null ou undefined
+  let messages: ChatMessage[] = [];
+  
+  if (Array.isArray(chat.messages)) {
+    messages = chat.messages.map((msg: any) => ({
+      id: msg.id || uuidv4(),
+      sender: msg.sender,
+      text: msg.text,
+      timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+    }));
+  }
+  
+  return {
+    id: chat.id,
+    title: chat.title,
+    messages: messages,
+    createdAt: new Date(chat.created_at),
+    updatedAt: new Date(chat.updated_at),
+  };
+};
+
+// Função para serializar mensagens para armazenamento
+const serializeMessages = (messages: ChatMessage[]): any[] => {
+  return messages.map(msg => ({
+    id: msg.id,
+    sender: msg.sender,
+    text: msg.text,
+    timestamp: typeof msg.timestamp === 'string' ? msg.timestamp : msg.timestamp.toISOString()
+  }));
+};
+
+// Carrega todas as conversas do usuário
+export const loadChats = async (): Promise<Chat[]> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    
+    if (!user?.user?.id) {
+      return [];
+    }
+    
     const { data, error } = await supabase
-      .from('chats')
-      .select('*')
-      .order('updated_at', { ascending: false });
+      .from("chats")
+      .select("*")
+      .eq("user_id", user.user.id)
+      .order("updated_at", { ascending: false });
 
     if (error) throw error;
 
-    return data.map(chat => ({
-      id: chat.id,
-      title: chat.title || "Nova Conversa",
-      messages: [],
-      createdAt: new Date(chat.created_at),
-      updatedAt: new Date(chat.updated_at)
-    }));
+    return data.map(convertChatDates);
   } catch (error) {
-    console.error("Erro ao buscar chats:", error);
-    toast.error("Erro ao carregar conversas");
+    console.error("Erro ao carregar conversas:", error);
     return [];
   }
 };
 
-// Função para carregar as mensagens de um chat específico
-export const fetchChatMessages = async (chatId: string): Promise<Chat | null> => {
+// Carrega uma conversa específica pelo ID
+export const loadChat = async (chatId: string): Promise<Chat | null> => {
   try {
-    // Buscar dados do chat
-    const { data: chatData, error: chatError } = await supabase
-      .from('chats')
-      .select('*')
-      .eq('id', chatId)
+    const { data, error } = await supabase
+      .from("chats")
+      .select("*")
+      .eq("id", chatId)
       .single();
-    
-    if (chatError) throw chatError;
-    
-    // Buscar mensagens associadas ao chat
-    const { data: messagesData, error: messagesError } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('chat_id', chatId)
-      .order('created_at', { ascending: true });
-    
-    if (messagesError) throw messagesError;
-    
-    // Formatar mensagens
-    const formattedMessages: ChatMessage[] = messagesData ? messagesData.map(message => ({
-      id: message.id,
-      sender: message.sender as "user" | "ai", // Fazemos um type casting explícito aqui
-      text: message.content,
-      timestamp: new Date(message.created_at)
-    })) : [];
-    
-    // Criar objeto do chat com as mensagens
-    return {
-      id: chatData.id,
-      title: chatData.title || "Nova Conversa",
-      messages: formattedMessages,
-      createdAt: new Date(chatData.created_at),
-      updatedAt: new Date(chatData.updated_at)
-    };
-  } catch (error) {
-    console.error("Erro ao buscar mensagens do chat:", error);
-    toast.error("Erro ao carregar mensagens");
-    return null;
-  }
-};
-
-// Função para criar um novo chat
-export const createNewChat = async (): Promise<string | null> => {
-  try {
-    const chatId = uuidv4();
-    const { data: userData } = await supabase.auth.getUser();
-    
-    const { error } = await supabase
-      .from('chats')
-      .insert([
-        {
-          id: chatId,
-          title: "Nova Conversa",
-          user_id: userData.user?.id
-        }
-      ]);
 
     if (error) throw error;
     
-    return chatId;
+    return convertChatDates(data);
   } catch (error) {
-    console.error("Erro ao criar novo chat:", error);
-    toast.error("Erro ao criar nova conversa");
+    console.error(`Erro ao carregar conversa ${chatId}:`, error);
     return null;
   }
 };
 
-// Função para excluir um chat
-export const deleteChat = async (chatId: string): Promise<boolean> => {
+// Cria uma nova conversa
+export const createChat = async (initialMessage?: string): Promise<Chat> => {
+  const now = new Date();
+  const { data: user } = await supabase.auth.getUser();
+  
+  if (!user?.user?.id) {
+    throw new Error("Usuário não autenticado");
+  }
+  
+  const chatId = uuidv4();
+  const initialMessages: ChatMessage[] = initialMessage ? [
+    {
+      id: uuidv4(),
+      sender: "user",
+      text: initialMessage,
+      timestamp: now,
+    }
+  ] : [];
+
+  const newChat: Chat = {
+    id: chatId,
+    title: `Nova conversa (${now.toLocaleDateString()})`,
+    messages: initialMessages,
+    createdAt: now,
+    updatedAt: now,
+  };
+
   try {
-    // Exclui o chat (as mensagens serão excluídas automaticamente devido à restrição ON DELETE CASCADE)
-    const { error: chatError } = await supabase
-      .from('chats')
-      .delete()
-      .eq('id', chatId);
-    
-    if (chatError) throw chatError;
-    
-    toast.success("Conversa excluída com sucesso");
-    return true;
+    const { error } = await supabase.from("chats").insert({
+      id: newChat.id,
+      title: newChat.title,
+      messages: initialMessages.length > 0 ? serializeMessages(initialMessages) : [],
+      created_at: newChat.createdAt.toISOString(),
+      updated_at: newChat.updatedAt.toISOString(),
+      user_id: user.user.id
+    });
+
+    if (error) throw error;
+    return newChat;
   } catch (error) {
-    console.error("Erro ao excluir chat:", error);
-    toast.error("Erro ao excluir conversa");
-    return false;
+    console.error("Erro ao criar nova conversa:", error);
+    throw new Error("Não foi possível criar uma nova conversa");
   }
 };
 
-// Função para adicionar uma mensagem a um chat
+// Adiciona uma mensagem a uma conversa
 export const addMessageToChat = async (
   chatId: string, 
-  message: { sender: "user" | "ai", text: string }
-): Promise<boolean> => {
+  message: Omit<ChatMessage, "id" | "timestamp">
+): Promise<ChatMessage> => {
+  const newMessage: ChatMessage = {
+    id: uuidv4(),
+    ...message,
+    timestamp: new Date(),
+  };
+
   try {
-    const messageId = uuidv4();
-    const now = new Date();
+    const { data: chat } = await supabase
+      .from("chats")
+      .select("messages, title")
+      .eq("id", chatId)
+      .single();
     
-    // Verificação para garantir que sender seja apenas "user" ou "ai"
-    if (message.sender !== "user" && message.sender !== "ai") {
-      throw new Error("O remetente da mensagem deve ser 'user' ou 'ai'");
+    // Garantimos que messages seja sempre um array
+    const currentMessages = Array.isArray(chat?.messages) ? chat.messages : [];
+    
+    // Combinamos as mensagens existentes com a nova e serializamos
+    const serializedMessages = serializeMessages([...currentMessages.map((msg: any) => ({
+      id: msg.id,
+      sender: msg.sender,
+      text: msg.text,
+      timestamp: msg.timestamp
+    })), newMessage]);
+    
+    // Se for a primeira mensagem do usuário e título for genérico, atualize o título
+    let title = chat?.title;
+    if (message.sender === "user" && serializedMessages.length <= 2 && chat?.title?.startsWith("Nova conversa")) {
+      title = message.text.length > 30 
+        ? `${message.text.substring(0, 30)}...` 
+        : message.text;
+    }
+
+    const now = new Date();
+    await supabase
+      .from("chats")
+      .update({
+        messages: serializedMessages,
+        title,
+        updated_at: now.toISOString(),
+      })
+      .eq("id", chatId);
+
+    return newMessage;
+  } catch (error) {
+    console.error(`Erro ao adicionar mensagem à conversa ${chatId}:`, error);
+    throw new Error("Erro ao adicionar mensagem");
+  }
+};
+
+// Atualiza o título de uma conversa
+export const updateChatTitle = async (chatId: string, title: string): Promise<void> => {
+  try {
+    const now = new Date();
+    await supabase
+      .from("chats")
+      .update({
+        title,
+        updated_at: now.toISOString(),
+      })
+      .eq("id", chatId);
+  } catch (error) {
+    console.error(`Erro ao atualizar título da conversa ${chatId}:`, error);
+    throw new Error("Erro ao atualizar título");
+  }
+};
+
+// Exclui uma conversa
+export const deleteChat = async (chatId: string): Promise<void> => {
+  try {
+    await supabase
+      .from("chats")
+      .delete()
+      .eq("id", chatId);
+  } catch (error) {
+    console.error(`Erro ao excluir conversa ${chatId}:`, error);
+    throw new Error("Erro ao excluir conversa");
+  }
+};
+
+// Exclui todas as conversas
+export const deleteAllChats = async (): Promise<void> => {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user?.user?.id) throw new Error("Usuário não autenticado");
+    
+    await supabase
+      .from("chats")
+      .delete()
+      .eq("user_id", user.user.id);
+  } catch (error) {
+    console.error("Erro ao excluir todas as conversas:", error);
+    throw new Error("Erro ao limpar histórico");
+  }
+};
+
+// Obtém as informações do usuário e da organização para o contexto do chat
+export const getUserAndOrgContext = async (): Promise<{
+  userName: string;
+  orgInfo: {
+    name?: string;
+    sector?: string;
+    city?: string;
+    state?: string;
+    description?: string;
+    [key: string]: any;
+  } | null;
+}> => {
+  try {
+    // Obter perfil do usuário
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error("Usuário não autenticado");
     }
     
-    // Inserir a mensagem
-    const { error } = await supabase
-      .from('messages')
-      .insert([
-        {
-          id: messageId,
-          chat_id: chatId,
-          sender: message.sender,
-          content: message.text,
-          created_at: now.toISOString()
-        }
-      ]);
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+      
+    // Obter organização atual do usuário
+    const { data: memberData } = await supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+      
+    let orgInfo = null;
+    
+    if (memberData?.organization_id) {
+      const { data: org } = await supabase
+        .from("organizations")
+        .select("*")
+        .eq("id", memberData.organization_id)
+        .single();
+        
+      if (org) {
+        orgInfo = {
+          name: org.name,
+          ...(org.settings && typeof org.settings === 'object' ? org.settings : {})
+        };
+      }
+    }
+    
+    return {
+      userName: profile?.full_name || user.email?.split('@')[0] || "Usuário",
+      orgInfo
+    };
+  } catch (error) {
+    console.error("Erro ao obter contexto do usuário:", error);
+    return {
+      userName: "Usuário",
+      orgInfo: null
+    };
+  }
+};
+
+// Envia mensagem para a IA e obtém resposta
+export const sendMessageToAI = async (message: string, context?: string, chatId?: string): Promise<string> => {
+  try {
+    const settings = await loadChatSettings();
+    
+    // Obter o ID do usuário atual
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user?.id) {
+      throw new Error("Usuário não autenticado");
+    }
+    
+    // Obter a organização atual do usuário
+    const { data: memberData } = await supabase
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    
+    // Chamar a função Edge com os IDs do usuário e da organização
+    const { data, error } = await supabase.functions.invoke("chat-with-dona", {
+      body: { 
+        message,
+        context,
+        settings,
+        userId: user.id,
+        orgId: memberData?.organization_id || null,
+        chatId: chatId // Passando o ID do chat para que a IA possa acessar o histórico
+      },
+    });
 
     if (error) throw error;
-    
-    // Atualizar a data de atualização do chat
-    await supabase
-      .from('chats')
-      .update({
-        updated_at: now.toISOString()
-      })
-      .eq('id', chatId);
-    
-    return true;
+    return data.response;
   } catch (error) {
-    console.error("Erro ao adicionar mensagem:", error);
-    toast.error("Erro ao enviar mensagem");
-    return false;
-  }
-};
-
-// Função para enviar mensagem para IA e obter resposta
-export const sendMessageToAI = async (
-  message: string, 
-  context: string, 
-  chatId: string
-): Promise<string> => {
-  try {
-    // Aqui você pode integrar com uma API de IA como OpenAI, Azure OpenAI, etc.
-    // Por enquanto, vamos simular uma resposta
-    
-    // Simular um tempo de processamento
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Resposta simulada
-    const resposta = `Olá! Recebi sua mensagem: "${message}".\n\nBaseado na minha análise, posso oferecer algumas informações:\n\n**Resultados da análise:**\n- Os dados mostram uma tendência interessante para seu negócio\n- Existe uma oportunidade de crescimento no segmento de mercado atual\n- Recomendo focar em estratégias de fidelização de clientes\n\nVocê gostaria de alguma análise específica sobre esses resultados?`;
-    
-    return resposta;
-  } catch (error) {
-    console.error("Erro ao processar resposta da IA:", error);
+    console.error("Erro ao enviar mensagem para a IA:", error);
     throw new Error("Não foi possível obter resposta da IA. Tente novamente mais tarde.");
-  }
-};
-
-// Função para carregar configurações do chat
-export const loadChatSettings = async (): Promise<ChatSettings> => {
-  try {
-    // Em um cenário real, você carregaria do banco de dados
-    // Por enquanto, retorna configurações padrão
-    return {
-      model: "gpt-4",
-      temperature: 0.7,
-      saveHistory: true,
-      autoAnalysis: true
-    };
-  } catch (error) {
-    console.error("Erro ao carregar configurações:", error);
-    toast.error("Erro ao carregar configurações da IA");
-    
-    // Retornar configurações padrão em caso de erro
-    return {
-      model: "gpt-4",
-      temperature: 0.7,
-      saveHistory: true,
-      autoAnalysis: true
-    };
-  }
-};
-
-// Função para salvar configurações do chat
-export const saveChatSettings = async (settings: ChatSettings): Promise<boolean> => {
-  try {
-    // Em um cenário real, você salvaria no banco de dados
-    // Por enquanto, apenas simula o salvamento
-    console.log("Configurações salvas:", settings);
-    
-    // Simular tempo de processamento
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    return true;
-  } catch (error) {
-    console.error("Erro ao salvar configurações:", error);
-    toast.error("Erro ao salvar configurações da IA");
-    return false;
   }
 };

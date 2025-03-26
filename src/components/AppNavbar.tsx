@@ -7,7 +7,6 @@ import { Logo } from "./navbar/Logo"
 import { Navigation } from "./navbar/Navigation"
 import { UserMenu } from "./navbar/UserMenu"
 import { MobileNav } from "./MobileNav"
-import { useMobile } from "@/hooks/use-mobile"
 
 export function AppNavbar() {
   const { session } = useAuth()
@@ -16,7 +15,6 @@ export function AppNavbar() {
     email: string;
     avatar_url: string;
   } | null>(null)
-  const isMobile = useMobile()
 
   useEffect(() => {
     if (session?.user) {
@@ -43,18 +41,8 @@ export function AppNavbar() {
     }
   }
 
-  // Se o perfil ainda não foi carregado, mostre apenas um esqueleto básico para o header
   if (!profile) {
-    return (
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-green-100/20 dark:border-emerald-900/20 safe-area-top">
-        <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
-            <Logo />
-            <ModeToggle />
-          </div>
-        </div>
-      </nav>
-    )
+    return null
   }
 
   return (
@@ -64,12 +52,12 @@ export function AppNavbar() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-8">
               <Logo />
-              {!isMobile && <Navigation />}
+              <Navigation />
             </div>
 
             <div className="flex items-center gap-4">
               <ModeToggle />
-              {!isMobile && <UserMenu profile={profile} />}
+              <UserMenu profile={profile} />
             </div>
           </div>
         </div>
