@@ -30,7 +30,6 @@ export function ChatInterface({
   const [inputMessage, setInputMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState("")
-  const [isRecording, setIsRecording] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const isMobile = useMobile()
 
@@ -110,13 +109,6 @@ export function ChatInterface({
     } finally {
       setIsLoading(false)
       setLoadingMessage("")
-    }
-  }
-
-  const handleVoiceRecord = () => {
-    setIsRecording(!isRecording)
-    if (!isRecording) {
-      toast.info("Funcionalidade de gravação em desenvolvimento")
     }
   }
 
@@ -213,8 +205,6 @@ export function ChatInterface({
         inputMessage={inputMessage}
         onInputChange={setInputMessage}
         onSendMessage={handleSendMessage}
-        onVoiceRecord={handleVoiceRecord}
-        isRecording={isRecording}
         isLoading={isLoading}
       />
     </div>
