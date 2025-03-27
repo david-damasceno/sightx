@@ -213,7 +213,7 @@ export function InsightsPanel() {
         <div className="flex items-center gap-2">
           <Brain className="h-5 w-5 text-purple-500" />
           <div>
-            <h3 className="font-semibold">Insights da DONA</h3>
+            <h3 className="font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Insights da DONA</h3>
             <p className="text-sm text-muted-foreground">
               {loading ? 'Carregando insights...' : `${insights.length} insights ativos`}
             </p>
@@ -224,27 +224,27 @@ export function InsightsPanel() {
           size="sm" 
           onClick={refreshInsights}
           disabled={refreshing}
-          className="gap-1"
+          className="gap-1 hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-100/20 dark:border-purple-900/20"
         >
           <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
           {refreshing ? 'Atualizando...' : 'Atualizar'}
         </Button>
       </div>
 
-      <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+      <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
         {loading ? (
           // Skeleton loaders
           Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="p-4 rounded-lg border">
+            <div key={index} className="p-4 rounded-lg border border-purple-100/10 dark:border-purple-900/10 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm">
               <div className="flex items-start gap-3">
-                <Skeleton className="h-5 w-5 rounded-full" />
+                <Skeleton className="h-5 w-5 rounded-full bg-purple-100/50 dark:bg-purple-900/50" />
                 <div className="space-y-2 w-full">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-full bg-purple-100/50 dark:bg-purple-900/50" />
+                  <Skeleton className="h-4 w-3/4 bg-purple-100/50 dark:bg-purple-900/50" />
                   <div className="flex flex-wrap gap-2 mt-2">
-                    <Skeleton className="h-6 w-20 rounded-full" />
-                    <Skeleton className="h-6 w-24 rounded-full" />
-                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-20 rounded-full bg-purple-100/50 dark:bg-purple-900/50" />
+                    <Skeleton className="h-6 w-24 rounded-full bg-purple-100/50 dark:bg-purple-900/50" />
+                    <Skeleton className="h-6 w-16 rounded-full bg-purple-100/50 dark:bg-purple-900/50" />
                   </div>
                 </div>
               </div>
@@ -255,12 +255,12 @@ export function InsightsPanel() {
             <div 
               key={insight.id} 
               className={cn(
-                "group relative flex flex-col gap-3 p-4 rounded-lg transition-all duration-200 hover:scale-[1.02] cursor-pointer animate-fade-in",
+                "group relative flex flex-col gap-3 p-4 rounded-lg transition-all duration-200 hover:scale-[1.02] cursor-pointer animate-fade-in shadow-sm hover:shadow-md",
                 {
-                  'bg-purple-50 dark:bg-purple-950/30': insight.type === 'ai',
-                  'bg-yellow-50 dark:bg-yellow-950/30': insight.type === 'warning',
-                  'bg-green-50 dark:bg-green-950/30': insight.type === 'success',
-                  'bg-blue-50 dark:bg-blue-950/30': insight.type === 'info',
+                  'bg-purple-50/70 dark:bg-purple-950/30 border border-purple-100/20 dark:border-purple-900/20': insight.type === 'ai',
+                  'bg-yellow-50/70 dark:bg-yellow-950/30 border border-yellow-100/20 dark:border-yellow-900/20': insight.type === 'warning',
+                  'bg-green-50/70 dark:bg-green-950/30 border border-green-100/20 dark:border-green-900/20': insight.type === 'success',
+                  'bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100/20 dark:border-blue-900/20': insight.type === 'info',
                   'border-l-4': true,
                   'border-l-red-500': insight.priority === 'high',
                   'border-l-yellow-500': insight.priority === 'medium',
@@ -275,7 +275,7 @@ export function InsightsPanel() {
                       <Button
                         variant="ghost" 
                         size="icon"
-                        className="h-7 w-7"
+                        className="h-7 w-7 hover:bg-white/60 dark:hover:bg-gray-800/60"
                         onClick={() => toggleFavorite(insight.id, insight.is_favorite)}
                       >
                         <Star className={cn(
@@ -284,7 +284,7 @@ export function InsightsPanel() {
                         )} />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent className="bg-white dark:bg-gray-800 border border-purple-100/20 dark:border-purple-900/20">
                       {insight.is_favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
                     </TooltipContent>
                   </Tooltip>
@@ -302,7 +302,7 @@ export function InsightsPanel() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent className="bg-white dark:bg-gray-800 border border-purple-100/20 dark:border-purple-900/20">
                       Excluir insight
                     </TooltipContent>
                   </Tooltip>
@@ -310,21 +310,21 @@ export function InsightsPanel() {
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-1">{getIconForInsight(insight)}</div>
+                <div className="flex-shrink-0 mt-1 bg-white dark:bg-gray-800 p-1.5 rounded-full shadow-sm">{getIconForInsight(insight)}</div>
                 <div className="flex-1">
                   <p className="text-sm font-medium">{insight.text}</p>
                   
                   <div className="flex flex-wrap items-center gap-2 mt-3">
-                    <Badge variant={insight.priority === 'high' ? 'destructive' : 'secondary'}>
+                    <Badge variant={insight.priority === 'high' ? 'destructive' : 'secondary'} className="bg-white/70 dark:bg-gray-800/70 border border-purple-100/20 dark:border-purple-900/20 text-purple-700 dark:text-purple-300">
                       {insight.priority === 'high' ? 'Alta' : insight.priority === 'medium' ? 'Média' : 'Baixa'} Prioridade
                     </Badge>
-                    <Badge variant="outline">{insight.category}</Badge>
-                    <Badge variant="outline">Impacto: {insight.impact}</Badge>
+                    <Badge variant="outline" className="bg-white/70 dark:bg-gray-800/70 border border-purple-100/20 dark:border-purple-900/20">{insight.category}</Badge>
+                    <Badge variant="outline" className="bg-white/70 dark:bg-gray-800/70 border border-purple-100/20 dark:border-purple-900/20">Impacto: {insight.impact}</Badge>
                     {insight.timeToImplement && (
-                      <Badge variant="outline">Tempo: {insight.timeToImplement}</Badge>
+                      <Badge variant="outline" className="bg-white/70 dark:bg-gray-800/70 border border-purple-100/20 dark:border-purple-900/20">Tempo: {insight.timeToImplement}</Badge>
                     )}
                     {insight.source && (
-                      <Badge variant="outline" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100">
+                      <Badge variant="outline" className="bg-purple-100/70 text-purple-800 dark:bg-purple-900/70 dark:text-purple-100 border border-purple-200/20 dark:border-purple-800/20">
                         {insight.source}
                       </Badge>
                     )}
@@ -334,7 +334,7 @@ export function InsightsPanel() {
             </div>
           ))
         ) : (
-          <div className="text-center py-8">
+          <div className="text-center py-8 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-lg border border-purple-100/20 dark:border-purple-900/20">
             <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
             <p className="text-muted-foreground">Nenhum insight disponível no momento.</p>
             <p className="text-xs text-muted-foreground mt-1">

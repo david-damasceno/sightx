@@ -54,7 +54,7 @@ export function ChatInput({
               "min-h-[56px] max-h-[120px] pr-16 resize-none mb-2",
               "bg-white/90 dark:bg-gray-800/80 backdrop-blur-md",
               "border-primary/10 dark:border-primary/20 focus-visible:ring-primary/20",
-              "rounded-2xl py-4 px-6 pb-5", // Adicionei pb-5 para mais padding na parte inferior
+              "rounded-2xl py-4 px-6 pb-5", // Padding inferior já aumentado
               "text-base md:text-sm",
               "placeholder:text-muted-foreground/70 shadow-md",
               "transition-all duration-200 ease-in-out"
@@ -68,8 +68,8 @@ export function ChatInput({
               className={cn(
                 "flex-shrink-0 rounded-full",
                 "h-11 w-11 p-0",
-                "bg-gradient-to-r from-blue-600 to-purple-600",
-                "hover:from-blue-700 hover:to-purple-700",
+                "bg-gradient-to-r from-purple-600 to-indigo-600",
+                "hover:from-purple-700 hover:to-indigo-700",
                 "shadow-md hover:shadow-lg transition-all duration-200",
                 "disabled:opacity-50 disabled:shadow-none disabled:from-gray-400 disabled:to-gray-500"
               )}
