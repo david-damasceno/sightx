@@ -16,7 +16,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
           "disabled:cursor-not-allowed disabled:opacity-50",
           "transition-colors duration-200",
-          "rounded-xl", // Arredondamento mais moderno
+          "rounded-xl pb-4", // Adicionado padding inferior
           className
         )}
         ref={ref}
