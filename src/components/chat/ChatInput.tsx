@@ -38,7 +38,7 @@ export function ChatInput({
   }
 
   return (
-    <div className="p-4 pb-6 bg-gradient-to-b from-background/80 to-background/95 backdrop-blur-md border-t safe-area-bottom">
+    <div className="p-4 pb-6 bg-gradient-to-b from-background/80 to-background/95 backdrop-blur-md border-t border-purple-100/20 dark:border-purple-900/20 safe-area-bottom">
       <div className={cn(
         "flex flex-col max-w-3xl mx-auto relative",
         isMobile ? "max-w-full" : "max-w-3xl"
@@ -53,11 +53,11 @@ export function ChatInput({
             className={cn(
               "min-h-[56px] max-h-[120px] pr-16 resize-none mb-2",
               "bg-white/90 dark:bg-gray-800/80 backdrop-blur-md",
-              "border-primary/10 dark:border-primary/20 focus-visible:ring-primary/20",
-              "rounded-2xl py-4 px-6 pb-5", // Padding inferior já aumentado
+              "border-purple-200/30 dark:border-purple-700/30 focus-visible:ring-purple-300/30 dark:focus-visible:ring-purple-500/20",
+              "rounded-2xl py-4 px-6 pb-6", 
               "text-base md:text-sm",
-              "placeholder:text-muted-foreground/70 shadow-md",
-              "transition-all duration-200 ease-in-out"
+              "placeholder:text-muted-foreground/70",
+              "shadow-sm hover:shadow-md transition-all duration-200 ease-in-out"
             )}
             disabled={isLoading}
           />
