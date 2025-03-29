@@ -11,7 +11,7 @@ export default defineConfig({
       jsxImportSource: '@emotion/react',
     }),
     process.env.NODE_ENV === 'development' && componentTagger(),
-  ],
+  ].filter(Boolean),
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

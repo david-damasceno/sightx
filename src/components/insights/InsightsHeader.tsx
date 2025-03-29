@@ -1,3 +1,4 @@
+
 import { Brain } from "lucide-react"
 
 export function InsightsHeader() {
@@ -6,11 +7,11 @@ export function InsightsHeader() {
       <div className="relative z-10 max-w-3xl">
         <div className="flex items-center gap-3 mb-3">
           <Brain className="h-8 w-8 text-purple-500" />
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent" data-lovable-editable="true">
             Insights da DONA
           </h1>
         </div>
-        <p className="text-muted-foreground text-lg">
+        <p className="text-muted-foreground text-lg" data-lovable-editable="true">
           Análise inteligente dos dados da sua empresa para tomada de decisões estratégicas. 
           Acompanhe métricas em tempo real e receba recomendações personalizadas.
         </p>
