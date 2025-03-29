@@ -1,4 +1,3 @@
-
 import { Home, BarChart2, Users, MapPin, Share2, Brain, MessageSquare, FileText, Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Link, useLocation } from "react-router-dom"
@@ -25,7 +24,7 @@ const menuItems = [
     icon: Users
   },
   {
-    title: "SightX I.A",
+    title: "IA Insights",
     href: "/ai-insights",
     icon: Brain
   },

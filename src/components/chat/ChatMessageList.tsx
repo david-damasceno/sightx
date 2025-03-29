@@ -27,7 +27,7 @@ export function ChatMessageList({
     return (
       <div className="flex flex-col items-center justify-center text-center p-8 h-full">
         <DonaAvatar className="w-16 h-16 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Olá, eu sou Donna</h2>
+        <h2 className="text-xl font-semibold mb-2">Olá, eu sou DONA</h2>
         <p className="text-muted-foreground max-w-md mb-6">
           Sua assistente de análise de dados e insights empresariais. 
           Como posso ajudar você hoje?

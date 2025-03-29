@@ -1,12 +1,15 @@
 
-project_id = "zzmezxjwhtiwhnhqvnck"
+# This file lists Edge Functions that should be built along with the database.
+# When this file is present, the CLI will look for each Edge Function's entrypoint in 
+# the ./functions/<name>/index.ts or ./functions/<name>/index.js file.
 
 [config]
 # Base directory containing edge functions
 base_dir = "functions"
 
-# Lista das funções essenciais para manter (limitado ao plano gratuito)
+# List of functions to include when building
 [[functions]]
+# Functions will be deployed to Supabase Edge Functions
 name = "process-file-upload"
 verify_jwt = false
 
@@ -27,9 +30,30 @@ name = "analyze-data-insights"
 verify_jwt = false
 
 [[functions]]
+name = "test-function"
+verify_jwt = false
+
+[[functions]]
+name = "hello-world"
+verify_jwt = false
+
+[[functions]]
 name = "process-invite"
 verify_jwt = false
 
 [[functions]]
 name = "read-file-data"
+verify_jwt = false
+
+[[functions]]
+name = "create-airbyte-user"
+verify_jwt = false
+
+[[functions]]
+name = "analyze-table-context"
+verify_jwt = false
+
+# Nova função para gerenciar insights
+[[functions]]
+name = "manage-insights"
 verify_jwt = false
