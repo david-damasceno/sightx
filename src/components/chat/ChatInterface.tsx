@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react"
 import { ChatInput } from "./ChatInput"
 import { ChatMessageList } from "./ChatMessageList"
@@ -129,7 +128,7 @@ export function ChatInterface({
           <Brain className="w-8 h-8 md:w-10 md:h-10 text-white" />
         </div>
         <div>
-          <h2 className="text-xl md:text-2xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">IA Insights</h2>
+          <h2 className="text-xl md:text-2xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">SightX I.A</h2>
           <p className="text-muted-foreground max-w-md text-sm md:text-base">
             Explore seus dados com a ajuda da nossa IA. Faça perguntas, obtenha insights e descubra tendências que impulsionarão seu negócio.
           </p>
@@ -166,7 +165,6 @@ export function ChatInterface({
     )
   }
 
-  // Para dispositivos móveis e quando um chat está selecionado
   return (
     <div className="flex flex-col h-full">
       {/* Header */}

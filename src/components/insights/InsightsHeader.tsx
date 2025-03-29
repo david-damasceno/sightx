@@ -1,3 +1,4 @@
+
 import { Brain } from "lucide-react"
 
 export function InsightsHeader() {
@@ -7,7 +8,7 @@ export function InsightsHeader() {
         <div className="flex items-center gap-3 mb-3">
           <Brain className="h-8 w-8 text-purple-500" />
           <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-            Insights da DONA
+            Insights da Donna
           </h1>
         </div>
         <p className="text-muted-foreground text-lg">

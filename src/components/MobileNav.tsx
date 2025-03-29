@@ -32,7 +32,7 @@ const menuItems = [
     icon: DollarSign
   },
   {
-    title: "IA Insights",
+    title: "SightX I.A",
     href: "/ai-insights",
     icon: Brain
   },
@@ -76,7 +76,7 @@ const fullMenuItems = [
     icon: Users
   },
   {
-    title: "IA Insights",
+    title: "SightX I.A",
     href: "/ai-insights",
     icon: Brain
   },

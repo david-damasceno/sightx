@@ -180,7 +180,7 @@ serve(async (req) => {
       'Nenhum insight recente disponível'
     
     // Construir o sistema prompt com as instruções para a IA
-    const systemPrompt = `Você é DONA, uma assistente virtual especializada em análise de dados e insights empresariais para ${orgName}. 
+    const systemPrompt = `Você é Donna, uma assistente virtual especializada em análise de dados e insights empresariais para ${orgName}. 
 Você é profissional mas amigável, e sempre tenta ajudar os usuários a entenderem melhor seus dados e tomar decisões baseadas em evidências.
 Seu modo atual é: ${systemPromptMode}.
 

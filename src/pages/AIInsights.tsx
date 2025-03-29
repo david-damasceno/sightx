@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react"
 import { ChatInterface } from "@/components/chat/ChatInterface"
 import { ChatSidebar } from "@/components/chat/ChatSidebar"
@@ -26,7 +25,6 @@ export default function AIInsights() {
   
   const isMobile = useMobile()
   
-  // Carregar lista de chats quando o componente é montado
   useEffect(() => {
     const fetchChats = async () => {
       try {
@@ -44,7 +42,6 @@ export default function AIInsights() {
     fetchChats()
   }, [])
 
-  // Carregar um chat específico quando selecionado
   useEffect(() => {
     const fetchChat = async () => {
       if (selectedChat && selectedChat !== 'settings' && selectedChat !== 'new') {
@@ -64,7 +61,6 @@ export default function AIInsights() {
   }, [selectedChat])
   
   useEffect(() => {
-    // Em dispositivos móveis, colapsar o sidebar automaticamente
     if (isMobile) {
       setIsSidebarCollapsed(true)
     }
@@ -105,7 +101,6 @@ export default function AIInsights() {
       const chatsList = await loadChats()
       setChats(chatsList)
       
-      // Se o chat atual ainda está na lista, recarregue-o
       if (selectedChat && selectedChat !== 'settings' && chatsList.some(c => c.id === selectedChat)) {
         const updatedChat = await loadChat(selectedChat)
         setCurrentChat(updatedChat)
@@ -115,18 +110,15 @@ export default function AIInsights() {
     }
   }
 
-  // Rola para o topo quando um novo chat é iniciado
   useEffect(() => {
     if (selectedChat === null && chatContainerRef.current) {
       chatContainerRef.current.scrollTop = 0
     }
   }, [selectedChat])
 
-  // Interface principal para dispositivos móveis
   if (isMobile) {
     return (
       <div className="fixed inset-0 top-16 flex flex-col bg-gradient-to-br from-background via-purple-50/5 dark:via-purple-950/5 to-background">
-        {/* Barra superior com navegação de abas */}
         <div className="border-b border-border/40 bg-background/95 backdrop-blur-md">
           <Tabs 
             value={activeTab} 
@@ -138,7 +130,7 @@ export default function AIInsights() {
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-md">
                   <Brain className="h-5 w-5 text-white" />
                 </div>
-                <h1 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">SightX A.I</h1>
+                <h1 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">SightX I.A</h1>
               </div>
               
               <div className="flex items-center gap-2">
@@ -189,7 +181,6 @@ export default function AIInsights() {
           </Tabs>
         </div>
         
-        {/* Conteúdo das abas */}
         <TabsContent value="chat" className="flex-1 overflow-hidden pt-0 m-0">
           {selectedChat ? (
             <div className="h-full" ref={chatContainerRef}>
@@ -224,7 +215,6 @@ export default function AIInsights() {
                 </Button>
               </div>
               
-              {/* Histórico de conversas recentes */}
               <div className="mt-auto py-2 px-2 bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-xl border border-purple-100/20 dark:border-purple-900/20">
                 <h3 className="text-sm font-medium bg-gradient-to-r from-purple-700 to-indigo-700 bg-clip-text text-transparent px-2 py-2">Conversas recentes</h3>
                 <div className="space-y-2 p-2">
@@ -274,7 +264,6 @@ export default function AIInsights() {
           </div>
           
           <div className="mt-4 md:mt-6 space-y-3 md:space-y-4">
-            {/* Resultados da busca */}
             {searchQuery && (
               <div className="space-y-2">
                 {chats
@@ -346,7 +335,6 @@ export default function AIInsights() {
           </div>
         </TabsContent>
 
-        {/* Menu lateral para dispositivos móveis */}
         <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
           <SheetContent side="left" className="w-[85%] max-w-[320px] p-0 border-r border-purple-100/20 dark:border-purple-900/20 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md">
             <ChatSidebar
@@ -367,35 +355,30 @@ export default function AIInsights() {
     )
   }
 
-  // Interface para desktop
   return (
     <div className="fixed inset-0 top-16 bg-gradient-to-br from-background via-purple-50/10 dark:via-purple-950/10 to-background">
       <div className="h-full p-0 md:p-4">
         <div className="flex gap-0 md:gap-4 h-full rounded-none md:rounded-2xl border-0 md:border border-purple-100/20 dark:border-purple-900/20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md md:shadow-xl overflow-hidden">
-          {/* Mobile Menu Button and New Chat Button */}
-          {isMobile && (
-            <div className="fixed top-4 left-4 z-40 flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={handleMobileMenuToggle}
-                className="h-10 w-10 rounded-full bg-background/80 backdrop-blur-md shadow-md border border-purple-100/30 dark:border-purple-900/30"
-              >
-                {isMobileSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                onClick={handleNewChat}
-                className="flex items-center gap-2 rounded-full bg-background/80 backdrop-blur-md shadow-md border border-purple-100/30 dark:border-purple-900/30"
-              >
-                <PlusCircle className="h-4 w-4" />
-                <span>Novo Chat</span>
-              </Button>
-            </div>
-          )}
+          <div className="fixed top-4 left-4 z-40 flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={handleMobileMenuToggle}
+              className="h-10 w-10 rounded-full bg-background/80 backdrop-blur-md shadow-md border border-purple-100/30 dark:border-purple-900/30"
+            >
+              {isMobileSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              onClick={handleNewChat}
+              className="flex items-center gap-2 rounded-full bg-background/80 backdrop-blur-md shadow-md border border-purple-100/30 dark:border-purple-900/30"
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span>Novo Chat</span>
+            </Button>
+          </div>
 
-          {/* Sidebar for desktop and mobile */}
           <aside 
             className={cn(
               "transition-all duration-300 ease-in-out",
@@ -420,7 +403,6 @@ export default function AIInsights() {
             />
           </aside>
 
-          {/* Main chat area */}
           <main className={cn(
             "flex-1 relative rounded-none md:rounded-2xl overflow-hidden",
             isSidebarCollapsed || isMobile ? 'border-l-0 md:border-l' : 'border-l-0 md:border-l',
