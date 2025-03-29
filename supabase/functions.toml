@@ -5,7 +5,7 @@ project_id = "zzmezxjwhtiwhnhqvnck"
 # Base directory containing edge functions
 base_dir = "functions"
 
-# Lista das funções essenciais para manter
+# Lista das funções essenciais para manter (limitado ao plano gratuito)
 [[functions]]
 name = "process-file-upload"
 verify_jwt = false
@@ -32,17 +32,4 @@ verify_jwt = false
 
 [[functions]]
 name = "read-file-data"
-verify_jwt = false
-
-[[functions]]
-name = "create-airbyte-user"
-verify_jwt = false
-
-[[functions]]
-name = "analyze-table-context"
-verify_jwt = false
-
-# Nova função para gerenciar insights
-[[functions]]
-name = "manage-insights"
 verify_jwt = false
