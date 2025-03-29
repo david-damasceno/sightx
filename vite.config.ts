@@ -7,7 +7,9 @@ import { componentTagger } from 'lovable-tagger'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      jsxImportSource: '@emotion/react',
+    }),
     process.env.NODE_ENV === 'development' && componentTagger(),
   ],
   resolve: {

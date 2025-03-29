@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,59 +6,47 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 267 82% 28%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 262 83% 96%;
-    --accent-foreground: 240 5.9% 10%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 267 85% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 214 32% 91%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 214 32% 91%;
+    --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 98%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 98%;
-    --info: 221 83% 53%;
-    --info-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 267 82% 28%;
-    --radius: 1rem;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 267 85% 50%;
+    --radius: 0.5rem;
   }
 
   .dark {
-    --background: 240 10% 4%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 6%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 4%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 267 82% 60%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 255 92% 15%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 98%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 98%;
-    --info: 221 83% 53%;
-    --info-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 267 82% 60%;
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 267 85% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 33% 18%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 18%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 18%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 18%;
+    --input: 217 33% 18%;
+    --ring: 267 85% 50%;
   }
 }
 
@@ -66,60 +55,35 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased transition-colors duration-300;
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
-  
-  input, 
-  select, 
-  textarea {
-    @apply text-base sm:text-sm;
-    font-size: 16px; /* Previne zoom automático em iOS */
-  }
-  
-  button {
-    @apply touch-manipulation; /* Melhora resposta de toque */
+  /* Estilizações globais para garantir que o renderizador funcione corretamente */
+  [data-lovable-component-id] {
+    position: relative;
   }
 }
 
-.bg-300% {
-  background-size: 300% 300%;
+/* Estilos personalizados para componentes */
+.rdg-cell {
+  @apply border-r border-b border-border/50;
 }
 
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
+.rdg-header-row {
+  @apply bg-muted/50;
+}
+
+/* Corrigindo estilos para garantir compatibilidade com a função Edit */
+@keyframes show {
+  from {
+    opacity: 0;
   }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
+  to {
+    opacity: 1;
   }
 }
 
-.animate-gradient {
-  animation: gradient 8s ease infinite;
-}
-
-.glass-card {
-  @apply bg-white/30 dark:bg-gray-800/30 backdrop-blur-md 
-         border border-purple-100/20 dark:border-purple-900/20 
-         shadow-lg hover:shadow-xl transition-all duration-300
-         dark:shadow-purple-900/30;
-}
-
-.dark .glass-card {
-  @apply bg-gray-800/30 backdrop-blur-md 
-         border border-purple-900/20 
-         shadow-lg hover:shadow-xl transition-all duration-300
-         dark:shadow-purple-900/30;
-}
-
-.animate-in {
-  animation: fadeIn 0.5s ease-out;
-}
-
-@keyframes fadeIn {
+@keyframes float-up {
   from {
     opacity: 0;
     transform: translateY(10px);
@@ -130,521 +94,46 @@
   }
 }
 
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.animate-float-up {
+  animation: float-up 0.3s ease forwards;
 }
 
-::-webkit-scrollbar-track {
-  @apply bg-transparent dark:bg-transparent rounded-full;
+/* Estilização para o loading state */
+.loading-dots:after {
+  content: '.';
+  animation: dots 1.5s steps(5, end) infinite;
 }
 
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-gray-700 rounded-full 
-         hover:bg-gray-400 dark:hover:bg-gray-600 
-         transition-colors duration-200;
-}
-
-/* Mobile Optimizations */
-@media (max-width: 640px) {
-  .chat-container {
-    @apply h-[calc(100vh-4rem)];
+@keyframes dots {
+  0%, 20% {
+    content: '.';
   }
-
-  .message-bubble {
-    @apply max-w-[90%];
+  40% {
+    content: '..';
   }
-
-  .input-area {
-    @apply sticky bottom-0 bg-background/80 backdrop-blur-lg;
+  60% {
+    content: '...';
+  }
+  80%, 100% {
+    content: '';
   }
 }
 
-/* Chat Interface Enhancements */
-.chat-container {
-  @apply flex flex-col h-full overflow-hidden;
+/* Estilização para garantir que a função de edição funcione corretamente */
+[data-lovable-editable="true"] {
+  position: relative;
+  cursor: pointer;
+}
+
+[data-lovable-editable="true"]:hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(128, 90, 213, 0.1);
+  border: 1px dashed rgba(128, 90, 213, 0.5);
+  pointer-events: none;
+  z-index: 5;
 }
-
-.chat-messages {
-  @apply flex-1 overflow-y-auto p-4 space-y-4;
-}
-
-.message-bubble {
-  @apply max-w-[80%] rounded-lg p-4 animate-in;
-}
-
-.user-message {
-  @apply bg-green-500 text-white ml-auto;
-}
-
-.ai-message {
-  @apply glass-card mr-auto;
-}
-
-/* Loading Animation */
-@keyframes bounce-delay {
-  0%, 80%, 100% { 
-    transform: scale(0);
-  } 
-  40% { 
-    transform: scale(1.0);
-  }
-}
-
-.typing-indicator span {
-  @apply inline-block w-2 h-2 bg-purple-500 rounded-full mx-0.5;
-  animation: bounce-delay 1.4s infinite ease-in-out both;
-}
-
-.typing-indicator span:nth-child(1) {
-  animation-delay: -0.32s;
-}
-
-.typing-indicator span:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-/* Novas classes para a interface de dados */
-.data-grid-wrapper {
-  @apply bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm 
-         rounded-lg border border-gray-200 dark:border-gray-800
-         shadow-sm hover:shadow-md transition-all duration-300;
-}
-
-.data-card {
-  @apply bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700
-         rounded-lg shadow-sm hover:shadow-md transition-all duration-300
-         backdrop-filter backdrop-blur-sm;
-}
-
-.data-editor-controls {
-  @apply flex items-center gap-2 p-2 rounded-md
-         bg-gray-50 dark:bg-gray-800/50
-         border border-gray-100 dark:border-gray-700;
-}
-
-.stat-card {
-  @apply bg-gradient-to-br from-white to-gray-50 
-         dark:from-gray-800 dark:to-gray-900
-         border border-gray-100 dark:border-gray-700
-         rounded-lg shadow-sm p-4 transition-all duration-300;
-}
-
-.data-pill {
-  @apply inline-flex items-center justify-center 
-         px-2.5 py-0.5 rounded-full text-xs font-medium
-         bg-primary/10 dark:bg-primary/20 
-         text-primary-foreground;
-}
-
-/* Efeitos de destaque para células editáveis */
-.editable-cell-highlight {
-  @apply outline outline-2 outline-primary/30 
-         dark:outline-primary/40 outline-offset-1
-         transition-all duration-300;
-}
-
-/* Efeitos de transição para painéis */
-.panel-transition {
-  @apply transition-all duration-300 ease-in-out;
-}
-
-/* Background sutis para áreas de conteúdo */
-.content-bg {
-  @apply bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm;
-}
-
-/* Melhorias para foco de elementos interativos */
-.focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-primary/40 
-         focus:ring-offset-2 focus:ring-offset-background
-         dark:focus:ring-primary/60 dark:focus:ring-offset-1;
-}
-
-/* Estilização para caixas de busca e filtros */
-.search-field {
-  @apply bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm
-         border border-gray-200 dark:border-gray-700
-         rounded-md px-3 py-2 text-sm
-         focus:outline-none focus:ring-2 focus:ring-primary/30
-         transition-all duration-200;
-}
-
-.tooltip-styled {
-  @apply bg-gray-900 dark:bg-gray-800 text-white 
-         px-2 py-1 text-xs rounded shadow-lg
-         border border-gray-800 dark:border-gray-700
-         z-50;
-}
-
-/* Controles para filtro e ordenação */
-.filter-controls {
-  @apply flex flex-wrap items-center gap-2 p-2
-         bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm
-         rounded-md border border-gray-200 dark:border-gray-700;
-}
-
-/* Status e badges para informações */
-.status-badge {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
-}
-
-.status-active {
-  @apply bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300;
-}
-
-.status-pending {
-  @apply bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300;
-}
-
-.status-inactive {
-  @apply bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300;
-}
-
-/* Melhorias para botões de ação */
-.action-button {
-  @apply inline-flex items-center justify-center rounded-md
-         text-sm font-medium transition-colors
-         focus-visible:outline-none focus-visible:ring-2
-         focus-visible:ring-offset-2 disabled:opacity-50
-         disabled:pointer-events-none;
-}
-
-.action-primary {
-  @apply bg-primary text-primary-foreground hover:bg-primary/90;
-}
-
-.action-secondary {
-  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
-}
-
-.action-ghost {
-  @apply hover:bg-accent hover:text-accent-foreground;
-}
-
-/* Indicadores visuais para várias funcionalidades */
-.indicator-dot {
-  @apply h-2 w-2 rounded-full;
-}
-
-.indicator-success {
-  @apply bg-green-500;
-}
-
-.indicator-warning {
-  @apply bg-yellow-500;
-}
-
-.indicator-error {
-  @apply bg-red-500;
-}
-
-/* Contêineres com visuais aprimorados */
-.enhanced-container {
-  @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-md
-         border border-gray-200 dark:border-gray-800
-         rounded-xl shadow-lg overflow-hidden
-         transition-all duration-300;
-}
-
-/* Animações de transição rápidas para elementos interativos */
-.quick-transition {
-  @apply transition-all duration-150 ease-in-out;
-}
-
-/* Estilos em camadas para áreas com níveis visuais */
-.layered-section {
-  @apply relative z-10 rounded-xl overflow-hidden
-         bg-gradient-to-b from-white/60 to-white/40
-         dark:from-gray-900/60 dark:to-gray-900/40
-         backdrop-blur-lg border border-gray-200/50 dark:border-gray-800/50
-         shadow-md;
-}
-
-.layered-section::before {
-  @apply content-[''] absolute inset-0 -z-10
-         bg-gradient-to-br from-primary/10 to-accent/10
-         dark:from-primary/5 dark:to-accent/5
-         opacity-80 dark:opacity-30;
-}
-
-/* Melhorias para cartões de dados interativos */
-.interactive-card {
-  @apply relative overflow-hidden rounded-xl
-         bg-white dark:bg-gray-800
-         border border-gray-200 dark:border-gray-700
-         shadow-sm hover:shadow-md
-         transition-all duration-300;
-}
-
-.interactive-card::after {
-  @apply content-[''] absolute inset-0
-         bg-gradient-to-br from-primary/5 to-accent/5
-         dark:from-primary/10 dark:to-accent/10
-         opacity-0 hover:opacity-100
-         transition-opacity duration-300;
-}
-
-/* Novas classes específicas para mobile */
-@layer components {
-  /* Melhorias para formulários em dispositivos móveis */
-  .mobile-form {
-    @apply space-y-6;
-  }
-  
-  .mobile-form .form-group {
-    @apply mb-5;
-  }
-  
-  .mobile-form label {
-    @apply text-base mb-2 block;
-  }
-  
-  .mobile-form input,
-  .mobile-form select,
-  .mobile-form textarea {
-    @apply h-12 px-4 py-3 text-base;
-  }
-  
-  .mobile-form button[type="submit"] {
-    @apply h-14 text-lg w-full;
-  }
-  
-  /* Container para dispositivos móveis */
-  .mobile-container {
-    @apply px-4 py-5 w-full max-w-md mx-auto;
-  }
-  
-  /* Cards para dispositivos móveis */
-  .mobile-card {
-    @apply rounded-xl p-5 shadow-lg;
-  }
-  
-  /* Botão de ação flutuante para dispositivos móveis */
-  .mobile-fab {
-    @apply fixed bottom-6 right-6 h-14 w-14 rounded-full 
-           bg-primary text-white shadow-lg flex items-center justify-center
-           active:scale-95 transition-transform;
-  }
-  
-  /* Tela cheia para dispositivos móveis */
-  .mobile-fullscreen {
-    @apply fixed inset-0 z-50 bg-background p-4 overflow-auto;
-  }
-  
-  /* Menu inferior para navegação em dispositivos móveis */
-  .mobile-nav-bar {
-    @apply fixed bottom-0 left-0 right-0 bg-background border-t 
-           border-border flex justify-around items-center h-16 z-40
-           dark:bg-gray-900/90 backdrop-blur-md;
-  }
-  
-  .mobile-nav-item {
-    @apply flex flex-col items-center justify-center w-full h-full
-           text-xs font-medium text-muted-foreground 
-           hover:text-primary transition-colors;
-  }
-  
-  .mobile-nav-item.active {
-    @apply text-primary;
-  }
-  
-  .mobile-nav-icon {
-    @apply mb-1 h-5 w-5;
-  }
-  
-  /* Ajuste para conteúdo com menu inferior */
-  .has-mobile-nav {
-    @apply pb-16;
-  }
-  
-  /* Melhorias específicas para login em dispositivos móveis */
-  .mobile-login-container {
-    @apply min-h-screen flex flex-col justify-center p-6;
-  }
-  
-  .mobile-login-form {
-    @apply w-full max-w-md mx-auto space-y-6;
-  }
-  
-  .mobile-login-input {
-    @apply h-14 text-base;
-  }
-  
-  .mobile-login-button {
-    @apply h-14 text-lg w-full;
-  }
-}
-
-/* Melhorias para scroll em dispositivos móveis */
-@media (max-width: 640px) {
-  ::-webkit-scrollbar {
-    width: 3px;
-    height: 3px;
-  }
-  
-  body {
-    @apply overscroll-none; /* Evita scroll bounce em iOS */
-  }
-  
-  /* Correções para espaçamento */
-  .p-6 {
-    @apply p-4;
-  }
-  
-  .container {
-    @apply px-4;
-  }
-  
-  /* Ajustes para cabeçalhos */
-  h1 {
-    @apply text-2xl;
-  }
-  
-  h2 {
-    @apply text-xl;
-  }
-  
-  /* Classe para garantir que todos os itens clicáveis tenham tamanho adequado */
-  .touch-target {
-    @apply min-h-[44px] min-w-[44px];
-  }
-}
-
-/* Classe para lidar com a área segura do iOS */
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-.safe-area-top {
-  padding-top: env(safe-area-inset-top, 0px);
-}
-
-/* Suporte para dispositivos dobráveis */
-@media (screen-spanning: single-fold-vertical) {
-  .foldable-container {
-    @apply grid grid-cols-2 gap-4;
-  }
-}
-
-/* Animação de entrada aprimorada para dispositivos móveis */
-.mobile-enter {
-  animation: slide-up 0.3s ease-out forwards;
-}
-
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Estilos específicos para tema escuro */
-.dark .glass-card {
-  @apply bg-gray-800/30 backdrop-blur-md 
-         border border-purple-900/20 
-         shadow-lg hover:shadow-xl transition-all duration-300
-         shadow-purple-900/30;
-}
-
-.dark .data-card {
-  @apply bg-gray-800/90 border-gray-700;
-}
-
-/* Efeitos de gradiente melhorados para modo escuro */
-.dark .bg-gradient-primary {
-  @apply bg-gradient-to-br from-purple-700 to-indigo-900 animate-gradient-flow;
-}
-
-/* Melhoria nos elementos interativos no modo escuro */
-.dark .interactive-element:hover {
-  @apply bg-primary/10 border-primary/30;
-}
-
-/* Cards com melhor contraste no modo escuro */
-.dark .enhanced-card {
-  @apply bg-card/95 backdrop-blur-sm border border-border/50 shadow-lg shadow-primary/5;
-}
-
-/* Melhoria no contraste de texto no modo escuro */
-.dark .subtle-text {
-  @apply text-gray-300;
-}
-
-.dark .very-subtle-text {
-  @apply text-gray-400;
-}
-
-/* Melhorias para status badges no modo escuro */
-.dark .status-active {
-  @apply bg-green-900/30 text-green-300;
-}
-
-.dark .status-pending {
-  @apply bg-yellow-900/30 text-yellow-300;
-}
-
-.dark .status-inactive {
-  @apply bg-gray-800 text-gray-300;
-}
-
-/* Ajustes para gráficos no modo escuro */
-.dark .recharts-cartesian-axis-tick-value,
-.dark .recharts-legend-item-text {
-  @apply fill-gray-300;
-}
-
-.dark .recharts-cartesian-grid-horizontal line,
-.dark .recharts-cartesian-grid-vertical line {
-  @apply stroke-gray-700/50;
-}
-
-/* Animações personalizadas para a página de login */
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-}
-
-@keyframes float-delay-1 {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-}
-
-@keyframes float-delay-2 {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-}
-
-@keyframes float-delay-3 {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.animate-float-delay-1 {
-  animation: float-delay-1 6s ease-in-out infinite;
-  animation-delay: 1s;
-}
-
-.animate-float-delay-2 {
-  animation: float-delay-2 6s ease-in-out infinite;
-  animation-delay: 2s;
-}
-
-.animate-float-delay-3 {
-  animation: float-delay-3 6s ease-in-out infinite;
-  animation-delay: 3s;
-}
-
