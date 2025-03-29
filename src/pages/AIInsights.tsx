@@ -138,7 +138,7 @@ export default function AIInsights() {
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-md">
                   <Brain className="h-5 w-5 text-white" />
                 </div>
-                <h1 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">IA Insights</h1>
+                <h1 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">SightX A.I</h1>
               </div>
               
               <div className="flex items-center gap-2">
@@ -209,7 +209,7 @@ export default function AIInsights() {
                   <Brain className="h-12 w-12 text-white" />
                 </div>
                 <div className="text-center space-y-2">
-                  <h3 className="text-lg md:text-xl font-medium bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">IA Insights</h3>
+                  <h3 className="text-lg md:text-xl font-medium bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">SightX I.A</h3>
                   <p className="text-sm text-muted-foreground max-w-[320px] bg-white/30 dark:bg-gray-800/30 p-3 rounded-lg backdrop-blur-sm border border-purple-100/20 dark:border-purple-900/20">
                     Pergunte qualquer coisa sobre seus dados e receba insights valiosos para impulsionar seu negócio.
                   </p>
